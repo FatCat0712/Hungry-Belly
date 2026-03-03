@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: hungry-belly-backend
+  datasource:
+    url: jdbc:mysql://localhost:3306/foodies
+    username: root
+    password: Maisonhai@789
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+ # supabase S3 configuration
+supabase:
+  accessKey: ${SUPABASE_ACCESS_KEY}
+  secretkey: ${SUPABASE_SECRET_KEY}
+  region: ${SUPABASE_REGION}
+
+  s3:
+    bucketName: foodies
+    bucketEndpoint: ${SUPABASE_BUCKET_ENDPOINT}
+
+
