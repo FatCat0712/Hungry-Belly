@@ -12,11 +12,11 @@ spring:
  # supabase S3 configuration
 supabase:
   accessKey: ${SUPABASE_ACCESS_KEY}
-  secretkey: ${SUPABASE_SECRET_KEY}
+  secretKey: ${SUPABASE_SECRET_KEY}
   region: ${SUPABASE_REGION}
-
   s3:
     bucketName: foodies
-    bucketEndpoint: ${SUPABASE_BUCKET_ENDPOINT}
+    bucketEndPoint: ${SUPABASE_BUCKET_ENDPOINT}
+    bucketPublicEndpoint: ${SUPABASE_BUCKET_PUBLIC_ENDPOINT}
 
 

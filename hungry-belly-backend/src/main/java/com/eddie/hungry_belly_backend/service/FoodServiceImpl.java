@@ -5,6 +5,7 @@ import com.eddie.hungry_belly_backend.io.FoodRequest;
 import com.eddie.hungry_belly_backend.io.FoodResponse;
 import com.eddie.hungry_belly_backend.repository.FoodRepository;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -19,7 +20,7 @@ import java.io.IOException;
 import java.util.UUID;
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class FoodServiceImpl implements FoodService {
     private final S3Client s3Client;
     private final FoodRepository foodRepository;
@@ -27,8 +28,8 @@ public class FoodServiceImpl implements FoodService {
     @Value("${supabase.s3.bucketName}")
     private String bucketName;
 
-    @Value("${supabase.s3.bucketEndpoint}")
-    private String bucketEndpoint;
+    @Value("${supabase.s3.bucketPublicEndpoint}")
+    private String bucketPublicEndpoint;
 
     @Override
     public String uploadFile(MultipartFile file) {
@@ -46,7 +47,7 @@ public class FoodServiceImpl implements FoodService {
             PutObjectResponse response = s3Client.putObject(putObjectRequest, RequestBody.fromBytes(file.getBytes()));
 
             if(response.sdkHttpResponse().isSuccessful()) {
-                return bucketEndpoint + bucketName + "/" + key;
+                return bucketPublicEndpoint + bucketName + "/" + key;
             }
             else {
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "File upload failed");

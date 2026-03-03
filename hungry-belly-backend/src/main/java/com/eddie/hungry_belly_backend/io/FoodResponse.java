@@ -1,12 +1,12 @@
 package com.eddie.hungry_belly_backend.io;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@Getter
+@Setter
 public class FoodResponse {
     private Long id;
     private String name;
