@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { assets } from "../../assets/assets";
-import axios from "axios";
+import { addFood } from "../../services/foodService";
+import { toast } from "react-toastify";
 
 const AddFood = () => {
   const [image, setImage] = useState(false);
@@ -20,28 +21,22 @@ const AddFood = () => {
   const onSubmitHandler = async (e) => {
     e.preventDefault();
     if (!image) {
-      alert("Please select an image");
+      toast.error("Please select an image");
       return;
     }
 
-    const formData = new FormData();
-    formData.append("food", JSON.stringify(data));
-    formData.append("file", image);
-
     try {
-      const response = await axios.post(
-        "http://localhost:8080/api/foods",
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } },
-      );
-      if (response.status === 200) {
-        alert("Food added successfully");
-        setData({ name: "", description: "", category: "biryani", price: "" });
-        setImage(null);
-      }
+      await addFood(data, image);
+      toast.success("Food added successfully");
+      setData({
+        name: "",
+        description: "",
+        category: "biryani",
+        price: "",
+      });
+      setImage(null);
     } catch (error) {
-      console.log("Error", error);
-      alert("Error adding food");
+      toast.error("Error adding food.");
     }
   };
 
@@ -77,6 +72,7 @@ const AddFood = () => {
                   className="form-control"
                   id="name"
                   name="name"
+                  placeholder="Chicken Biryani"
                   required
                   onChange={onChangeHandler}
                   value={data.name}
@@ -92,6 +88,7 @@ const AddFood = () => {
                   name="description"
                   rows="5"
                   required
+                  placeholder="Write content here..."
                   onChange={onChangeHandler}
                   value={data.description}
                 ></textarea>
@@ -126,6 +123,7 @@ const AddFood = () => {
                   className="form-control"
                   id="price"
                   name="price"
+                  placeholder="$200"
                   required
                   onChange={onChangeHandler}
                   value={data.price}
