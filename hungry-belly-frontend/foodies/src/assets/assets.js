@@ -21,11 +21,11 @@ export const assets = {
 };
 
 export const categories = [
-  { category: "Biryani", image: biryani },
-  { category: "Burger", image: burger },
-  { category: "Cakes", image: cakes },
-  { category: "Ice Creams", image: icecream },
-  { category: "Pizza", image: pizza },
-  { category: "Rolls", image: rolls },
-  { category: "Salad", image: salad },
+  { category: "biryani", image: biryani },
+  { category: "burger", image: burger },
+  { category: "cake", image: cakes },
+  { category: "ice-cream", image: icecream },
+  { category: "pizza", image: pizza },
+  { category: "rolls", image: rolls },
+  { category: "salad", image: salad },
 ];

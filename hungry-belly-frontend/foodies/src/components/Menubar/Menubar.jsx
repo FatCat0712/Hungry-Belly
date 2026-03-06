@@ -7,13 +7,15 @@ const Menubar = () => {
   return (
     <nav className="navbar navbar-expand-lg bg-body-tertiary">
       <div className="container">
-        <img
-          src={assets.logo}
-          className="mx-4"
-          alt="Logo"
-          height={48}
-          width={48}
-        />
+        <Link to="/">
+          <img
+            src={assets.logo}
+            className="mx-4"
+            alt="Logo"
+            height={48}
+            width={48}
+          />
+        </Link>
         <button
           className="navbar-toggler"
           type="button"
@@ -44,18 +46,20 @@ const Menubar = () => {
             </li>
           </ul>
           <div className="d-flex align-items-center gap-4">
-            <div className="position-relative">
-              <img
-                src={assets.cart}
-                alt=""
-                height={32}
-                width={32}
-                className="position-relative"
-              />
-              <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning">
-                5
-              </span>
-            </div>
+            <Link to="/cart">
+              <div className="position-relative">
+                <img
+                  src={assets.cart}
+                  alt=""
+                  height={32}
+                  width={32}
+                  className="position-relative"
+                />
+                <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning">
+                  5
+                </span>
+              </div>
+            </Link>
             <div className="btn btn-outline-primary">Login</div>
             <div className="btn btn-outline-success">Register</div>
           </div>
