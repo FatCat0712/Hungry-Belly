@@ -38,7 +38,7 @@ public class FoodController {
 
     @GetMapping("/{id}")
     public FoodResponse readFood(@PathVariable Long id) {
-        return foodService.readFood(id);
+        return foodService.readFoodResponse(id);
     }
 
     @DeleteMapping("/{id}")

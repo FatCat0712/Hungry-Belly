@@ -1,12 +1,15 @@
 import axios from "axios";
-import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import React, { useContext, useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { fetchFoodDetails } from "../../service/FoodService";
+import { StoreContext } from "../../context/StoreContext";
 
 const FoodDetails = () => {
   const { id } = useParams();
-
   const [data, setData] = useState({});
+  const { increaseQty } = useContext(StoreContext);
+  const navigate = useNavigate();
+
   const loadFoodDetails = async () => {
     try {
       const foodData = await fetchFoodDetails(id);
@@ -14,6 +17,11 @@ const FoodDetails = () => {
     } catch (error) {
       toast.error("Error displaying food details.");
     }
+  };
+
+  const addToCart = () => {
+    increaseQty(parseInt(id));
+    navigate("/cart");
   };
 
   useEffect(() => {
@@ -45,6 +53,7 @@ const FoodDetails = () => {
               <button
                 className="btn btn-outline-dark flex-shrink-0"
                 type="button"
+                onClick={addToCart}
               >
                 <i className="bi-cart-fill me-1"></i>
                 Add to cart

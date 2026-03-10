@@ -1,9 +1,14 @@
-import React from "react";
+import React, { useContext, useState } from "react";
 import "./Menubar.css";
 import { assets } from "../../assets/assets";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { StoreContext } from "../../context/StoreContext";
 
 const Menubar = () => {
+  const [active, setActive] = useState("home");
+  const { quantities } = useContext(StoreContext);
+  const navigate = useNavigate();
+
   return (
     <nav className="navbar navbar-expand-lg bg-body-tertiary">
       <div className="container">
@@ -30,17 +35,30 @@ const Menubar = () => {
         <div className="collapse navbar-collapse" id="navbarSupportedContent">
           <ul className="navbar-nav me-auto mb-2 mb-lg-0">
             <li className="nav-item">
-              <Link className="nav-link" aria-current="page" to="/">
+              <Link
+                className={`nav-link ${active === "home" ? "fw-bold active" : ""}`}
+                aria-current="page"
+                to="/"
+                onClick={() => setActive("home")}
+              >
                 Home
               </Link>
             </li>
             <li className="nav-item">
-              <Link className="nav-link" to="/explore">
+              <Link
+                className={`nav-link ${active === "explore" ? "fw-bold active" : ""}`}
+                to="/explore"
+                onClick={() => setActive("explore")}
+              >
                 Explore
               </Link>
             </li>
             <li className="nav-item dropdown">
-              <Link className="nav-link" to="/contact">
+              <Link
+                className={`nav-link ${active === "contact-us" ? "fw-bold active" : ""}`}
+                to="/contact"
+                onClick={() => setActive("contact-us")}
+              >
                 Contact us
               </Link>
             </li>
@@ -56,12 +74,22 @@ const Menubar = () => {
                   className="position-relative"
                 />
                 <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning">
-                  5
+                  {Object.keys(quantities).length}
                 </span>
               </div>
             </Link>
-            <div className="btn btn-outline-primary">Login</div>
-            <div className="btn btn-outline-success">Register</div>
+            <div
+              className="btn btn-outline-primary"
+              onClick={() => navigate("/login")}
+            >
+              Login
+            </div>
+            <div
+              className="btn btn-outline-success"
+              onClick={() => navigate("/register")}
+            >
+              Register
+            </div>
           </div>
         </div>
       </div>

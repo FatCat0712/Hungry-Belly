@@ -4,7 +4,6 @@ import com.eddie.hungry_belly_backend.entity.Food;
 import com.eddie.hungry_belly_backend.io.FoodRequest;
 import com.eddie.hungry_belly_backend.io.FoodResponse;
 import com.eddie.hungry_belly_backend.repository.FoodRepository;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -78,9 +77,14 @@ public class FoodServiceImpl implements FoodService {
     }
 
     @Override
-    public FoodResponse readFood(Long id) {
+    public FoodResponse readFoodResponse(Long id) {
         Food existingFood = foodRepository.findById(id).orElseThrow(() -> new RuntimeException("Food not found for the id " + id));
         return convertToResponse(existingFood);
+    }
+
+    @Override
+    public Food readFoodEntity(Long id) {
+        return foodRepository.findById(id).orElseThrow(() -> new RuntimeException("Food not found for the id " + id));
     }
 
     @Override
@@ -95,7 +99,7 @@ public class FoodServiceImpl implements FoodService {
 
     @Override
     public void deleteFood(Long id) {
-        FoodResponse response = readFood(id);
+        FoodResponse response = readFoodResponse(id);
         String foodImageUrl =  response.getImageUrl();
         String fileName = foodImageUrl.substring(foodImageUrl.lastIndexOf("/") + 1);
 

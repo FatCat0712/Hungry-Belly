@@ -18,5 +18,9 @@ supabase:
     bucketName: foodies
     bucketEndPoint: ${SUPABASE_BUCKET_ENDPOINT}
     bucketPublicEndpoint: ${SUPABASE_BUCKET_PUBLIC_ENDPOINT}
+# jwt configuration
+jwt:
+  secret:
+    key: ${JWT_SECRET_KEY}
 
 

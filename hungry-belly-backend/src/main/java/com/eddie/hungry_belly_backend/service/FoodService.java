@@ -11,7 +11,8 @@ public interface FoodService {
      String uploadFile(MultipartFile file);
      FoodResponse addFood(FoodRequest request, MultipartFile multipartFile);
      List<FoodResponse> readFoods();
-     FoodResponse readFood(Long id);
+     FoodResponse readFoodResponse(Long id);
+     Food readFoodEntity(Long id);
      boolean deleteFile(String filename);
      void deleteFood(Long id);
 }
