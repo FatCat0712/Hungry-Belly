@@ -27,10 +27,17 @@ public class CartItem {
 
     private int quantity;
 
+
+
     public CartItem(AppUser user, Food food, int quantity) {
         this.user = user;
         this.food = food;
         this.quantity = quantity;
+    }
+
+    public CartItem(AppUser user, Food food) {
+        this.user = user;
+        this.food = food;
     }
 
     @Override

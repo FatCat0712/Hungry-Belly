@@ -1,8 +1,45 @@
-import React from "react";
+import React, { useContext, useState } from "react";
 import "./Login.css";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
+import { login } from "../../service/AuthService";
+import { toast } from "react-toastify";
+import { StoreContext } from "../../context/StoreContext";
 
 const Login = () => {
+  const [data, setData] = useState({
+    email: "",
+    password: "",
+  });
+
+  const { setToken } = useContext(StoreContext);
+  const navigate = useNavigate();
+
+  const onChangeHandler = (e) => {
+    const name = e.target.name;
+    const value = e.target.value;
+
+    setData((data) => ({ ...data, [name]: value }));
+  };
+
+  const onSubmitHandler = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await login(data);
+      if (response.status === 200) {
+        const data = response.data;
+        setToken(data.token);
+        localStorage.setItem("token", response.data.token);
+        navigate("/  ");
+      } else {
+        toast.error("Login failed. Please try again");
+      }
+    } catch (error) {
+      console.log("Unable to login", error);
+      toast.error("Login failed. Please try again");
+    }
+  };
+
   return (
     <div className=" login-container">
       <div className="row">
@@ -12,13 +49,17 @@ const Login = () => {
               <h5 className="card-title text-center mb-5 fw-light fs-5">
                 Sign In
               </h5>
-              <form>
+              <form onSubmit={onSubmitHandler}>
                 <div className="form-floating mb-3">
                   <input
                     type="email"
                     className="form-control"
                     id="floatingInput"
                     placeholder="name@example.com"
+                    name="email"
+                    value={data.email}
+                    onChange={onChangeHandler}
+                    required
                   />
                   <label htmlFor="floatingInput">Email address</label>
                 </div>
@@ -28,6 +69,10 @@ const Login = () => {
                     className="form-control"
                     id="floatingPassword"
                     placeholder="Password"
+                    name="password"
+                    value={data.password}
+                    onChange={onChangeHandler}
+                    required
                   />
                   <label htmlFor="floatingPassword">Password</label>
                 </div>

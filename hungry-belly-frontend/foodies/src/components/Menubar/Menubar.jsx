@@ -6,8 +6,13 @@ import { StoreContext } from "../../context/StoreContext";
 
 const Menubar = () => {
   const [active, setActive] = useState("home");
-  const { quantities } = useContext(StoreContext);
+  const { quantities, token, setToken } = useContext(StoreContext);
   const navigate = useNavigate();
+  const logout = () => {
+    localStorage.removeItem("token");
+    setToken("");
+    navigate("/");
+  };
 
   return (
     <nav className="navbar navbar-expand-lg bg-body-tertiary">
@@ -78,18 +83,44 @@ const Menubar = () => {
                 </span>
               </div>
             </Link>
-            <div
-              className="btn btn-outline-primary"
-              onClick={() => navigate("/login")}
-            >
-              Login
-            </div>
-            <div
-              className="btn btn-outline-success"
-              onClick={() => navigate("/register")}
-            >
-              Register
-            </div>
+            {!token ? (
+              <>
+                <div
+                  className="btn btn-outline-primary"
+                  onClick={() => navigate("/login")}
+                >
+                  Login
+                </div>
+                <div
+                  className="btn btn-outline-success"
+                  onClick={() => navigate("/register")}
+                >
+                  Register
+                </div>
+              </>
+            ) : (
+              <div className="dropdown text-end">
+                <img
+                  src=""
+                  alt=""
+                  width={32}
+                  height={32}
+                  className="rounded-circle"
+                />
+
+                <ul className="dropdown-menu text-sm">
+                  <li
+                    className="dropdown-item"
+                    onClick={() => navigate("/myorder")}
+                  >
+                    Orders
+                  </li>
+                  <li className="dropdown-item" onClick={logout}>
+                    Logout
+                  </li>
+                </ul>
+              </div>
+            )}
           </div>
         </div>
       </div>

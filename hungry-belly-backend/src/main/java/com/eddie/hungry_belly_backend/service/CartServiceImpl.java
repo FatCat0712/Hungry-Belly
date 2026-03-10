@@ -6,6 +6,7 @@ import com.eddie.hungry_belly_backend.entity.Food;
 import com.eddie.hungry_belly_backend.io.CartRequest;
 import com.eddie.hungry_belly_backend.io.CartResponse;
 import com.eddie.hungry_belly_backend.repository.CartItemRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -41,7 +42,55 @@ public class CartServiceImpl implements CartService{
 
     }
 
-    private CartResponse convertToResponse(Long userId, Long foodId,  List<CartItem> items) {
+    @Override
+    public CartResponse getCart() {
+        AppUser loggedInUser = userService.findByUserId();
+        List<CartItem> cartItems =  cartItemRepository.findByUserId(loggedInUser.getId());
+        return convertToResponse(loggedInUser.getId(),  cartItems);
+    }
+
+    @Override
+    @Transactional
+    public void clearCart() {
+        AppUser loggedInUser = userService.findByUserId();
+        cartItemRepository.deleteByUserId(loggedInUser.getId());
+    }
+
+    @Override
+    @Transactional
+    public CartResponse removeFromCart(CartRequest cartRequest) {
+        AppUser loggedInUser = userService.findByUserId();
+        List<CartItem> cartItems =  cartItemRepository.findByUserId(loggedInUser.getId());
+        CartItem removedCartItem = new CartItem(loggedInUser, new Food(cartRequest.getFoodId()));
+        if(cartItems.contains(removedCartItem)) {
+            removedCartItem = cartItems.get(cartItems.indexOf(removedCartItem));
+            int currentQuantity =  removedCartItem.getQuantity();
+            if(currentQuantity > 1) {
+                currentQuantity--;
+                removedCartItem.setQuantity(currentQuantity);
+                cartItemRepository.save(removedCartItem);
+            }
+            else {
+                cartItemRepository.removeCartItemByUserAndFood(loggedInUser.getId(), cartRequest.getFoodId());
+                cartItems.remove(removedCartItem);
+            }
+        }
+        return convertToResponse(loggedInUser.getId(), cartItems);
+    }
+
+    private CartResponse convertToResponse(Long userId, List<CartItem> items) {
+        Map<Long, Integer> cartItems = new HashMap<>();
+
+        items.forEach(item -> cartItems.put(item.getFood().getId(), item.getQuantity()));
+
+        return CartResponse.builder()
+                .userId(userId)
+                .items(cartItems)
+                .build();
+    }
+
+
+    private CartResponse convertToResponse(Long userId, Long foodId, List<CartItem> items) {
         Map<Long, Integer> cartItems = new HashMap<>();
 
         items.forEach(item -> cartItems.put(item.getFood().getId(), item.getQuantity()));

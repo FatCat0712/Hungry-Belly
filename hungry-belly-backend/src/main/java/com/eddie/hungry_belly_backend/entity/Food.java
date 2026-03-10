@@ -22,6 +22,7 @@ public class Food {
     private String category;
     private String imageUrl;
 
-
-
+    public Food(Long id) {
+        this.id = id;
+    }
 }
