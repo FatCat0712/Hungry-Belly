@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect } from "react";
 import "./Cart.css";
 import { StoreContext } from "../../context/StoreContext";
 import { Link, useNavigate } from "react-router-dom";
@@ -10,7 +10,6 @@ const Cart = () => {
   const { foodList, increaseQty, decreaseQty, quantities, removeFromCart } =
     useContext(StoreContext);
 
-  console.log(quantities);
   //   cart items
   const cartItems = foodList.filter((food) => quantities[food.id] > 0);
 

@@ -12,7 +12,7 @@ const Login = () => {
     password: "",
   });
 
-  const { setToken } = useContext(StoreContext);
+  const { setToken, loadCartData } = useContext(StoreContext);
   const navigate = useNavigate();
 
   const onChangeHandler = (e) => {
@@ -30,7 +30,8 @@ const Login = () => {
         const data = response.data;
         setToken(data.token);
         localStorage.setItem("token", response.data.token);
-        navigate("/  ");
+        await loadCartData(response.data.token);
+        navigate("/");
       } else {
         toast.error("Login failed. Please try again");
       }

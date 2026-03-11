@@ -35,7 +35,7 @@ public class CartController {
         cartService.clearCart();
     }
 
-    @DeleteMapping("/remove")
+    @PostMapping("/remove")
     public CartResponse removeFromCart(@RequestBody CartRequest request) {
         Long foodId = request.getFoodId();
         if(foodId == null) {

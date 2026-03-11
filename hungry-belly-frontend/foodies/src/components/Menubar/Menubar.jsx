@@ -6,12 +6,14 @@ import { StoreContext } from "../../context/StoreContext";
 
 const Menubar = () => {
   const [active, setActive] = useState("home");
-  const { quantities, token, setToken } = useContext(StoreContext);
+  const { quantities, setQuantities, token, setToken } =
+    useContext(StoreContext);
   const navigate = useNavigate();
   const logout = () => {
     localStorage.removeItem("token");
     setToken("");
     navigate("/");
+    setQuantities({});
   };
 
   return (
@@ -100,13 +102,20 @@ const Menubar = () => {
               </>
             ) : (
               <div className="dropdown text-end">
-                <img
-                  src=""
-                  alt=""
-                  width={32}
-                  height={32}
-                  className="rounded-circle"
-                />
+                <a
+                  href="#"
+                  className="d-block link-body-emphasis text-decoration-none dropdown-toggle"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                >
+                  <img
+                    src={assets.profile}
+                    alt=""
+                    width={32}
+                    height={32}
+                    className="rounded-circle"
+                  />
+                </a>
 
                 <ul className="dropdown-menu text-sm">
                   <li
