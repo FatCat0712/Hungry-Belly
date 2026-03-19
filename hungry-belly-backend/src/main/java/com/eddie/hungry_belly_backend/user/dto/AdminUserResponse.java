@@ -12,8 +12,7 @@ import java.util.Set;
 public class AdminUserResponse {
     private Long id;
     private String email;
-    private String lastName;
-    private String firstName;
+    private String name;
     private String photo;
     private boolean enabled;
     private Set<String> roles;

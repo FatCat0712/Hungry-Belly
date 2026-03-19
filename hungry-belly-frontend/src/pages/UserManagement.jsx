@@ -1,39 +1,24 @@
-const users = [
-  {
-    id: 1,
-    name: "Sarah Johnson",
-    email: "sarah@example.com",
-    role: "Admin",
-    status: "Active",
-    joined: "2025-08-18",
-  },
-  {
-    id: 2,
-    name: "Daniel Kim",
-    email: "daniel@example.com",
-    role: "Manager",
-    status: "Active",
-    joined: "2025-09-03",
-  },
-  {
-    id: 3,
-    name: "Priya Patel",
-    email: "priya@example.com",
-    role: "Support",
-    status: "Pending",
-    joined: "2025-09-23",
-  },
-  {
-    id: 4,
-    name: "Lucas Brown",
-    email: "lucas@example.com",
-    role: "Chef",
-    status: "Inactive",
-    joined: "2025-07-12",
-  },
-];
+import axios from "axios";
+import { useEffect, useState } from "react";
 
 export default function UserManagement() {
+  const [users, setUsers] = useState([]);
+
+  useEffect(() => {
+    const getUsers = async () => {
+      try {
+        const response = await axios.get("http://localhost:8080/api/v1/users");
+        const data = response.data.data;
+        console.log("Fetched users:", data);
+        setUsers(data);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+    };
+
+    getUsers();
+  }, []);
+
   return (
     <div className="container-fluid px-0">
       <div className="d-flex justify-content-between align-items-start mb-3">
@@ -125,7 +110,6 @@ export default function UserManagement() {
                   <th>Email</th>
                   <th>Role</th>
                   <th>Status</th>
-                  <th>Joined</th>
                   <th className="text-end">Actions</th>
                 </tr>
               </thead>
@@ -136,23 +120,27 @@ export default function UserManagement() {
                       <div className="d-flex align-items-center gap-2">
                         <div
                           className="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center"
-                          style={{ width: 32, height: 32 }}
+                          style={{ width: 40, height: 40 }}
                         >
-                          {user.name.charAt(0)}
+                          {user.photo || user.name.charAt(0)}
                         </div>
                         <div>{user.name}</div>
                       </div>
                     </td>
                     <td>{user.email}</td>
-                    <td>{user.role}</td>
+                    <td>
+                      {user.roles.map((role) => (
+                        <span className="badge bg-primary">{role}</span>
+                      ))}
+                    </td>
                     <td>
                       <span
-                        className={`badge ${user.status === "Active" ? "bg-success" : user.status === "Pending" ? "bg-warning text-dark" : "bg-secondary"}`}
+                        className={`badge ${user.enabled ? "bg-success" : "bg-secondary"}`}
                       >
-                        {user.status}
+                        {user.enabled ? "Active" : "Inactive"}
                       </span>
                     </td>
-                    <td>{user.joined}</td>
+
                     <td className="text-end">
                       <button className="btn btn-sm btn-outline-secondary me-1">
                         <i className="bi bi-pencil"></i>
