@@ -28,6 +28,10 @@ public class Role {
         this.id = id;
     }
 
+    public Role(String name) {
+        this.name = name;
+    }
+
     public Role(String name, String description) {
         this.name = name;
         this.description = description;
@@ -37,12 +41,12 @@ public class Role {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         Role role = (Role) o;
-        return Objects.equals(id, role.id);
+        return Objects.equals(name, role.name);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(id);
+        return Objects.hashCode(name);
     }
 
     @Override
