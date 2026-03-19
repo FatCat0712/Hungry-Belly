@@ -3,9 +3,9 @@ spring:
     name: hungry-belly-backend
 
   datasource:
-    url: ${DB_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    url: ${DB_URL:jdbc:mysql://localhost:3306/foodies}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:Maisonhai@789}
 
   jpa:
     hibernate:
