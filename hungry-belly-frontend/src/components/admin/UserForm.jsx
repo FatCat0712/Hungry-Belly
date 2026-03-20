@@ -1,27 +1,55 @@
 import React, { useState } from "react";
 import assets from "../../assets/assets";
 
-const roles = ["Admin", "User", "Staff", "Support", "Shipper"];
+import { useCreateUser } from "../../hooks/users/userCreateUsers";
+import Spinner from "../Spinner";
+import { toast } from "react-toastify";
+import { useRoles } from "../../hooks/roles/useRoles";
 
-function UserForm({ initialData, onSubmit, onClose }) {
+function UserForm({ onClose }) {
   const [image, setImage] = useState(false);
-  const [formData, setFormData] = useState({
-    email: initialData?.email || "",
-    firstName: initialData?.firstName || "",
-    lastName: initialData?.lastName || "",
+  const [data, setData] = useState({
+    email: "",
+    firstName: "",
+    lastName: "",
     password: "",
-    roles: initialData?.roles || [],
-    photo: initialData?.photo || null,
-    useDefaultPhoto: initialData?.useDefaultPhoto || false,
+    roles: [],
+    enabled: false,
+    photo: null,
   });
+
+  const [errors, setErrors] = useState({});
+  const mutation = useCreateUser();
+  const { roles } = useRoles();
+
+  console.log(roles)
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    mutation.mutate(data, {
+      onSuccess: (res) => {
+        const message = res.message;
+        toast.success(message);
+        onClose();
+      },
+      onError: (error) => {
+        console.log(error.response);
+        const res = error.response?.data;
+        if (res?.message) {
+          console.log(res.message);
+          setErrors(res.message);
+        }
+      },
+    });
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleRoleChange = (role) => {
-    setFormData((prev) => ({
+    setData((prev) => ({
       ...prev,
       roles: prev.roles.includes(role)
         ? prev.roles.filter((r) => r !== role)
@@ -32,7 +60,7 @@ function UserForm({ initialData, onSubmit, onClose }) {
   const handlePhotoChange = (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      setFormData((prev) => ({ ...prev, photo: file }));
+      setData((prev) => ({ ...prev, photo: file }));
     }
   };
 
@@ -54,7 +82,7 @@ function UserForm({ initialData, onSubmit, onClose }) {
             ></button>
           </div>
           <div className="modal-body">
-            <form onSubmit={onSubmit}>
+            <form onSubmit={handleSubmit}>
               <div className="mb-3">
                 <label htmlFor="email" className="form-label">
                   Email <span className="text-danger">*</span>
@@ -64,10 +92,11 @@ function UserForm({ initialData, onSubmit, onClose }) {
                   className="form-control"
                   id="email"
                   name="email"
-                  value={formData.email}
+                  value={data.email}
                   onChange={handleInputChange}
                   required
                 />
+                {errors.email && <p style={{ color: "red" }}>{errors.email}</p>}
               </div>
 
               <div className="row mb-3">
@@ -80,10 +109,13 @@ function UserForm({ initialData, onSubmit, onClose }) {
                     className="form-control"
                     id="firstName"
                     name="firstName"
-                    value={formData.firstName}
+                    value={data.firstName}
                     onChange={handleInputChange}
                     required
                   />
+                  {errors.firstName && (
+                    <p style={{ color: "red" }}>{errors.firstName}</p>
+                  )}
                 </div>
                 <div className="col-md-6">
                   <label htmlFor="lastName" className="form-label">
@@ -94,10 +126,13 @@ function UserForm({ initialData, onSubmit, onClose }) {
                     className="form-control"
                     id="lastName"
                     name="lastName"
-                    value={formData.lastName}
+                    value={data.lastName}
                     onChange={handleInputChange}
                     required
                   />
+                  {errors.lastName && (
+                    <p style={{ color: "red" }}>{errors.lastName}</p>
+                  )}
                 </div>
               </div>
 
@@ -110,16 +145,20 @@ function UserForm({ initialData, onSubmit, onClose }) {
                   className="form-control"
                   id="password"
                   name="password"
-                  value={formData.password}
+                  value={data.password}
                   onChange={handleInputChange}
                   required
                 />
+                {errors.password && (
+                  <p style={{ color: "red" }}>{errors.password}</p>
+                )}
               </div>
 
               <div className="mb-3">
                 <label className="form-label">
                   Roles <span className="text-danger">*</span>
                 </label>
+
                 <div
                   className="border rounded p-3"
                   style={{ backgroundColor: "#f8f9fa" }}
@@ -132,7 +171,7 @@ function UserForm({ initialData, onSubmit, onClose }) {
                             className="form-check-input"
                             type="checkbox"
                             id={role}
-                            checked={formData.roles.includes(role)}
+                            checked={data.roles.includes(role)}
                             onChange={() => handleRoleChange(role)}
                           />
                           <label className="form-check-label" htmlFor={role}>
@@ -143,6 +182,7 @@ function UserForm({ initialData, onSubmit, onClose }) {
                     ))}
                   </div>
                 </div>
+                {errors.roles && <p style={{ color: "red" }}>{errors.roles}</p>}
               </div>
 
               <div className="mb-3 d-flex">
@@ -152,15 +192,18 @@ function UserForm({ initialData, onSubmit, onClose }) {
                     className="form-check-input"
                     type="checkbox"
                     id="enabled"
-                    checked={formData.enabled}
+                    checked={data.enabled}
                     onChange={(e) =>
-                      setFormData((prev) => ({
+                      setData((prev) => ({
                         ...prev,
                         enabled: e.target.checked,
                       }))
                     }
                   />
                 </div>
+                {errors.enabled && (
+                  <p style={{ color: "red" }}>{errors.enabled}</p>
+                )}
               </div>
 
               <div className="mb-3">
@@ -173,7 +216,7 @@ function UserForm({ initialData, onSubmit, onClose }) {
                       id="photo"
                       accept="image/*"
                       onChange={handlePhotoChange}
-                      disabled={formData.useDefaultPhoto}
+                      disabled={data.useDefaultPhoto}
                     />
                   </div>
                   <div className="form-check mt-1">
@@ -200,7 +243,7 @@ function UserForm({ initialData, onSubmit, onClose }) {
             <button
               type="button"
               className="btn btn-primary"
-              onClick={onSubmit}
+              onClick={handleSubmit}
             >
               Add User
             </button>

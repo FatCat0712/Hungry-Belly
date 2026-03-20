@@ -1,20 +1,12 @@
 import React from "react";
 import UserForm from "./UserForm";
 
-const UserDialog = ({ open, onClose, onSubmit, initialData }) => {
+const UserDialog = ({ open, onClose }) => {
   if (!open) return null;
 
   return (
     <div className="dialog">
-      <h2>{initialData ? "Edit User" : "Add User"}</h2>
-      <UserForm
-        initial={initialData}
-        onSubmit={(data) => {
-          onSubmit(data);
-          onClose();
-        }}
-        onClose={onClose}
-      />
+      <UserForm onClose={onClose} />
 
       <button onClick={onClose}>Cancel</button>
     </div>

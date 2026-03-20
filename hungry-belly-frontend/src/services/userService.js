@@ -1,12 +1,16 @@
-const API_URL = "http://localhost:8080/api/v1/users";
+import axios from "axios";
 
-export const fetchUsers = async () => {
-  try {
-    const response = await fetch(API_URL);
-    const data = await response.json();
-    return data.data;
-  } catch (error) {
-    console.error("Error fetching users:", error);
-    throw error;
-  }
+const API_URL = import.meta.env.VITE_API_URL + "/users";
+
+export const fetchUsersApi = async () => {
+  const response = await fetch(API_URL);
+  const data = await response.json();
+  return data.data;
+};
+
+export const createUserApi = async (userData) => {
+  const data = await axios.post(API_URL, userData, {
+    headers: { "Content-Type": "application/json" },
+  });
+  return data.data;
 };

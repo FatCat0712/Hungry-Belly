@@ -6,4 +6,5 @@ import java.util.Set;
 
 public interface RoleService {
     Set<Role> getRolesByNames(Set<String> names);
+    Set<String> fetchAllRoleNames();
 }

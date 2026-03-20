@@ -6,7 +6,6 @@ import com.eddie.hungry_belly_backend.role.service.RoleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Set;
 
 @Service
@@ -17,5 +16,10 @@ public class RoleServiceImpl implements RoleService {
     @Override
     public Set<Role> getRolesByNames(Set<String> names) {
         return roleRepository.findByNameIn(names);
+    }
+
+    @Override
+    public Set<String> fetchAllRoleNames() {
+        return roleRepository.fetchAllRoleNames() ;
     }
 }

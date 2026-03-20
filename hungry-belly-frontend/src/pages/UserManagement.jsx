@@ -1,36 +1,22 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
-import { fetchUsers } from "../services/userService";
+import Spinner from "../components/Spinner";
 import UserDialog from "../components/admin/UserDialog";
+import { useUsers } from "../hooks/users/useUsers";
+import { useCreateUser } from "../hooks/users/userCreateUsers";
 
 export default function UserManagement() {
-  const [users, setUsers] = useState([]);
   const [showModal, setShowModal] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null);
+  const { users, isLoading } = useUsers();
+  const { isCreating } = useCreateUser();
 
   const handleCancel = () => {
     setShowModal(false);
-    setSelectedUser(null);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setShowModal(false);
-    setSelectedUser(null);
-  };
-
-  useEffect(() => {
-    const getUsers = async () => {
-      try {
-        const data = await fetchUsers();
-        setUsers(data);
-      } catch (error) {
-        console.error("Error", error.message);
-      }
-    };
-
-    getUsers();
-  }, []);
+  if (isLoading || isCreating) {
+    return <Spinner message="Loading users..." />;
+  }
 
   return (
     <>
@@ -121,7 +107,11 @@ export default function UserManagement() {
               </div>
             </div>
 
-            <div className="table-responsive">
+            <div
+              className="table-responsive position-relative"
+              style={{ minHeight: isLoading ? 280 : undefined }}
+            >
+              {isLoading && <Spinner message="Loading users..." />}
               <table className="table table-hover align-middle mb-0">
                 <thead className="table-light">
                   <tr>
@@ -180,12 +170,7 @@ export default function UserManagement() {
       </div>
 
       {/* Add User Modal */}
-      <UserDialog
-        open={showModal}
-        onClose={handleCancel}
-        onSubmit={handleSubmit}
-        initialData={selectedUser}
-      />
+      <UserDialog open={showModal} onClose={handleCancel} />
     </>
   );
 }

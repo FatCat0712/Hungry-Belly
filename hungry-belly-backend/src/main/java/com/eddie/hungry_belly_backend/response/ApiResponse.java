@@ -12,10 +12,10 @@ import java.time.LocalDateTime;
 public class ApiResponse<T> {
     private LocalDateTime timestamp;
     private int status;
-    private String message;
+    private Object message;
     private T data;
 
-    public static <T> ApiResponse<T> success(T data, String message) {
+    public static <T> ApiResponse<T> success(T data,String message) {
         return ApiResponse.<T>builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.OK.value())
@@ -35,7 +35,7 @@ public class ApiResponse<T> {
 
 
 
-    public static <T> ApiResponse<T> error(int status, String message) {
+    public static <T> ApiResponse<T> error(int status, Object message) {
         return ApiResponse.<T>builder()
                 .timestamp(LocalDateTime.now())
                 .status(status)

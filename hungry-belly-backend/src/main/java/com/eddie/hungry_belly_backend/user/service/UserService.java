@@ -6,6 +6,6 @@ import com.eddie.hungry_belly_backend.user.dto.AdminUserResponse;
 import java.util.List;
 
 public interface UserService {
-    List<AdminUserResponse> listAllUsers();
-    AdminUserResponse createUser(AdminUserRequest request);
+    List<AdminUserResponse> fetchAllUsers();
+    void createUser(AdminUserRequest request);
 }

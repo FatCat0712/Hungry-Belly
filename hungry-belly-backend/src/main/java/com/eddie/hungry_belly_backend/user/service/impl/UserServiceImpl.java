@@ -22,17 +22,16 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
 
     @Override
-    public List<AdminUserResponse> listAllUsers() {
+    public List<AdminUserResponse> fetchAllUsers() {
         return userRepository.findAll().stream().map(this::convertToAdminResponse).toList();
     }
 
-    public AdminUserResponse createUser(AdminUserRequest request) {
+    public void createUser(AdminUserRequest request) {
         if(userRepository.existsByEmail(request.getEmail())) {
-            throw new BadRequestException("Email Already exists");
+            throw new BadRequestException("email: Email already exists");
         }
         User user = convertToUserEntity(request);
-        user = userRepository.save(user);
-        return convertToAdminResponse(user);
+        userRepository.save(user);
     }
 
 

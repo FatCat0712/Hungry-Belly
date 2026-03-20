@@ -3,6 +3,7 @@ package com.eddie.hungry_belly_backend.user.dto;
 
 import jakarta.validation.constraints.*;
 import lombok.*;
+import org.hibernate.validator.constraints.Length;
 
 import java.util.Set;
 
@@ -24,12 +25,11 @@ public class AdminUserRequest {
     private String lastName;
 
     @NotBlank(message = "Password is required")
-    @Size(min = 6,max = 20)
+    @Length(min = 6, message = "Password must be at least 6 characters")
     private String password;
 
     @NotEmpty(message = "At least one role is required")
     private Set<String> roles;
 
-    @NotNull(message = "User status is required")
     private Boolean enabled;
 }

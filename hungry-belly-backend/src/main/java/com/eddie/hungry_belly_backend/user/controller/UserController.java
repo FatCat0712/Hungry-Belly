@@ -20,13 +20,13 @@ public class UserController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<AdminUserResponse>>> listUsers() {
-            List<AdminUserResponse> listUsers = userService.listAllUsers();
+            List<AdminUserResponse> listUsers = userService.fetchAllUsers();
             return ResponseEntity.ok(ApiResponse.success(listUsers, "User fetched successfully"));
     }
 
     @PostMapping
     public ResponseEntity<ApiResponse<?>> createUser(@Valid @RequestBody AdminUserRequest request) {
-         AdminUserResponse createdUser = userService.createUser(request);
-         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.create(createdUser, "User created"));
+         userService.createUser(request);
+         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.create(null, "User created"));
     }
 }

@@ -1,0 +1,13 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createUserApi } from "../../services/userService";
+
+export const useCreateUser = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: createUserApi,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["users"]);
+    },
+  });
+};
