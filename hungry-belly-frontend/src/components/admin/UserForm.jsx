@@ -22,8 +22,6 @@ function UserForm({ onClose }) {
   const mutation = useCreateUser();
   const { roles } = useRoles();
 
-  console.log(roles)
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     mutation.mutate(data, {

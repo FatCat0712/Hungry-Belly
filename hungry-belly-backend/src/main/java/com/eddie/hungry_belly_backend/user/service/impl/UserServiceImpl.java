@@ -9,6 +9,7 @@ import com.eddie.hungry_belly_backend.user.dto.AdminUserResponse;
 import com.eddie.hungry_belly_backend.user.repository.UserRepository;
 import com.eddie.hungry_belly_backend.user.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,6 +21,7 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService {
     private final RoleService roleService;
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public List<AdminUserResponse> fetchAllUsers() {
@@ -48,11 +50,15 @@ public class UserServiceImpl implements UserService {
                 .email(request.getEmail())
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
-                .password(request.getPassword())
+                .password(encodePassword(request.getPassword()))
                 .enabled(request.getEnabled())
                 .roles(savedRoles)
                 .build();
 
+    }
+
+    private String encodePassword(String rawPassword) {
+        return passwordEncoder.encode(rawPassword);
     }
 
     private AdminUserResponse convertToAdminResponse(User user) {
