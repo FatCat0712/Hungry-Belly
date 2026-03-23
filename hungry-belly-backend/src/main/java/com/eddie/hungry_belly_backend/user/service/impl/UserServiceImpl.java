@@ -7,6 +7,7 @@ import com.eddie.hungry_belly_backend.exception.UserNotFoundException;
 import com.eddie.hungry_belly_backend.role.service.RoleService;
 import com.eddie.hungry_belly_backend.user.dto.request.AdminUserCreateRequest;
 import com.eddie.hungry_belly_backend.user.dto.request.AdminUserRequest;
+import com.eddie.hungry_belly_backend.user.dto.request.ResetPasswordRequest;
 import com.eddie.hungry_belly_backend.user.dto.response.AdminUserResponse;
 import com.eddie.hungry_belly_backend.user.repository.UserRepository;
 import com.eddie.hungry_belly_backend.user.service.UserService;
@@ -75,6 +76,13 @@ public class UserServiceImpl implements UserService {
         userRepository.save(dbUser);
     }
 
+    @Override
+    public void resetPassword(Long id, ResetPasswordRequest request) {
+        User dbUser = findUserById(id);
+        dbUser.setPassword(encodePassword(request.getNewPassword()));
+        userRepository.save(dbUser);
+
+    }
 
     private User convertToUserEntity(AdminUserCreateRequest request) {
         Set<Role> savedRoles = convertToRoleEntitySet(request.getRoles());

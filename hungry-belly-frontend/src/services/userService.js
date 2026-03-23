@@ -21,3 +21,10 @@ export const updateUserApi = async (userData) => {
   });
   return data.data;
 };
+
+export const resetPasswordApi = async (userId, userData) => {
+  const data = await axios.put(`${API_URL}/${userId}/password`, userData, {
+    headers: { "Content-Type": "application/json" },
+  });
+  return data.data;
+};

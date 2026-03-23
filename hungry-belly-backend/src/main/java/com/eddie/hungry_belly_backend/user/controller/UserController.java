@@ -3,6 +3,7 @@ package com.eddie.hungry_belly_backend.user.controller;
 import com.eddie.hungry_belly_backend.response.ApiResponse;
 import com.eddie.hungry_belly_backend.user.dto.request.AdminUserCreateRequest;
 import com.eddie.hungry_belly_backend.user.dto.request.AdminUserRequest;
+import com.eddie.hungry_belly_backend.user.dto.request.ResetPasswordRequest;
 import com.eddie.hungry_belly_backend.user.dto.response.AdminUserResponse;
 import com.eddie.hungry_belly_backend.user.service.UserService;
 import jakarta.validation.Valid;
@@ -37,7 +38,11 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success(null, "User updated successfully"));
     }
 
-
+    @PutMapping("/{id}/password")
+    public ResponseEntity<ApiResponse<?>> resetUserPassword(@PathVariable Long id, @Valid @RequestBody ResetPasswordRequest request) {
+        userService.resetPassword(id, request);
+        return ResponseEntity.ok(ApiResponse.success(null, "Password reset successfully"));
+    }
 
 
 

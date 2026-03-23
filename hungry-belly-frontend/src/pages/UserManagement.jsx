@@ -2,15 +2,18 @@ import { useState } from "react";
 
 import Spinner from "../components/Spinner";
 import UserDialog from "../components/admin/UserDialog";
+import ResetPasswordDialog from "../components/admin/ResetPasswordDialog";
 import { useUsers } from "../hooks/users/useUsers";
 import { useCreateUser } from "../hooks/users/useCreateUsers";
 
 export default function UserManagement() {
   const [showModal, setShowModal] = useState(false);
+  const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
   const [statusOverrides, setStatusOverrides] = useState({});
   const { users, isLoading } = useUsers();
   const { isCreating } = useCreateUser();
   const [selectedUser, setSelectedUser] = useState(null);
+  const [userToResetPassword, setUserToResetPassword] = useState(null);
 
   const isUserEnabled = (user) => {
     return statusOverrides[user.id] ?? user.enabled;
@@ -28,10 +31,13 @@ export default function UserManagement() {
   };
 
   const handleResetPassword = (user) => {
-    // TODO: Implement password reset functionality
-    console.log("Reset password for user:", user.id);
-    // This can trigger an API call to send password reset email
-    // or open a dialog for immediate password reset
+    setUserToResetPassword(user);
+    setShowResetPasswordModal(true);
+  };
+
+  const handleCloseResetPasswordModal = () => {
+    setShowResetPasswordModal(false);
+    setUserToResetPassword(null);
   };
 
   if (isLoading || isCreating) {
@@ -228,6 +234,13 @@ export default function UserManagement() {
         open={showModal}
         onClose={handleCancel}
         selectedUser={selectedUser}
+      />
+
+      {/* Reset Password Modal */}
+      <ResetPasswordDialog
+        open={showResetPasswordModal}
+        user={userToResetPassword}
+        onClose={handleCloseResetPasswordModal}
       />
     </>
   );
