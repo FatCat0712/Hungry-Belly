@@ -3,6 +3,7 @@ import { fetchRolesApi } from "../../services/roleService";
 
 export const useRoles = () => {
   const { data, isLoading } = useQuery({
+    queryKey: ["roles"],
     queryFn: async () => {
       const response = await fetchRolesApi();
       return response;

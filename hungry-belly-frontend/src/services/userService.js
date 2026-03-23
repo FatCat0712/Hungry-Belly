@@ -14,3 +14,10 @@ export const createUserApi = async (userData) => {
   });
   return data.data;
 };
+
+export const updateUserApi = async (userData) => {
+  const data = await axios.put(`${API_URL}/${userData.id}`, userData, {
+    headers: { "Content-Type": "application/json" },
+  });
+  return data.data;
+};

@@ -1,14 +1,12 @@
 import React from "react";
 import UserForm from "./UserForm";
 
-const UserDialog = ({ open, onClose }) => {
+const UserDialog = ({ open, onClose, selectedUser }) => {
   if (!open) return null;
 
   return (
     <div className="dialog">
-      <UserForm onClose={onClose} />
-
-      <button onClick={onClose}>Cancel</button>
+      <UserForm onClose={onClose} selectedUser={selectedUser} />
     </div>
   );
 };

@@ -1,29 +1,35 @@
 import React, { useState } from "react";
 import assets from "../../assets/assets";
 
-import { useCreateUser } from "../../hooks/users/userCreateUsers";
+import { useCreateUser } from "../../hooks/users/useCreateUsers";
 import Spinner from "../Spinner";
 import { toast } from "react-toastify";
 import { useRoles } from "../../hooks/roles/useRoles";
+import { useUpdateUser } from "../../hooks/users/useUpdateUser";
 
-function UserForm({ onClose }) {
+function UserForm({ onClose, selectedUser }) {
   const [image, setImage] = useState(false);
   const [data, setData] = useState({
-    email: "",
-    firstName: "",
-    lastName: "",
+    id: selectedUser?.id || null,
+    email: selectedUser?.email || "",
+    firstName: selectedUser?.firstName || "",
+    lastName: selectedUser?.lastName || "",
     password: "",
-    roles: [],
-    enabled: false,
-    photo: null,
+    roles: selectedUser?.roles || [],
+    enabled: selectedUser?.enabled || false,
+    photo: selectedUser?.photo || null,
   });
 
   const [errors, setErrors] = useState({});
-  const mutation = useCreateUser();
+  const createUserMutation = useCreateUser();
+  const updateUserMutation = useUpdateUser();
   const { roles } = useRoles();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const mutation = selectedUser.id ? updateUserMutation : createUserMutation;
+
     mutation.mutate(data, {
       onSuccess: (res) => {
         const message = res.message;
@@ -31,10 +37,8 @@ function UserForm({ onClose }) {
         onClose();
       },
       onError: (error) => {
-        console.log(error.response);
         const res = error.response?.data;
         if (res?.message) {
-          console.log(res.message);
           setErrors(res.message);
         }
       },
@@ -71,7 +75,9 @@ function UserForm({ onClose }) {
       <div className="modal-dialog modal-dialog-centered" role="document">
         <div className="modal-content">
           <div className="modal-header border-bottom">
-            <h5 className="modal-title">Add New User</h5>
+            <h5 className="modal-title">
+              {selectedUser ? "Edit User" : "Add New User"}
+            </h5>
             <button
               type="button"
               className="btn-close"
@@ -134,23 +140,26 @@ function UserForm({ onClose }) {
                 </div>
               </div>
 
-              <div className="mb-3">
-                <label htmlFor="password" className="form-label">
-                  Password <span className="text-danger">*</span>
-                </label>
-                <input
-                  type="password"
-                  className="form-control"
-                  id="password"
-                  name="password"
-                  value={data.password}
-                  onChange={handleInputChange}
-                  required
-                />
-                {errors.password && (
-                  <p style={{ color: "red" }}>{errors.password}</p>
-                )}
-              </div>
+              {!selectedUser && (
+                <div className="mb-3">
+                  <label htmlFor="password" className="form-label">
+                    Password <span className="text-danger">*</span>
+                  </label>
+                  <input
+                    type="password"
+                    className="form-control"
+                    id="password"
+                    name="password"
+                    value={data.password}
+                    onChange={handleInputChange}
+                    placeholder="leave blank if you don't want to change password"
+                    required
+                  />
+                  {errors.password && (
+                    <p style={{ color: "red" }}>{errors.password}</p>
+                  )}
+                </div>
+              )}
 
               <div className="mb-3">
                 <label className="form-label">
@@ -243,7 +252,7 @@ function UserForm({ onClose }) {
               className="btn btn-primary"
               onClick={handleSubmit}
             >
-              Add User
+              {selectedUser ? "Save" : "Add User"}
             </button>
           </div>
         </div>

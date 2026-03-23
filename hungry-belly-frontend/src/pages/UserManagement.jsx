@@ -3,15 +3,35 @@ import { useState } from "react";
 import Spinner from "../components/Spinner";
 import UserDialog from "../components/admin/UserDialog";
 import { useUsers } from "../hooks/users/useUsers";
-import { useCreateUser } from "../hooks/users/userCreateUsers";
+import { useCreateUser } from "../hooks/users/useCreateUsers";
 
 export default function UserManagement() {
   const [showModal, setShowModal] = useState(false);
+  const [statusOverrides, setStatusOverrides] = useState({});
   const { users, isLoading } = useUsers();
   const { isCreating } = useCreateUser();
+  const [selectedUser, setSelectedUser] = useState(null);
+
+  const isUserEnabled = (user) => {
+    return statusOverrides[user.id] ?? user.enabled;
+  };
+
+  const toggleUserStatus = (userId, currentStatus) => {
+    setStatusOverrides((prev) => ({
+      ...prev,
+      [userId]: !currentStatus,
+    }));
+  };
 
   const handleCancel = () => {
     setShowModal(false);
+  };
+
+  const handleResetPassword = (user) => {
+    // TODO: Implement password reset functionality
+    console.log("Reset password for user:", user.id);
+    // This can trigger an API call to send password reset email
+    // or open a dialog for immediate password reset
   };
 
   if (isLoading || isCreating) {
@@ -35,7 +55,10 @@ export default function UserManagement() {
             </button>
             <button
               className="btn btn-primary d-flex align-items-center gap-2"
-              onClick={() => setShowModal(true)}
+              onClick={() => {
+                setShowModal(true);
+                setSelectedUser(null);
+              }}
             >
               <i className="bi bi-plus-lg"></i> Add User
             </button>
@@ -131,9 +154,9 @@ export default function UserManagement() {
                             className="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center"
                             style={{ width: 40, height: 40 }}
                           >
-                            {user.photo || user.name.charAt(0)}
+                            {user.photo || user.firstName.charAt(0)}
                           </div>
-                          <div>{user.name}</div>
+                          <div>{user.firstName + " " + user.lastName}</div>
                         </div>
                       </td>
                       <td>{user.email}</td>
@@ -145,16 +168,47 @@ export default function UserManagement() {
                         ))}
                       </td>
                       <td>
-                        <span
-                          className={`badge ${user.enabled ? "bg-success" : "bg-secondary"}`}
+                        <button
+                          type="button"
+                          className={`btn btn-sm rounded-pill d-inline-flex align-items-center gap-2 ${
+                            isUserEnabled(user)
+                              ? "btn-success"
+                              : "btn-outline-secondary"
+                          }`}
+                          role="switch"
+                          aria-checked={isUserEnabled(user)}
+                          onClick={() =>
+                            toggleUserStatus(user.id, isUserEnabled(user))
+                          }
                         >
-                          {user.enabled ? "Active" : "Inactive"}
-                        </span>
+                          <i
+                            className={`bi ${
+                              isUserEnabled(user)
+                                ? "bi-toggle-on"
+                                : "bi-toggle-off"
+                            }`}
+                          ></i>
+                          {isUserEnabled(user) ? "Active" : "Inactive"}
+                        </button>
                       </td>
 
                       <td className="text-end">
-                        <button className="btn btn-sm btn-outline-secondary me-1">
+                        <button
+                          className="btn btn-sm btn-outline-secondary me-1"
+                          onClick={() => {
+                            setShowModal(true);
+                            setSelectedUser(user);
+                          }}
+                          title="Edit user info"
+                        >
                           <i className="bi bi-pencil"></i>
+                        </button>
+                        <button
+                          className="btn btn-sm btn-outline-warning me-1"
+                          onClick={() => handleResetPassword(user)}
+                          title="Reset password"
+                        >
+                          <i className="bi bi-key"></i>
                         </button>
                         <button className="btn btn-sm btn-outline-danger">
                           <i className="bi bi-trash"></i>
@@ -170,7 +224,11 @@ export default function UserManagement() {
       </div>
 
       {/* Add User Modal */}
-      <UserDialog open={showModal} onClose={handleCancel} />
+      <UserDialog
+        open={showModal}
+        onClose={handleCancel}
+        selectedUser={selectedUser}
+      />
     </>
   );
 }

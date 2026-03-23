@@ -121,7 +121,11 @@ public class UserRepositoryTests {
 
         assertThat(updatedUser).isPresent();
         assertThat(updatedUser.get().isDeleted()).isTrue();
+    }
 
-
+    @Test
+    public void testGetUserByEmail() {
+        String email = "abc@def.com";
+        assertThat(userRepository.existsByEmail(email)).isFalse();
     }
 }
