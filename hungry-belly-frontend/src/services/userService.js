@@ -28,3 +28,8 @@ export const resetPasswordApi = async (userId, userData) => {
   });
   return data.data;
 };
+
+export const deleteUserApi = async (userId) => {
+  const data = await axios.delete(`${API_URL}/${userId}`);
+  return data.data;
+};

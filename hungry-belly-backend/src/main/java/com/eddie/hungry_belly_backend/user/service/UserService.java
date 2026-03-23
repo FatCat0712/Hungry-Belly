@@ -12,6 +12,6 @@ public interface UserService {
     List<AdminUserResponse> fetchAllUsers();
     void createUser(AdminUserCreateRequest request);
     void updateUserInfo(Long id, AdminUserRequest request);
-
     void resetPassword(Long id, @Valid ResetPasswordRequest request);
+    void delete(Long id);
 }

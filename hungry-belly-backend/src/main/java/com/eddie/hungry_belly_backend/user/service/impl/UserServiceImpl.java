@@ -14,6 +14,7 @@ import com.eddie.hungry_belly_backend.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -34,7 +35,7 @@ public class UserServiceImpl implements UserService {
 
     public void createUser(AdminUserCreateRequest request) {
         boolean isEmailUnique = userRepository.existsByEmail(request.getEmail());
-        if(isEmailUnique) {
+        if(!isEmailUnique) {
             User user = convertToUserEntity(request);
             userRepository.save(user);
         }
@@ -81,7 +82,13 @@ public class UserServiceImpl implements UserService {
         User dbUser = findUserById(id);
         dbUser.setPassword(encodePassword(request.getNewPassword()));
         userRepository.save(dbUser);
+    }
 
+    @Override
+    @Transactional
+    public void delete(Long id) {
+        User dbUser = findUserById(id);
+        userRepository.deleteUserById(dbUser.getId());
     }
 
     private User convertToUserEntity(AdminUserCreateRequest request) {

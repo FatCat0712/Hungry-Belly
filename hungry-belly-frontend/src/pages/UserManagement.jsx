@@ -3,17 +3,20 @@ import { useState } from "react";
 import Spinner from "../components/Spinner";
 import UserDialog from "../components/admin/UserDialog";
 import ResetPasswordDialog from "../components/admin/ResetPasswordDialog";
+import DeleteUserConfirmDialog from "../components/admin/DeleteUserConfirmDialog";
 import { useUsers } from "../hooks/users/useUsers";
 import { useCreateUser } from "../hooks/users/useCreateUsers";
 
 export default function UserManagement() {
   const [showModal, setShowModal] = useState(false);
   const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const [statusOverrides, setStatusOverrides] = useState({});
   const { users, isLoading } = useUsers();
   const { isCreating } = useCreateUser();
   const [selectedUser, setSelectedUser] = useState(null);
   const [userToResetPassword, setUserToResetPassword] = useState(null);
+  const [userToDelete, setUserToDelete] = useState(null);
 
   const isUserEnabled = (user) => {
     return statusOverrides[user.id] ?? user.enabled;
@@ -38,6 +41,21 @@ export default function UserManagement() {
   const handleCloseResetPasswordModal = () => {
     setShowResetPasswordModal(false);
     setUserToResetPassword(null);
+  };
+
+  const handleDeleteClick = (user) => {
+    setUserToDelete(user);
+    setShowDeleteConfirmModal(true);
+  };
+
+  const handleCloseDeleteConfirmModal = () => {
+    setShowDeleteConfirmModal(false);
+    setUserToDelete(null);
+  };
+
+  const handleConfirmDelete = () => {
+    // Keep modal UX in place until delete API/hook is added.
+    handleCloseDeleteConfirmModal();
   };
 
   if (isLoading || isCreating) {
@@ -216,7 +234,11 @@ export default function UserManagement() {
                         >
                           <i className="bi bi-key"></i>
                         </button>
-                        <button className="btn btn-sm btn-outline-danger">
+                        <button
+                          className="btn btn-sm btn-outline-danger"
+                          onClick={() => handleDeleteClick(user)}
+                          title="Delete user"
+                        >
                           <i className="bi bi-trash"></i>
                         </button>
                       </td>
@@ -241,6 +263,13 @@ export default function UserManagement() {
         open={showResetPasswordModal}
         user={userToResetPassword}
         onClose={handleCloseResetPasswordModal}
+      />
+
+      <DeleteUserConfirmDialog
+        open={showDeleteConfirmModal}
+        user={userToDelete}
+        onClose={handleCloseDeleteConfirmModal}
+        onConfirm={handleConfirmDelete}
       />
     </>
   );

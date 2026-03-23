@@ -41,7 +41,13 @@ public class UserController {
     @PutMapping("/{id}/password")
     public ResponseEntity<ApiResponse<?>> resetUserPassword(@PathVariable Long id, @Valid @RequestBody ResetPasswordRequest request) {
         userService.resetPassword(id, request);
-        return ResponseEntity.ok(ApiResponse.success(null, "Password reset successfully"));
+        return ResponseEntity.ok(ApiResponse.success(null, null));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<?>> deleteUser(@PathVariable Long id) {
+        userService.delete(id);
+        return ResponseEntity.ok(ApiResponse.success(null, null));
     }
 
 

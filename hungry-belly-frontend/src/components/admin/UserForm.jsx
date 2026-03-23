@@ -28,7 +28,7 @@ function UserForm({ onClose, selectedUser }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const mutation = selectedUser.id ? updateUserMutation : createUserMutation;
+    const mutation = selectedUser ? updateUserMutation : createUserMutation;
 
     mutation.mutate(data, {
       onSuccess: (res) => {
@@ -152,7 +152,10 @@ function UserForm({ onClose, selectedUser }) {
                     name="password"
                     value={data.password}
                     onChange={handleInputChange}
-                    placeholder="leave blank if you don't want to change password"
+                    placeholder={
+                      selectedUser &&
+                      "leave blank if you don't want to change password"
+                    }
                     required
                   />
                   {errors.password && (

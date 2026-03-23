@@ -128,4 +128,12 @@ public class UserRepositoryTests {
         String email = "abc@def.com";
         assertThat(userRepository.existsByEmail(email)).isFalse();
     }
+
+    @Test
+    public void testCountById() {
+        Long id = 100L;
+        Long countById = userRepository.countById(id);
+
+        assertThat(countById).isEqualTo(0L);
+    }
 }
