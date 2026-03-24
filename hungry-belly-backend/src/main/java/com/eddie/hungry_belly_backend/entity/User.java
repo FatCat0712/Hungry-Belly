@@ -50,7 +50,6 @@ public class User {
         this.roles.add(role);
     }
 
-
     @Override
     public String toString() {
         return "User{" +

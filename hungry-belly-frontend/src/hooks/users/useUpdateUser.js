@@ -7,7 +7,7 @@ export const useUpdateUser = () => {
   return useMutation({
     mutationFn: updateUserApi,
     onSuccess: () => {
-      queryClient.invalidateQueries(["users"]);
+      queryClient.invalidateQueries({ queryKey: ["users"] });
     },
   });
 };

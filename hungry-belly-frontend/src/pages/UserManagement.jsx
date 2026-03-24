@@ -186,7 +186,16 @@ export default function UserManagement() {
                             className="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center"
                             style={{ width: 40, height: 40 }}
                           >
-                            {user.photo || user.firstName.charAt(0)}
+                            {user.photo ? (
+                              <img
+                                src={user.photo}
+                                alt="User"
+                                className="rounded-circle"
+                                style={{ width: 40, height: 40 }}
+                              />
+                            ) : (
+                              user.firstName[0] + user.lastName[0]
+                            )}
                           </div>
                           <div>{user.firstName + " " + user.lastName}</div>
                         </div>

@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -34,8 +35,8 @@ public class UserController {
 
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<?>> updateUser(@PathVariable Long id, @Valid @RequestBody AdminUserRequest request) {
-        userService.updateUserInfo(id, request);
-        return ResponseEntity.ok(ApiResponse.success(null, "User updated successfully"));
+        AdminUserResponse response = userService.updateUserInfo(id, request);
+        return ResponseEntity.ok(ApiResponse.success(response, "User updated successfully"));
     }
 
     @PutMapping("/{id}/password")
@@ -54,6 +55,12 @@ public class UserController {
     public ResponseEntity<ApiResponse<?>> updateUserStatus(@PathVariable Long id) {
         userService.updateUserStatus(id);
         return ResponseEntity.ok(ApiResponse.success(null, null));
+    }
+
+    @PostMapping("/{id}/photo")
+    public ResponseEntity<ApiResponse<?>> updatePhoto(@PathVariable Long id, @RequestParam("photo") MultipartFile photo) {
+        var response = userService.uploadPhoto(id, photo);
+        return ResponseEntity.ok(ApiResponse.success(response, "User photo updated successfully"));
     }
 
 

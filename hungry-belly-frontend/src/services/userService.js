@@ -9,14 +9,24 @@ export const fetchUsersApi = async () => {
 };
 
 export const createUserApi = async (userData) => {
-  const data = await axios.post(API_URL, userData, {
+  const transferData = {
+    ...userData,
+    photo:
+      userData.photo instanceof File ? userData.photo?.name : userData.photo,
+  };
+  const data = await axios.post(API_URL, transferData, {
     headers: { "Content-Type": "application/json" },
   });
   return data.data;
 };
 
 export const updateUserApi = async (userData) => {
-  const data = await axios.put(`${API_URL}/${userData.id}`, userData, {
+  const transferData = {
+    ...userData,
+    photo:
+      userData.photo instanceof File ? userData.photo?.name : userData.photo,
+  };
+  const data = await axios.put(`${API_URL}/${userData.id}`, transferData, {
     headers: { "Content-Type": "application/json" },
   });
   return data.data;
@@ -36,5 +46,15 @@ export const deleteUserApi = async (userId) => {
 
 export const toggleUserStatusApi = async (userId) => {
   const data = await axios.patch(`${API_URL}/${userId}/status`);
+  return data.data;
+};
+
+export const uploadUserPhotoApi = async (userId, photo) => {
+  const formData = new FormData();
+  formData.append("photo", photo);
+
+  const data = await axios.post(`${API_URL}/${userId}/photo`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
   return data.data;
 };

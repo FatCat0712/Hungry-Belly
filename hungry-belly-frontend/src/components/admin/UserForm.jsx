@@ -2,13 +2,13 @@ import React, { useState } from "react";
 import assets from "../../assets/assets";
 
 import { useCreateUser } from "../../hooks/users/useCreateUsers";
-import Spinner from "../Spinner";
 import { toast } from "react-toastify";
 import { useRoles } from "../../hooks/roles/useRoles";
 import { useUpdateUser } from "../../hooks/users/useUpdateUser";
+import { useUploadPhoto } from "../../hooks/users/useUploadPhoto";
+import { useQueryClient } from "@tanstack/react-query";
 
 function UserForm({ onClose, selectedUser }) {
-  const [image, setImage] = useState(false);
   const [data, setData] = useState({
     id: selectedUser?.id || null,
     email: selectedUser?.email || "",
@@ -20,26 +20,42 @@ function UserForm({ onClose, selectedUser }) {
     photo: selectedUser?.photo || null,
   });
 
-  const [errors, setErrors] = useState({});
-  const createUserMutation = useCreateUser();
-  const updateUserMutation = useUpdateUser();
+  const queryClient = useQueryClient();
+
+  const [errors] = useState({});
+  const { mutate: createUser } = useCreateUser();
+  const { mutate: updateUser } = useUpdateUser();
+  const { uploadPhoto } = useUploadPhoto();
   const { roles } = useRoles();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const mutation = selectedUser ? updateUserMutation : createUserMutation;
+    const handler = selectedUser ? updateUser : createUser;
 
-    mutation.mutate(data, {
+    handler(data, {
       onSuccess: (res) => {
-        const message = res.message;
-        toast.success(message);
+        if (data.photo instanceof File) {
+          uploadPhoto(
+            { userId: res.data.id, photo: data.photo },
+            {
+              onSuccess: () => {
+                queryClient.invalidateQueries({ queryKey: ["users"] });
+              },
+            },
+          );
+        }
+        toast.success(
+          selectedUser
+            ? "User updated successfully"
+            : "User saved successfully",
+        );
         onClose();
       },
       onError: (error) => {
         const res = error.response?.data;
         if (res?.message) {
-          setErrors(res.message);
+          toast.error(res.message);
         }
       },
     });
@@ -175,8 +191,8 @@ function UserForm({ onClose, selectedUser }) {
                 >
                   <div className="row">
                     {roles.map((role) => (
-                      <div className="col-4">
-                        <div className="form-check mb-2" key={role}>
+                      <div className="col-4" key={role}>
+                        <div className="form-check mb-2">
                           <input
                             className="form-check-input"
                             type="checkbox"
@@ -226,13 +242,18 @@ function UserForm({ onClose, selectedUser }) {
                       id="photo"
                       accept="image/*"
                       onChange={handlePhotoChange}
-                      disabled={data.useDefaultPhoto}
                     />
                   </div>
                   <div className="form-check mt-1">
                     <label className="form-label" htmlFor="useDefault">
                       <img
-                        src={image ? URL.createObjectURL(image) : assets.upload}
+                        src={
+                          data.photo instanceof File
+                            ? URL.createObjectURL(data.photo)
+                            : data.photo
+                              ? data.photo
+                              : assets.upload
+                        }
                         alt=""
                         width={98}
                       />
@@ -255,7 +276,7 @@ function UserForm({ onClose, selectedUser }) {
               className="btn btn-primary"
               onClick={handleSubmit}
             >
-              {selectedUser ? "Save" : "Add User"}
+              Save
             </button>
           </div>
         </div>

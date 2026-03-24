@@ -1,5 +1,6 @@
 package com.eddie.hungry_belly_backend.user.service.impl;
 
+import com.eddie.hungry_belly_backend.SupabaseS3Util;
 import com.eddie.hungry_belly_backend.entity.Role;
 import com.eddie.hungry_belly_backend.entity.User;
 import com.eddie.hungry_belly_backend.exception.BadRequestException;
@@ -15,8 +16,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -27,6 +32,7 @@ public class UserServiceImpl implements UserService {
     private final RoleService roleService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final SupabaseS3Util supabaseS3Util;
 
     @Override
     public List<AdminUserResponse> fetchAllUsers() {
@@ -50,7 +56,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void updateUserInfo(Long userId, AdminUserRequest request) {
+    public AdminUserResponse updateUserInfo(Long userId, AdminUserRequest request) {
 
         User existUser = userRepository.findByEmail(request.getEmail());
 
@@ -74,7 +80,8 @@ public class UserServiceImpl implements UserService {
         dbUser.setEnabled(userEntity.isEnabled());
         dbUser.setPhoto(userEntity.getPhoto());
 
-        userRepository.save(dbUser);
+        dbUser = userRepository.save(dbUser);
+        return convertToAdminResponse(dbUser);
     }
 
     @Override
@@ -98,6 +105,32 @@ public class UserServiceImpl implements UserService {
         userRepository.updateUserStatus(dbUser.getId(), !dbUser.isEnabled());
     }
 
+    @Override
+    public AdminUserResponse uploadPhoto(Long id, MultipartFile photo) {
+        User dbUser = findUserById(id);
+
+        if(!photo.isEmpty()) {
+            String contentType = photo.getContentType();
+            if(contentType != null && !contentType.startsWith("image/")) {
+                throw new BadRequestException("photo: only images allowed");
+            }
+            else {
+                String filename = StringUtils.cleanPath(Objects.requireNonNull(photo.getOriginalFilename()));
+                dbUser.setPhoto(filename);
+                dbUser = userRepository.save(dbUser);
+                String uploadDir = "user-photos/" + dbUser.getId();
+                supabaseS3Util.removeFolder(uploadDir);
+                try {
+                    supabaseS3Util.uploadFile(uploadDir, filename, photo.getInputStream());
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+
+        return convertToAdminResponse(dbUser);
+    }
+
     private User convertToUserEntity(AdminUserCreateRequest request) {
         Set<Role> savedRoles = convertToRoleEntitySet(request.getRoles());
 
@@ -111,7 +144,6 @@ public class UserServiceImpl implements UserService {
                 .build();
     }
 
-
     private User convertToUserEntity(AdminUserRequest request) {
         Set<Role> savedRoles = convertToRoleEntitySet(request.getRoles());
 
@@ -124,7 +156,11 @@ public class UserServiceImpl implements UserService {
                 .build();
     }
 
-
+    private String generateUserPhotoPath(User user) {
+        String photo = user.getPhoto();
+        if(photo == null) return "";
+        return supabaseS3Util.createSignedUrl("user-photos/" + user.getId() + "/" + photo , 3600);
+    }
 
     private Set<Role> convertToRoleEntitySet(Set<String> roles) {
         Set<Role> savedRoles = roleService.getRolesByNames(roles);
@@ -150,7 +186,7 @@ public class UserServiceImpl implements UserService {
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
                 .enabled(user.isEnabled())
-                .photo(user.getPhoto())
+                .photo(generateUserPhotoPath(user))
                 .roles(roles)
                 .build();
     }
