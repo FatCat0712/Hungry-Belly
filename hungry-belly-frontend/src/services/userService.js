@@ -33,3 +33,8 @@ export const deleteUserApi = async (userId) => {
   const data = await axios.delete(`${API_URL}/${userId}`);
   return data.data;
 };
+
+export const toggleUserStatusApi = async (userId) => {
+  const data = await axios.patch(`${API_URL}/${userId}/status`);
+  return data.data;
+};

@@ -6,27 +6,35 @@ import ResetPasswordDialog from "../components/admin/ResetPasswordDialog";
 import DeleteUserConfirmDialog from "../components/admin/DeleteUserConfirmDialog";
 import { useUsers } from "../hooks/users/useUsers";
 import { useCreateUser } from "../hooks/users/useCreateUsers";
+import { useToggleStatus } from "../hooks/users/useToggleStatus";
+import { toast } from "react-toastify";
 
 export default function UserManagement() {
   const [showModal, setShowModal] = useState(false);
   const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
-  const [statusOverrides, setStatusOverrides] = useState({});
+
   const { users, isLoading } = useUsers();
-  const { isCreating } = useCreateUser();
   const [selectedUser, setSelectedUser] = useState(null);
   const [userToResetPassword, setUserToResetPassword] = useState(null);
   const [userToDelete, setUserToDelete] = useState(null);
 
-  const isUserEnabled = (user) => {
-    return statusOverrides[user.id] ?? user.enabled;
-  };
+  const { isCreating } = useCreateUser();
+  const { toggleStatus } = useToggleStatus();
 
-  const toggleUserStatus = (userId, currentStatus) => {
-    setStatusOverrides((prev) => ({
-      ...prev,
-      [userId]: !currentStatus,
-    }));
+  const toggleUserStatus = (userId, name, status) => {
+    toggleStatus(
+      { userId },
+      {
+        onSuccess: () => {
+          const message = status
+            ? `${name} has been disabled`
+            : `${name} has been enabled`;
+
+          toast.success(message);
+        },
+      },
+    );
   };
 
   const handleCancel = () => {
@@ -195,24 +203,26 @@ export default function UserManagement() {
                         <button
                           type="button"
                           className={`btn btn-sm rounded-pill d-inline-flex align-items-center gap-2 ${
-                            isUserEnabled(user)
+                            user.enabled
                               ? "btn-success"
                               : "btn-outline-secondary"
                           }`}
                           role="switch"
-                          aria-checked={isUserEnabled(user)}
+                          aria-checked={user.enabled}
                           onClick={() =>
-                            toggleUserStatus(user.id, isUserEnabled(user))
+                            toggleUserStatus(
+                              user.id,
+                              user.firstName + " " + user.lastName,
+                              user.enabled,
+                            )
                           }
                         >
                           <i
                             className={`bi ${
-                              isUserEnabled(user)
-                                ? "bi-toggle-on"
-                                : "bi-toggle-off"
+                              user.enabled ? "bi-toggle-on" : "bi-toggle-off"
                             }`}
                           ></i>
-                          {isUserEnabled(user) ? "Active" : "Inactive"}
+                          {user.enabled ? "Active" : "Inactive"}
                         </button>
                       </td>
 

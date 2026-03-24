@@ -50,6 +50,12 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success(null, null));
     }
 
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<ApiResponse<?>> updateUserStatus(@PathVariable Long id) {
+        userService.updateUserStatus(id);
+        return ResponseEntity.ok(ApiResponse.success(null, null));
+    }
+
 
 
 

@@ -136,4 +136,15 @@ public class UserRepositoryTests {
 
         assertThat(countById).isEqualTo(0L);
     }
+
+    @Test
+    public void testDisableUser() {
+        Long id = 1L;
+        userRepository.updateUserStatus(id, false);
+
+        Optional<User> dbUser = userRepository.findById(1L);
+
+        assertThat(dbUser).isPresent();
+        assertThat(dbUser.get().isEnabled()).isFalse();
+    }
 }

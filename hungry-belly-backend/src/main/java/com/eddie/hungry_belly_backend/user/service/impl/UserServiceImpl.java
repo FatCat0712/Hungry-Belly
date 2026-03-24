@@ -91,6 +91,13 @@ public class UserServiceImpl implements UserService {
         userRepository.deleteUserById(dbUser.getId());
     }
 
+    @Override
+    @Transactional
+    public void updateUserStatus(Long id) {
+        User dbUser = findUserById(id);
+        userRepository.updateUserStatus(dbUser.getId(), !dbUser.isEnabled());
+    }
+
     private User convertToUserEntity(AdminUserCreateRequest request) {
         Set<Role> savedRoles = convertToRoleEntitySet(request.getRoles());
 
