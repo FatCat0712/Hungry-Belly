@@ -6,7 +6,6 @@ import { toast } from "react-toastify";
 import { useRoles } from "../../hooks/roles/useRoles";
 import { useUpdateUser } from "../../hooks/users/useUpdateUser";
 import { useUploadPhoto } from "../../hooks/users/useUploadPhoto";
-import { useQueryClient } from "@tanstack/react-query";
 
 function UserForm({ onClose, selectedUser }) {
   const [data, setData] = useState({
@@ -20,9 +19,7 @@ function UserForm({ onClose, selectedUser }) {
     photo: selectedUser?.photo || null,
   });
 
-  const queryClient = useQueryClient();
-
-  const [errors] = useState({});
+  const [errors, setErrors] = useState({});
   const { mutate: createUser } = useCreateUser();
   const { mutate: updateUser } = useUpdateUser();
   const { uploadPhoto } = useUploadPhoto();
@@ -36,14 +33,8 @@ function UserForm({ onClose, selectedUser }) {
     handler(data, {
       onSuccess: (res) => {
         if (data.photo instanceof File) {
-          uploadPhoto(
-            { userId: res.data.id, photo: data.photo },
-            {
-              onSuccess: () => {
-                queryClient.invalidateQueries({ queryKey: ["users"] });
-              },
-            },
-          );
+          const { id } = res.data;
+          uploadPhoto({ userId: id, photo: data.photo });
         }
         toast.success(
           selectedUser
@@ -54,7 +45,9 @@ function UserForm({ onClose, selectedUser }) {
       },
       onError: (error) => {
         const res = error.response?.data;
-        if (res?.message) {
+        if (res.status === 400) {
+          setErrors((prev) => ({ ...prev, ...res.message }));
+        } else {
           toast.error(res.message);
         }
       },
@@ -64,6 +57,7 @@ function UserForm({ onClose, selectedUser }) {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setData((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
   const handleRoleChange = (role) => {
@@ -73,12 +67,21 @@ function UserForm({ onClose, selectedUser }) {
         ? prev.roles.filter((r) => r !== role)
         : [...prev.roles, role],
     }));
+    setErrors((prev) => ({ ...prev, roles: "" }));
   };
 
   const handlePhotoChange = (e) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        setErrors((prev) => ({
+          ...prev,
+          photo: "File size should be less than 2MB",
+        }));
+        return;
+      }
       setData((prev) => ({ ...prev, photo: file }));
+      setErrors((prev) => ({ ...prev, photo: "" }));
     }
   };
 
@@ -244,6 +247,9 @@ function UserForm({ onClose, selectedUser }) {
                       onChange={handlePhotoChange}
                     />
                   </div>
+                  {errors.photo && (
+                    <p style={{ color: "red" }}>{errors.photo}</p>
+                  )}
                   <div className="form-check mt-1">
                     <label className="form-label" htmlFor="useDefault">
                       <img

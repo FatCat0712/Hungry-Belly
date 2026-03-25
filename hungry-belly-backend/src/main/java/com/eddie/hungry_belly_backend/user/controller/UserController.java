@@ -29,8 +29,8 @@ public class UserController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<?>> createUser(@Valid @RequestBody AdminUserCreateRequest request) {
-         userService.createUser(request);
-         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.create(null, "User created"));
+         var response = userService.createUser(request);
+         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.create(response, "User created"));
     }
 
     @PutMapping("/{id}")

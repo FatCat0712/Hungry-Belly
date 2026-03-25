@@ -39,12 +39,14 @@ public class UserServiceImpl implements UserService {
         return userRepository.findAllWithRoles().stream().map(this::convertToAdminResponse).toList();
     }
 
-    public void createUser(AdminUserCreateRequest request) {
-        boolean isEmailUnique = userRepository.existsByEmail(request.getEmail());
-        if(!isEmailUnique) {
-            User user = convertToUserEntity(request);
-            userRepository.save(user);
+    public AdminUserResponse createUser(AdminUserCreateRequest request) {
+        boolean isEmailUnique = userRepository.existsByEmailAndDeletedFalse(request.getEmail());
+        if(isEmailUnique) {
+            throw new BadRequestException("email: Email already exists");
         }
+        User user = convertToUserEntity(request);
+        user = userRepository.save(user);
+        return convertToAdminResponse(user);
     }
 
     public User findUserById(Long id) {
@@ -78,7 +80,10 @@ public class UserServiceImpl implements UserService {
         dbUser.setLastName(userEntity.getLastName());
         dbUser.setRoles(userEntity.getRoles());
         dbUser.setEnabled(userEntity.isEnabled());
-        dbUser.setPhoto(userEntity.getPhoto());
+
+        if(userEntity.getPhoto() != null) {
+            dbUser.setPhoto(userEntity.getPhoto());
+        }
 
         dbUser = userRepository.save(dbUser);
         return convertToAdminResponse(dbUser);

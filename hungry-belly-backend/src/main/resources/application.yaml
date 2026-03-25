@@ -1,11 +1,12 @@
 spring:
   application:
     name: hungry-belly-backend
+  config:
+    import: optional:file:./.env[.properties]
   datasource:
-    url: ${DB_URL:jdbc:mysql://localhost:3306/foodies}
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:Maisonhai@789}
-
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
   jpa:
     hibernate:
       ddl-auto: update
@@ -15,9 +16,9 @@ spring:
       enabled: ALWAYS
 supabase:
   bucketName: ${BUCKET_NAME}
-  accessKey: ${SUPABASE_ACCESS_BUCKET_KEY}
-  secretKey: ${SUPABASE_SECRET_BUCKET_KEY}
-  regionName: ${SUPABASE_REGION}
-  endpointUrl: ${SUPABASE_ENDPOINT}
-  serviceRoleKey: ${SUPABASE_SERVICE_ROLE_KEY}
-  endpointSignUrl: ${SUPABASE_SIGN_ENDPOINT}
+  accessKey: ${ACCESS_BUCKET_KEY}
+  secretKey: ${SECRET_BUCKET_KEY}
+  regionName: ${REGION_NAME}
+  endpointUrl: ${S3_ENDPOINT}
+  serviceRoleKey: ${SERVICE_ROLE_KEY}
+  endpointSignUrl: ${SIGN_ENDPOINT}

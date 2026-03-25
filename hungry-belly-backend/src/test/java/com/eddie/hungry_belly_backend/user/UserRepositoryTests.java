@@ -180,8 +180,8 @@ public class UserRepositoryTests {
 
     @Test
     public void testGetUserByEmail() {
-        assertThat(userRepository.existsByEmail(existingUser.getEmail())).isTrue();
-        assertThat(userRepository.existsByEmail("abc@def.com")).isFalse();
+        assertThat(userRepository.existsByEmailAndDeletedFalse(existingUser.getEmail())).isTrue();
+        assertThat(userRepository.existsByEmailAndDeletedFalse("abc@def.com")).isFalse();
     }
 
     @Test

@@ -11,7 +11,7 @@ import java.util.List;
 
 public interface UserService {
     List<AdminUserResponse> fetchAllUsers();
-    void createUser(AdminUserCreateRequest request);
+    AdminUserResponse createUser(AdminUserCreateRequest request);
     AdminUserResponse updateUserInfo(Long id, AdminUserRequest request);
     void resetPassword(Long id, @Valid ResetPasswordRequest request);
     void delete(Long id);
