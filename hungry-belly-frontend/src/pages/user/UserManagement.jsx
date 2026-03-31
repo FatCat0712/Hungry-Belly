@@ -8,6 +8,7 @@ import {
   useCreateUser,
   useListUsersByPage,
   useToggleStatus,
+  useUserStats,
 } from "../../hooks/users/useUser";
 import { toast } from "react-toastify";
 
@@ -15,10 +16,16 @@ export default function UserManagement() {
   const pageSize = 10;
   const [currentPage, setCurrentPage] = useState(1);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+  const [sortField, setSortField] = useState("firstName");
+  const [sortDirection, setSortDirection] = useState("asc");
+
+  const { stats } = useUserStats();
 
   const { data, isLoading } = useListUsersByPage({
     pageNum: currentPage,
     pageSize,
+    sortField,
+    sortDirection,
   });
   const [userToDelete, setUserToDelete] = useState(null);
 
@@ -62,7 +69,6 @@ export default function UserManagement() {
   const handlePageChange = (page) => {
     const totalPages = Math.max(1, Math.ceil(totalElements / pageSize));
     const nextPage = Math.min(Math.max(page, 1), totalPages);
-
     setCurrentPage(nextPage);
   };
 
@@ -82,9 +88,6 @@ export default function UserManagement() {
             </p>
           </div>
           <div className="d-flex gap-2">
-            <button className="btn btn-outline-secondary d-flex align-items-center gap-2">
-              <i className="bi bi-filter"></i> Filters
-            </button>
             <button
               className="btn btn-primary d-flex align-items-center gap-2"
               onClick={() => navigate("/users/new")}
@@ -114,9 +117,7 @@ export default function UserManagement() {
                 <div className="d-flex align-items-start justify-content-between">
                   <div>
                     <small className="text-muted">Active Users</small>
-                    <h5 className="mb-0">
-                      {users.filter((user) => user.enabled).length}
-                    </h5>
+                    <h5 className="mb-0">{stats}</h5>
                   </div>
                   <i className="bi bi-check-circle-fill fs-4 text-success"></i>
                 </div>
@@ -143,19 +144,57 @@ export default function UserManagement() {
             <div className="d-flex justify-content-between align-items-center mb-3">
               <div>
                 <h5 className="card-title mb-0">All Users</h5>
-                <small className="text-muted">Sorted by newest first</small>
+                <small className="text-muted">
+                  Sorted by {sortField === "enabled" ? "status" : sortField} in{" "}
+                  {sortDirection}ending order
+                </small>
               </div>
-              <div className="input-group" style={{ maxWidth: 280 }}>
-                <span className="input-group-text" id="search-addon">
-                  <i className="bi bi-search"></i>
-                </span>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Search users..."
-                  aria-label="Search users"
-                  aria-describedby="search-addon"
-                />
+
+              <div className="d-flex gap-2 align-items-center">
+                <div className="input-group" style={{ width: 200 }}>
+                  <span className="input-group-text">
+                    <i className="bi bi-sort-down"></i>
+                  </span>
+                  <select
+                    className="form-select"
+                    aria-label="Sort users by"
+                    onChange={(e) => setSortField(e.target.value)}
+                    value={sortField}
+                  >
+                    <option value="firstName">First Name</option>
+                    <option value="lastName">Last Name</option>
+                    <option value="email">Email</option>
+                    <option value="enabled">Status</option>
+                  </select>
+                </div>
+
+                <div className="input-group" style={{ width: 200 }}>
+                  <span className="input-group-text">
+                    <i className="bi bi-sort-down"></i>
+                  </span>
+                  <select
+                    className="form-select"
+                    aria-label="Sort users by"
+                    onChange={(e) => setSortDirection(e.target.value)}
+                    value={sortDirection}
+                  >
+                    <option value="asc">Ascending</option>
+                    <option value="desc">Descending</option>
+                  </select>
+                </div>
+
+                <div className="input-group" style={{ width: 280 }}>
+                  <span className="input-group-text" id="search-addon">
+                    <i className="bi bi-search"></i>
+                  </span>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Search users..."
+                    aria-label="Search users"
+                    aria-describedby="search-addon"
+                  />
+                </div>
               </div>
             </div>
 
@@ -168,6 +207,8 @@ export default function UserManagement() {
                 <thead className="table-light">
                   <tr>
                     <th>Name</th>
+                    <th>First Name</th>
+                    <th>Last Name</th>
                     <th>Email</th>
                     <th>Role</th>
                     <th>Status</th>
@@ -195,9 +236,10 @@ export default function UserManagement() {
                                 user.firstName[0] + user.lastName[0]
                               )}
                             </div>
-                            <div>{user.firstName + " " + user.lastName}</div>
                           </div>
                         </td>
+                        <td>{user.firstName}</td>
+                        <td>{user.lastName}</td>
                         <td>{user.email}</td>
                         <td>
                           {user.roles.map((role) => (

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createUserApi,
   deleteUserApi,
+  fetchStatsApi,
   fetchUsersByPageApi,
   getPresignedUrlApi,
   getUserApi,
@@ -107,11 +108,21 @@ export const useUploadPhoto = () => {
   return { uploadPhoto };
 };
 
-export const useListUsersByPage = ({ pageNum = 1, pageSize = 10 } = {}) => {
+export const useListUsersByPage = ({
+  pageNum = 1,
+  pageSize = 10,
+  sortField = "firstName",
+  sortDirection = "asc",
+} = {}) => {
   const { data, isLoading } = useQuery({
-    queryKey: ["users", pageNum, pageSize],
+    queryKey: ["users", pageNum, pageSize, sortField, sortDirection],
     queryFn: async () => {
-      const response = await fetchUsersByPageApi({ pageNum, pageSize });
+      const response = await fetchUsersByPageApi({
+        pageNum,
+        pageSize,
+        sortField,
+        sortDirection,
+      });
       return response;
     },
   });
@@ -119,7 +130,16 @@ export const useListUsersByPage = ({ pageNum = 1, pageSize = 10 } = {}) => {
   return { data, isLoading };
 };
 
-
+export const useUserStats = () => {
+  const { data: stats } = useQuery({
+    queryKey: ["userStats"],
+    queryFn: async () => {
+      const response = await fetchStatsApi();
+      return response;
+    },
+  });
+  return { stats };
+};
 
 export const useGetUser = (userId) => {
   const { data, isLoading } = useQuery({
