@@ -8,13 +8,14 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
     boolean  existsByEmailAndDeletedFalse(String email);
     User findByEmail(String email);
 
-    @Query("SELECT u FROM User u JOIN FETCH u.roles WHERE u.deleted = false")
+    @Query("SELECT u FROM User u JOIN FETCH u.roles WHERE u.deleted = false ORDER BY u.id")
     List<User> findAllWithRoles();
 
     @Query("UPDATE User u SET u.deleted = true WHERE u.id = ?1")
@@ -26,4 +27,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     void updateUserStatus(@Param("id") Long id,@Param("enabled") boolean isEnabled);
 
     Long countById(Long id);
+
+    @Query("SELECT u FROM User u JOIN FETCH u.roles WHERE u.id = ?1 AND u.deleted = false")
+    Optional<User> findUserById(Long id);
 }

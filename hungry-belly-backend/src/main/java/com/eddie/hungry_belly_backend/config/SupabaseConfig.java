@@ -3,22 +3,52 @@ package com.eddie.hungry_belly_backend.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.reactive.function.client.WebClient;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.S3Configuration;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+
+import java.net.URI;
 
 @Configuration
 public class SupabaseConfig {
-    @Value("${supabase.endpointSignUrl}")
+    @Value("${supabase.endpointUrl}")
     private String endpointUrl;
 
-    @Value("${supabase.serviceRoleKey}")
-    private String serviceKey;
+    @Value("${supabase.regionName}")
+    private String regionName;
+
+    @Value("${supabase.accessKey}")
+    private String accessKey;
+
+    @Value("${supabase.secretKey}")
+    private String secretKey;
 
     @Bean
-    public WebClient supabaseWebClient() {
-        return WebClient.builder()
-                .baseUrl(endpointUrl)
-                .defaultHeader("apiKey", serviceKey)
-                .defaultHeader("Authorization", "Bearer " + serviceKey)
+    public S3Presigner s3Presigner() {
+        return S3Presigner.builder()
+                .endpointOverride(URI.create(endpointUrl))
+                .region(Region.of(regionName))
+                .credentialsProvider(StaticCredentialsProvider.create(
+                        AwsBasicCredentials.create(accessKey, secretKey)
+                ))
+                .serviceConfiguration(S3Configuration.builder()
+                        .pathStyleAccessEnabled(true)
+                        .build())
                 .build();
     }
+
+    @Bean
+    public S3Client createClient() {
+        AwsBasicCredentials credentials = AwsBasicCredentials.create(accessKey, secretKey);
+        return S3Client.builder()
+                .endpointOverride(URI.create(endpointUrl))
+                .credentialsProvider(StaticCredentialsProvider.create(credentials))
+                .region(Region.of(regionName))
+                .forcePathStyle(true)
+                .build();
+    }
+
 }

@@ -1,6 +1,6 @@
 package com.eddie.hungry_belly_backend.user.service.impl;
 
-import com.eddie.hungry_belly_backend.SupabaseS3Util;
+import com.eddie.hungry_belly_backend.StorageService;
 import com.eddie.hungry_belly_backend.entity.Role;
 import com.eddie.hungry_belly_backend.entity.User;
 import com.eddie.hungry_belly_backend.exception.BadRequestException;
@@ -16,12 +16,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -32,7 +28,7 @@ public class UserServiceImpl implements UserService {
     private final RoleService roleService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final SupabaseS3Util supabaseS3Util;
+    private final StorageService storageService;
 
     @Override
     public List<AdminUserResponse> fetchAllUsers() {
@@ -50,11 +46,16 @@ public class UserServiceImpl implements UserService {
     }
 
     public User findUserById(Long id) {
-        Optional<User> dbUser = userRepository.findById(id);
+        Optional<User> dbUser = userRepository.findUserById(id);
         if (dbUser.isEmpty()) {
             throw new UserNotFoundException("User with id " + id + " could not found");
         }
         return dbUser.get();
+    }
+
+    @Override
+    public AdminUserResponse findById(Long id) {
+        return convertToAdminResponse(findUserById(id));
     }
 
     @Override
@@ -74,14 +75,14 @@ public class UserServiceImpl implements UserService {
             dbUser.setPassword(dbUser.getPassword());
         }
 
-       dbUser.setId(dbUser.getId());
         dbUser.setEmail(userEntity.getEmail());
         dbUser.setFirstName(userEntity.getFirstName());
         dbUser.setLastName(userEntity.getLastName());
         dbUser.setRoles(userEntity.getRoles());
         dbUser.setEnabled(userEntity.isEnabled());
 
-        if(userEntity.getPhoto() != null) {
+        if(!userEntity.getPhoto().isEmpty()) {
+            storageService.removeFolder("user-photos/" + dbUser.getId() + "/" + dbUser.getPhoto());
             dbUser.setPhoto(userEntity.getPhoto());
         }
 
@@ -110,31 +111,7 @@ public class UserServiceImpl implements UserService {
         userRepository.updateUserStatus(dbUser.getId(), !dbUser.isEnabled());
     }
 
-    @Override
-    public AdminUserResponse uploadPhoto(Long id, MultipartFile photo) {
-        User dbUser = findUserById(id);
 
-        if(!photo.isEmpty()) {
-            String contentType = photo.getContentType();
-            if(contentType != null && !contentType.startsWith("image/")) {
-                throw new BadRequestException("photo: only images allowed");
-            }
-            else {
-                String filename = StringUtils.cleanPath(Objects.requireNonNull(photo.getOriginalFilename()));
-                dbUser.setPhoto(filename);
-                dbUser = userRepository.save(dbUser);
-                String uploadDir = "user-photos/" + dbUser.getId();
-                supabaseS3Util.removeFolder(uploadDir);
-                try {
-                    supabaseS3Util.uploadFile(uploadDir, filename, photo.getInputStream());
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        }
-
-        return convertToAdminResponse(dbUser);
-    }
 
     private User convertToUserEntity(AdminUserCreateRequest request) {
         Set<Role> savedRoles = convertToRoleEntitySet(request.getRoles());
@@ -158,13 +135,14 @@ public class UserServiceImpl implements UserService {
                 .lastName(request.getLastName())
                 .enabled(request.getEnabled())
                 .roles(savedRoles)
+                .photo(request.getPhoto())
                 .build();
     }
 
     private String generateUserPhotoPath(User user) {
         String photo = user.getPhoto();
-        if(photo == null) return "";
-        return supabaseS3Util.createSignedUrl("user-photos/" + user.getId() + "/" + photo , 3600);
+        if(photo == null) return null;
+        return storageService.generateDownloadUrl("user-photos/" + user.getId() + "/" + photo , 3600);
     }
 
     private Set<Role> convertToRoleEntitySet(Set<String> roles) {
@@ -184,6 +162,8 @@ public class UserServiceImpl implements UserService {
     private AdminUserResponse convertToAdminResponse(User user) {
         Set<String> roles = user.getRoles().stream()
                 .map(Role::toString).collect(Collectors.toSet());
+
+        System.out.println(generateUserPhotoPath(user));
 
         return AdminUserResponse.builder()
                 .id(user.getId())

@@ -8,7 +8,7 @@ export default function AdminLayout() {
   return (
     <div className="d-flex vh-100 overflow-hidden">
       <Sidebar isOpen={isOpen} setIsOpen={setIsOpen} />
-      <main className="flex-grow-1 bg-light overflow-auto p-3">
+      <main className="flex-grow-1 bg-light overflow-auto p-3 position-relative">
         <Outlet />
       </main>
     </div>

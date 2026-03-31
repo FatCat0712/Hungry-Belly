@@ -49,12 +49,27 @@ export const toggleUserStatusApi = async (userId) => {
   return data.data;
 };
 
-export const uploadUserPhotoApi = async (userId, photo) => {
-  const formData = new FormData();
-  formData.append("photo", photo);
-
-  const data = await axios.post(`${API_URL}/${userId}/photo`, formData, {
-    headers: { "Content-Type": "multipart/form-data" },
+export const uploadUserPhotoApi = async (uploadUrl, file, contentType) => {
+  const data = await axios.put(uploadUrl, file, {
+    headers: { "Content-Type": contentType },
   });
   return data.data;
+};
+
+export const getUserApi = async (userId) => {
+  const response = await axios.get(`${API_URL}/${userId}`);
+  return response.data.data;
+};
+
+export const getPresignedUrlApi = async (userId, fileName, contentType) => {
+  const data = {
+    folderName: "user-photos/" + userId,
+    fileName,
+    contentType,
+  };
+
+  const response = await axios.post(`${API_URL}/presigned`, data, {
+    headers: { "Content-Type": "application/json" },
+  });
+  return response.data.data;
 };

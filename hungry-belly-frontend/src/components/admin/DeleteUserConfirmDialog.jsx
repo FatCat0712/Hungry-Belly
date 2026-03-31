@@ -1,5 +1,5 @@
 import React from "react";
-import { useDeleteUser } from "../../hooks/users/useDeleteUser";
+import { useDeleteUser } from "../../hooks/users/useUser";
 import { toast } from "react-toastify";
 
 function DeleteUserConfirmDialog({ open, user, onClose, onConfirm }) {

@@ -1,9 +1,11 @@
 package com.eddie.hungry_belly_backend.user.controller;
 
+import com.eddie.hungry_belly_backend.StorageService;
 import com.eddie.hungry_belly_backend.response.ApiResponse;
 import com.eddie.hungry_belly_backend.user.dto.request.AdminUserCreateRequest;
 import com.eddie.hungry_belly_backend.user.dto.request.AdminUserRequest;
 import com.eddie.hungry_belly_backend.user.dto.request.ResetPasswordRequest;
+import com.eddie.hungry_belly_backend.user.dto.request.UploadRequest;
 import com.eddie.hungry_belly_backend.user.dto.response.AdminUserResponse;
 import com.eddie.hungry_belly_backend.user.service.UserService;
 import jakarta.validation.Valid;
@@ -11,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -20,17 +21,24 @@ import java.util.List;
 @RequestMapping("/api/v1/users")
 public class UserController {
     private final UserService userService;
+    private final StorageService storageService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<AdminUserResponse>>> listUsers() {
             List<AdminUserResponse> listUsers = userService.fetchAllUsers();
-            return ResponseEntity.ok(ApiResponse.success(listUsers, "User fetched successfully"));
+            return ResponseEntity.ok(ApiResponse.success(listUsers, "All users fetched successfully"));
     }
 
     @PostMapping
     public ResponseEntity<ApiResponse<?>> createUser(@Valid @RequestBody AdminUserCreateRequest request) {
          var response = userService.createUser(request);
          return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.create(response, "User created"));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<AdminUserResponse>> findUserById(@PathVariable Long id) {
+        var response = userService.findById(id);
+        return ResponseEntity.ok(ApiResponse.success(response, "User fetched"));
     }
 
     @PutMapping("/{id}")
@@ -57,9 +65,9 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success(null, null));
     }
 
-    @PostMapping("/{id}/photo")
-    public ResponseEntity<ApiResponse<?>> updatePhoto(@PathVariable Long id, @RequestParam("photo") MultipartFile photo) {
-        var response = userService.uploadPhoto(id, photo);
+    @PostMapping("/presigned")
+    public ResponseEntity<ApiResponse<?>> getUploadUrl(@RequestBody UploadRequest request) {
+        var response = storageService.generateUploadUrl(request.getFolderName(), request.getFileName(), request.getContentType());
         return ResponseEntity.ok(ApiResponse.success(response, "User photo updated successfully"));
     }
 

@@ -1,24 +1,22 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-import Spinner from "../components/Spinner";
-import UserDialog from "../components/admin/UserDialog";
-import ResetPasswordDialog from "../components/admin/ResetPasswordDialog";
-import DeleteUserConfirmDialog from "../components/admin/DeleteUserConfirmDialog";
-import { useUsers } from "../hooks/users/useUsers";
-import { useCreateUser } from "../hooks/users/useCreateUsers";
-import { useToggleStatus } from "../hooks/users/useToggleStatus";
+import Spinner from "../../components/Spinner";
+import DeleteUserConfirmDialog from "../../components/admin/DeleteUserConfirmDialog";
+import {
+  useCreateUser,
+  useListUsers,
+  useToggleStatus,
+} from "../../hooks/users/useUser";
 import { toast } from "react-toastify";
 
 export default function UserManagement() {
-  const [showModal, setShowModal] = useState(false);
-  const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
 
-  const { users, isLoading } = useUsers();
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [userToResetPassword, setUserToResetPassword] = useState(null);
+  const { users, isLoading } = useListUsers();
   const [userToDelete, setUserToDelete] = useState(null);
 
+  const navigate = useNavigate();
   const { isCreating } = useCreateUser();
   const { toggleStatus } = useToggleStatus();
 
@@ -35,20 +33,6 @@ export default function UserManagement() {
         },
       },
     );
-  };
-
-  const handleCancel = () => {
-    setShowModal(false);
-  };
-
-  const handleResetPassword = (user) => {
-    setUserToResetPassword(user);
-    setShowResetPasswordModal(true);
-  };
-
-  const handleCloseResetPasswordModal = () => {
-    setShowResetPasswordModal(false);
-    setUserToResetPassword(null);
   };
 
   const handleDeleteClick = (user) => {
@@ -87,10 +71,7 @@ export default function UserManagement() {
             </button>
             <button
               className="btn btn-primary d-flex align-items-center gap-2"
-              onClick={() => {
-                setShowModal(true);
-                setSelectedUser(null);
-              }}
+              onClick={() => navigate("/users/new")}
             >
               <i className="bi bi-plus-lg"></i> Add User
             </button>
@@ -239,8 +220,7 @@ export default function UserManagement() {
                         <button
                           className="btn btn-sm btn-outline-secondary me-1"
                           onClick={() => {
-                            setShowModal(true);
-                            setSelectedUser(user);
+                            navigate(`/users/${user.id}/edit`);
                           }}
                           title="Edit user info"
                         >
@@ -248,7 +228,9 @@ export default function UserManagement() {
                         </button>
                         <button
                           className="btn btn-sm btn-outline-warning me-1"
-                          onClick={() => handleResetPassword(user)}
+                          onClick={() =>
+                            navigate(`/users/${user.id}/reset-password`)
+                          }
                           title="Reset password"
                         >
                           <i className="bi bi-key"></i>
@@ -269,20 +251,6 @@ export default function UserManagement() {
           </div>
         </div>
       </div>
-
-      {/* Add User Modal */}
-      <UserDialog
-        open={showModal}
-        onClose={handleCancel}
-        selectedUser={selectedUser}
-      />
-
-      {/* Reset Password Modal */}
-      <ResetPasswordDialog
-        open={showResetPasswordModal}
-        user={userToResetPassword}
-        onClose={handleCloseResetPasswordModal}
-      />
 
       <DeleteUserConfirmDialog
         open={showDeleteConfirmModal}
