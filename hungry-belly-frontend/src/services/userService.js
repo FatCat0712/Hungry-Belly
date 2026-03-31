@@ -2,7 +2,20 @@ import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL + "/users";
 
-export const fetchUsersApi = async () => {
+export const fetchUsersByPageApi = async ({
+  pageNum = 1,
+  pageSize = 10,
+} = {}) => {
+  const response = await axios.get(API_URL, {
+    params: {
+      pageNum,
+      pageSize,
+    },
+  });
+  return response.data.data;
+};
+
+export const fetchAllUsersApi = async () => {
   const response = await fetch(API_URL);
   const data = await response.json();
   return data.data;

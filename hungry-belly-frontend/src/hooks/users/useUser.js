@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createUserApi,
   deleteUserApi,
-  fetchUsersApi,
+  fetchUsersByPageApi,
   getPresignedUrlApi,
   getUserApi,
   resetPasswordApi,
@@ -27,7 +27,7 @@ export const useCreateUser = () => {
 export const useUpdateUser = () => {
   const queryClient = useQueryClient();
 
-  const { mutateAsync: updateUser } = useMutation({
+  const { mutateAsync: updateUser, error } = useMutation({
     mutationFn: updateUserApi,
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -36,26 +36,26 @@ export const useUpdateUser = () => {
     },
   });
 
-  return { updateUser };
+  return { updateUser, error };
 };
 
 export const useDeleteUser = () => {
   const queryClient = useQueryClient();
 
-  const { mutate: deleteUser } = useMutation({
+  const { mutate: deleteUser, error } = useMutation({
     mutationFn: ({ userId }) => deleteUserApi(userId),
     onSuccess: () => {
       queryClient.invalidateQueries(["users"]);
     },
   });
 
-  return { deleteUser };
+  return { deleteUser, error };
 };
 
 export const useResetPassword = () => {
   const queryClient = useQueryClient();
 
-  const { mutate: resetPassword } = useMutation({
+  const { mutate: resetPassword, error } = useMutation({
     mutationFn: ({ userId, newPassword }) =>
       resetPasswordApi(userId, { newPassword }),
     onSuccess: () => {
@@ -63,26 +63,26 @@ export const useResetPassword = () => {
     },
   });
 
-  return { resetPassword };
+  return { resetPassword, error };
 };
 
 export const useToggleStatus = () => {
   const queryClient = useQueryClient();
 
-  const { mutate: toggleStatus } = useMutation({
+  const { mutate: toggleStatus, error } = useMutation({
     mutationFn: ({ userId }) => toggleUserStatusApi(userId),
     onSuccess: () => {
       queryClient.invalidateQueries(["users"]);
     },
   });
 
-  return { toggleStatus };
+  return { toggleStatus, error };
 };
 
 export const useGetPresignedUrl = () => {
   const queryClient = useQueryClient();
 
-  const { mutateAsync: getPresignedUrl } = useMutation({
+  const { mutateAsync: getPresignedUrl, error } = useMutation({
     mutationFn: ({ userId, fileName, contentType }) =>
       getPresignedUrlApi(userId, fileName, contentType),
     onSuccess: () => {
@@ -90,7 +90,7 @@ export const useGetPresignedUrl = () => {
     },
   });
 
-  return { getPresignedUrl };
+  return { getPresignedUrl, error };
 };
 
 export const useUploadPhoto = () => {
@@ -107,16 +107,19 @@ export const useUploadPhoto = () => {
   return { uploadPhoto };
 };
 
-export const useListUsers = () => {
+export const useListUsersByPage = ({ pageNum = 1, pageSize = 10 } = {}) => {
   const { data, isLoading } = useQuery({
-    queryKey: ["users"],
+    queryKey: ["users", pageNum, pageSize],
     queryFn: async () => {
-      const response = await fetchUsersApi();
+      const response = await fetchUsersByPageApi({ pageNum, pageSize });
       return response;
     },
   });
-  return { users: data || [], isLoading };
+
+  return { data, isLoading };
 };
+
+
 
 export const useGetUser = (userId) => {
   const { data, isLoading } = useQuery({

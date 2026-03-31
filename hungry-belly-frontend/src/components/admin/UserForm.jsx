@@ -39,30 +39,30 @@ function UserForm({ selectedUser }) {
 
     let result = null;
 
-    if (selectedUser) {
-      if (data.photo !== null && data.photo instanceof File) {
-        const transferData = { ...data, photo: data.photo.name };
-        result = await updateUser(transferData);
-      } else {
-        const start = data.photo.lastIndexOf("/");
-        const end = data.photo.indexOf("?");
-        const photoFileName = data.photo
-          .substring(start + 1, end)
-          .replace(/%20/g, " ");
+    try {
+      if (selectedUser) {
+        if (data.photo !== null && data.photo instanceof File) {
+          const transferData = { ...data, photo: data.photo.name };
+          result = await updateUser(transferData);
+        } else {
+          const start = data.photo.lastIndexOf("/");
+          const end = data.photo.indexOf("?");
+          const photoFileName = data.photo
+            .substring(start + 1, end)
+            .replace(/%20/g, " ");
 
-        const transferData = { ...data, photo: photoFileName };
-        result = await updateUser(transferData);
-      }
-    } else {
-      if (data.photo !== null && data.photo instanceof File) {
-        const transferData = { ...data, photo: data.photo.name };
-        result = await createUser(transferData);
+          const transferData = { ...data, photo: photoFileName };
+          result = await updateUser(transferData);
+        }
       } else {
-        result = await createUser(data);
+        if (data.photo !== null && data.photo instanceof File) {
+          const transferData = { ...data, photo: data.photo.name };
+          result = await createUser(transferData);
+        } else {
+          result = await createUser(data);
+        }
       }
-    }
 
-    if (result.status === 200 || result.status === 201) {
       if (data.photo !== null && data.photo instanceof File) {
         const { id } = result.data;
         const presignedResult = await getPresignedUrl({
@@ -82,11 +82,17 @@ function UserForm({ selectedUser }) {
       }
       toast.success(result.message);
       navigate("/users");
-    } else if (result.status === 400) {
-      setErrors((prev) => ({ ...prev, ...result.message }));
+    } catch (error) {
+      const apiError = error.response?.data;
+      const apiMessage = apiError?.message;
+
+      if (apiMessage && typeof apiMessage === "object") {
+        setErrors((prev) => ({ ...prev, ...apiMessage }));
+        return;
+      }
+
+      toast.error(apiMessage || error.message || "An error occurred");
       return;
-    } else {
-      toast.error(result.message);
     }
   };
 

@@ -1,20 +1,29 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import Pagination from "../../components/Pagination";
 import Spinner from "../../components/Spinner";
 import DeleteUserConfirmDialog from "../../components/admin/DeleteUserConfirmDialog";
 import {
   useCreateUser,
-  useListUsers,
+  useListUsersByPage,
   useToggleStatus,
 } from "../../hooks/users/useUser";
 import { toast } from "react-toastify";
 
 export default function UserManagement() {
+  const pageSize = 10;
+  const [currentPage, setCurrentPage] = useState(1);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
 
-  const { users, isLoading } = useListUsers();
+  const { data, isLoading } = useListUsersByPage({
+    pageNum: currentPage,
+    pageSize,
+  });
   const [userToDelete, setUserToDelete] = useState(null);
+
+  const users = data?.content || [];
+  const totalElements = data?.totalElements || 0;
 
   const navigate = useNavigate();
   const { isCreating } = useCreateUser();
@@ -50,7 +59,14 @@ export default function UserManagement() {
     handleCloseDeleteConfirmModal();
   };
 
-  if (isLoading || isCreating) {
+  const handlePageChange = (page) => {
+    const totalPages = Math.max(1, Math.ceil(totalElements / pageSize));
+    const nextPage = Math.min(Math.max(page, 1), totalPages);
+
+    setCurrentPage(nextPage);
+  };
+
+  if ((!data && isLoading) || isCreating) {
     return <Spinner message="Loading users..." />;
   }
 
@@ -85,7 +101,7 @@ export default function UserManagement() {
                 <div className="d-flex align-items-start justify-content-between">
                   <div>
                     <small className="text-muted">Total Users</small>
-                    <h5 className="mb-0">{users.length}</h5>
+                    <h5 className="mb-0">{totalElements}</h5>
                   </div>
                   <i className="bi bi-people-fill fs-4 text-primary"></i>
                 </div>
@@ -159,95 +175,110 @@ export default function UserManagement() {
                   </tr>
                 </thead>
                 <tbody>
-                  {users.map((user) => (
-                    <tr key={user.id}>
-                      <td>
-                        <div className="d-flex align-items-center gap-2">
-                          <div
-                            className="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center"
-                            style={{ width: 40, height: 40 }}
-                          >
-                            {user.photo ? (
-                              <img
-                                src={user.photo}
-                                alt="User"
-                                className="rounded-circle"
-                                style={{ width: 40, height: 40 }}
-                              />
-                            ) : (
-                              user.firstName[0] + user.lastName[0]
-                            )}
+                  {users.length > 0 ? (
+                    users.map((user) => (
+                      <tr key={user.id}>
+                        <td>
+                          <div className="d-flex align-items-center gap-2">
+                            <div
+                              className="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center"
+                              style={{ width: 40, height: 40 }}
+                            >
+                              {user.photo ? (
+                                <img
+                                  src={user.photo}
+                                  alt="User"
+                                  className="rounded-circle"
+                                  style={{ width: 40, height: 40 }}
+                                />
+                              ) : (
+                                user.firstName[0] + user.lastName[0]
+                              )}
+                            </div>
+                            <div>{user.firstName + " " + user.lastName}</div>
                           </div>
-                          <div>{user.firstName + " " + user.lastName}</div>
-                        </div>
-                      </td>
-                      <td>{user.email}</td>
-                      <td>
-                        {user.roles.map((role) => (
-                          <span key={role} className="badge bg-primary me-1">
-                            {role}
-                          </span>
-                        ))}
-                      </td>
-                      <td>
-                        <button
-                          type="button"
-                          className={`btn btn-sm rounded-pill d-inline-flex align-items-center gap-2 ${
-                            user.enabled
-                              ? "btn-success"
-                              : "btn-outline-secondary"
-                          }`}
-                          role="switch"
-                          aria-checked={user.enabled}
-                          onClick={() =>
-                            toggleUserStatus(
-                              user.id,
-                              user.firstName + " " + user.lastName,
-                              user.enabled,
-                            )
-                          }
-                        >
-                          <i
-                            className={`bi ${
-                              user.enabled ? "bi-toggle-on" : "bi-toggle-off"
+                        </td>
+                        <td>{user.email}</td>
+                        <td>
+                          {user.roles.map((role) => (
+                            <span key={role} className="badge bg-primary me-1">
+                              {role}
+                            </span>
+                          ))}
+                        </td>
+                        <td>
+                          <button
+                            type="button"
+                            className={`btn btn-sm rounded-pill d-inline-flex align-items-center gap-2 ${
+                              user.enabled
+                                ? "btn-success"
+                                : "btn-outline-secondary"
                             }`}
-                          ></i>
-                          {user.enabled ? "Active" : "Inactive"}
-                        </button>
-                      </td>
+                            role="switch"
+                            aria-checked={user.enabled}
+                            onClick={() =>
+                              toggleUserStatus(
+                                user.id,
+                                user.firstName + " " + user.lastName,
+                                user.enabled,
+                              )
+                            }
+                          >
+                            <i
+                              className={`bi ${
+                                user.enabled ? "bi-toggle-on" : "bi-toggle-off"
+                              }`}
+                            ></i>
+                            {user.enabled ? "Active" : "Inactive"}
+                          </button>
+                        </td>
 
-                      <td className="text-end">
-                        <button
-                          className="btn btn-sm btn-outline-secondary me-1"
-                          onClick={() => {
-                            navigate(`/users/${user.id}/edit`);
-                          }}
-                          title="Edit user info"
-                        >
-                          <i className="bi bi-pencil"></i>
-                        </button>
-                        <button
-                          className="btn btn-sm btn-outline-warning me-1"
-                          onClick={() =>
-                            navigate(`/users/${user.id}/reset-password`)
-                          }
-                          title="Reset password"
-                        >
-                          <i className="bi bi-key"></i>
-                        </button>
-                        <button
-                          className="btn btn-sm btn-outline-danger"
-                          onClick={() => handleDeleteClick(user)}
-                          title="Delete user"
-                        >
-                          <i className="bi bi-trash"></i>
-                        </button>
+                        <td className="text-end">
+                          <button
+                            className="btn btn-sm btn-outline-secondary me-1"
+                            onClick={() => {
+                              navigate(`/users/${user.id}/edit`);
+                            }}
+                            title="Edit user info"
+                          >
+                            <i className="bi bi-pencil"></i>
+                          </button>
+                          <button
+                            className="btn btn-sm btn-outline-warning me-1"
+                            onClick={() =>
+                              navigate(`/users/${user.id}/reset-password`)
+                            }
+                            title="Reset password"
+                          >
+                            <i className="bi bi-key"></i>
+                          </button>
+                          <button
+                            className="btn btn-sm btn-outline-danger"
+                            onClick={() => handleDeleteClick(user)}
+                            title="Delete user"
+                          >
+                            <i className="bi bi-trash"></i>
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="5" className="text-center text-muted py-4">
+                        No users found.
                       </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>
+
+            <Pagination
+              currentPage={currentPage}
+              pageSize={pageSize}
+              totalItems={totalElements}
+              onPageChange={handlePageChange}
+            />
           </div>
         </div>
       </div>
