@@ -7,12 +7,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
+import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.time.Duration;
 import java.util.List;
 
@@ -43,6 +46,25 @@ public class StorageService {
 
         s3Client.deleteObject(request);
     }
+
+    public void uploadFile(String key, InputStream inputStream, String contentType) {
+        PutObjectRequest request = PutObjectRequest.builder()
+                .bucket(bucketName)
+                .key(key)
+                .contentType(contentType)
+                .acl("public-read")
+                .build();
+
+        try(inputStream) {
+            int contentLength = inputStream.available();
+            s3Client.putObject(request, RequestBody.fromInputStream(inputStream, contentLength));
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
+
+    }
+
+
 
     public void removeFolder(String folderName) {
 

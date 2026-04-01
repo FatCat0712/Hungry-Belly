@@ -76,6 +76,7 @@ export const uploadUserPhotoApi = async (uploadUrl, file, contentType) => {
   const data = await axios.put(uploadUrl, file, {
     headers: { "Content-Type": contentType },
   });
+
   return data.data;
 };
 
@@ -94,5 +95,10 @@ export const getPresignedUrlApi = async (userId, fileName, contentType) => {
   const response = await axios.post(`${API_URL}/presigned`, data, {
     headers: { "Content-Type": "application/json" },
   });
+  return response.data.data;
+};
+
+export const exportUsersApi = async () => {
+  const response = await axios.post(`${API_URL}/export`, null, {});
   return response.data.data;
 };

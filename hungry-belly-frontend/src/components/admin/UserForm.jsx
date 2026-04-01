@@ -45,13 +45,15 @@ function UserForm({ selectedUser }) {
           const transferData = { ...data, photo: data.photo.name };
           result = await updateUser(transferData);
         } else {
-          const start = data.photo.lastIndexOf("/");
-          const end = data.photo.indexOf("?");
-          const photoFileName = data.photo
-            .substring(start + 1, end)
-            .replace(/%20/g, " ");
-
-          const transferData = { ...data, photo: photoFileName };
+          const transferData = {
+            id: data.id,
+            email: data.email,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            password: data.password,
+            roles: data.roles,
+            enabled: data.enabled,
+          };
           result = await updateUser(transferData);
         }
       } else {

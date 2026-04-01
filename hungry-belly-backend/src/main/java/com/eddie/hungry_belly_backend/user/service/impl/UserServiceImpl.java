@@ -1,6 +1,9 @@
 package com.eddie.hungry_belly_backend.user.service.impl;
 
 import com.eddie.hungry_belly_backend.StorageService;
+import com.eddie.hungry_belly_backend.common.dto.response.PageResponse;
+import com.eddie.hungry_belly_backend.common.mapper.PageMapper;
+import com.eddie.hungry_belly_backend.common.util.CsvExporter;
 import com.eddie.hungry_belly_backend.entity.Role;
 import com.eddie.hungry_belly_backend.entity.User;
 import com.eddie.hungry_belly_backend.exception.BadRequestException;
@@ -10,13 +13,23 @@ import com.eddie.hungry_belly_backend.user.dto.request.AdminUserCreateRequest;
 import com.eddie.hungry_belly_backend.user.dto.request.AdminUserRequest;
 import com.eddie.hungry_belly_backend.user.dto.request.ResetPasswordRequest;
 import com.eddie.hungry_belly_backend.user.dto.response.AdminUserResponse;
+import com.eddie.hungry_belly_backend.user.dto.response.ExportResult;
+import com.eddie.hungry_belly_backend.user.dto.response.UserCsvDto;
+import com.eddie.hungry_belly_backend.user.dto.response.UserStatsResponse;
 import com.eddie.hungry_belly_backend.user.repository.UserRepository;
 import com.eddie.hungry_belly_backend.user.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
+import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -29,11 +42,6 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final StorageService storageService;
-
-    @Override
-    public List<AdminUserResponse> fetchAllUsers() {
-        return userRepository.findAllWithRoles().stream().map(this::convertToAdminResponse).toList();
-    }
 
     public AdminUserResponse createUser(AdminUserCreateRequest request) {
         boolean isEmailUnique = userRepository.existsByEmailAndDeletedFalse(request.getEmail());
@@ -48,7 +56,7 @@ public class UserServiceImpl implements UserService {
     public User findUserById(Long id) {
         Optional<User> dbUser = userRepository.findUserById(id);
         if (dbUser.isEmpty()) {
-            throw new UserNotFoundException("User with id " + id + " could not found");
+            throw new UserNotFoundException("User with id " + id + " could not be found");
         }
         return dbUser.get();
     }
@@ -81,7 +89,7 @@ public class UserServiceImpl implements UserService {
         dbUser.setRoles(userEntity.getRoles());
         dbUser.setEnabled(userEntity.isEnabled());
 
-        if(!userEntity.getPhoto().isEmpty()) {
+        if(userEntity.getPhoto()  != null) {
             storageService.removeFolder("user-photos/" + dbUser.getId() + "/" + dbUser.getPhoto());
             dbUser.setPhoto(userEntity.getPhoto());
         }
@@ -112,6 +120,99 @@ public class UserServiceImpl implements UserService {
     }
 
 
+    @Override
+    public PageResponse<AdminUserResponse> listByPage(
+            Integer pageNum,
+            Integer pageSize,
+            String sortField,
+            String sortDirection,
+            String keyword
+    ) {
+        if(pageNum == null) {
+            pageNum = 0;
+        }
+
+        if(pageSize == null) {
+            pageSize = 10;
+        }
+
+        if(pageNum < 0 || pageSize <= 0 || pageSize > 100) {
+            throw new IllegalArgumentException("Invalid pagination parameter");
+        }
+
+        Sort sort = Sort.by(sortField);
+        sort = sortDirection.equals("asc") ? sort.ascending() : sort.descending();
+
+        Pageable pageable = PageRequest.of(pageNum - 1, pageSize, sort);
+
+        // Step 1: Get paginated IDs (efficient DB pagination, no collection fetch)
+        Page<Long> idPage = null;
+        if(keyword != null) {
+            idPage = userRepository.findAllUserIdsWithKeyword(keyword, pageable);
+        }
+        else {
+            idPage = userRepository.findAllUserIds(pageable);
+        }
+
+        // Step 2: Bulk load users with roles by IDs (single efficient query)
+        List<User> users = userRepository.findAllWithRolesByIds(idPage.getContent());
+        
+        // Step 3: Convert to DTOs
+        List<AdminUserResponse> responses = users.stream()
+                .map(this::convertToAdminResponse)
+                .toList();
+        
+        // Step 4: Reconstruct Page object with original pagination metadata
+        Page<AdminUserResponse> responsePage = new PageImpl<>(
+                responses, 
+                pageable, 
+                idPage.getTotalElements()
+        );
+
+        return PageMapper.toPageResponse(responsePage);
+    }
+
+    public List<User> findAllUsers() {
+      return userRepository.findAll();
+    }
+
+    @Override
+    public UserStatsResponse getUserStats() {
+        Long usersCount = userRepository.countAllUsers();;
+        Long userActiveCount = userRepository.countActiveUser();
+        return UserStatsResponse.builder()
+                .totalUsers(usersCount)
+                .activeUsers(userActiveCount)
+                .build();
+    }
+
+    @Override
+    public ExportResult exportUserCsv() {
+        CsvExporter exporter = new CsvExporter();
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
+        String timestamp = dateTimeFormatter.format(LocalDateTime.now());
+        String fileName = "users_" + timestamp;
+        String path = "exports/csv/" + fileName + ".csv";
+        try {
+            Path tempFile = Files.createTempFile(fileName, ".csv");
+            try (Writer writer = Files.newBufferedWriter(tempFile)) {
+                List<UserCsvDto> userCsvDtos = findAllUsers().stream().map(this::convertToCsvDto).toList();
+                exporter.export(writer, userCsvDtos);
+                storageService.removeFolder("exports/csv");
+                storageService.uploadFile(path, Files.newInputStream(tempFile), "text/csv");
+            }
+
+            String signedUrl = storageService.generateDownloadUrl(path, 3600);
+
+            return ExportResult.builder()
+                    .fileName(fileName + ".csv")
+                    .downloadUrl(signedUrl)
+                    .created(LocalDateTime.now())
+                    .build();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     private User convertToUserEntity(AdminUserCreateRequest request) {
         Set<Role> savedRoles = convertToRoleEntitySet(request.getRoles());
@@ -163,8 +264,6 @@ public class UserServiceImpl implements UserService {
         Set<String> roles = user.getRoles().stream()
                 .map(Role::toString).collect(Collectors.toSet());
 
-        System.out.println(generateUserPhotoPath(user));
-
         return AdminUserResponse.builder()
                 .id(user.getId())
                 .email(user.getEmail())
@@ -173,6 +272,17 @@ public class UserServiceImpl implements UserService {
                 .enabled(user.isEnabled())
                 .photo(generateUserPhotoPath(user))
                 .roles(roles)
+                .build();
+    }
+
+    private UserCsvDto convertToCsvDto(User user) {
+        return UserCsvDto.builder()
+                .id(user.getId())
+                .email(user.getEmail())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .roles(user.getRoles().toString())
+                .status(user.isEnabled() ? "ACTIVE" : "INACTIVE")
                 .build();
     }
 }

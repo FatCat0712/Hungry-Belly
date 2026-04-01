@@ -1,4 +1,4 @@
-package com.eddie.hungry_belly_backend.response;
+package com.eddie.hungry_belly_backend.common.dto.response;
 
 import lombok.Builder;
 import lombok.Data;

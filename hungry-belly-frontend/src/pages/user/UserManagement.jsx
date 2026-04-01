@@ -5,7 +5,7 @@ import Pagination from "../../components/Pagination";
 import Spinner from "../../components/Spinner";
 import DeleteUserConfirmDialog from "../../components/admin/DeleteUserConfirmDialog";
 import {
-  useCreateUser,
+  useExportUsers,
   useListUsersByPage,
   useToggleStatus,
   useUserStats,
@@ -23,7 +23,9 @@ export default function UserManagement() {
   const debouncedKeyword = useDebounce(keyword, 500);
 
   const {
-    stats: { totalUsers, activeUsers },
+    stats: { activeUsers, totalUsers },
+    hasLoadedStats,
+    isLoading: isStatsLoading,
   } = useUserStats();
 
   const { data, isLoading } = useListUsersByPage({
@@ -39,8 +41,8 @@ export default function UserManagement() {
   const totalElements = data?.totalElements || 0;
 
   const navigate = useNavigate();
-  const { isCreating } = useCreateUser();
   const { toggleStatus } = useToggleStatus();
+  const { exportUsers } = useExportUsers();
 
   const toggleUserStatus = (userId, name, status) => {
     toggleStatus(
@@ -78,8 +80,15 @@ export default function UserManagement() {
     setCurrentPage(nextPage);
   };
 
-  if ((!data && isLoading) || isCreating) {
-    return <Spinner message="Loading users..." />;
+  const handleExportUsers = async () => {
+    // Keep modal UX in place until export API/hook is added.
+    toast.info("Exporting users... Please wait.");
+    const data = await exportUsers();
+    window.open(data.downloadUrl);
+  };
+
+  if ((!data && isLoading) || (!hasLoadedStats && isStatsLoading)) {
+    return <Spinner message="Loading users..." minHeight="50vh" />;
   }
 
   return (
@@ -94,6 +103,12 @@ export default function UserManagement() {
             </p>
           </div>
           <div className="d-flex gap-2">
+            <button
+              className="btn btn-info d-flex align-items-center gap-2"
+              onClick={handleExportUsers}
+            >
+              <i className="bi bi-download"></i> Export CSV
+            </button>
             <button
               className="btn btn-primary d-flex align-items-center gap-2"
               onClick={() => navigate("/users/new")}
@@ -210,7 +225,7 @@ export default function UserManagement() {
               className="table-responsive position-relative"
               style={{ minHeight: isLoading ? 280 : undefined }}
             >
-              {isLoading && <Spinner message="Loading users..." />}
+              {isLoading && <Spinner message="Loading users..." overlay />}
               <table className="table table-hover align-middle mb-0">
                 <thead className="table-light">
                   <tr>

@@ -1,6 +1,6 @@
 package com.eddie.hungry_belly_backend.role.controller;
 
-import com.eddie.hungry_belly_backend.response.ApiResponse;
+import com.eddie.hungry_belly_backend.common.dto.response.ApiResponse;
 import com.eddie.hungry_belly_backend.role.service.RoleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

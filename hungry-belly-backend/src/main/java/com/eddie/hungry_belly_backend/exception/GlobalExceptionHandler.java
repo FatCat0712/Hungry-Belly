@@ -1,6 +1,6 @@
 package com.eddie.hungry_belly_backend.exception;
 
-import com.eddie.hungry_belly_backend.response.ApiResponse;
+import com.eddie.hungry_belly_backend.common.dto.response.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -40,6 +40,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest()
                 .body(ApiResponse.error(HttpStatus.BAD_REQUEST.value(), errors));
 
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<?> handleBadRequest(IllegalArgumentException ex) {
+        return ResponseEntity.badRequest().body(
+                ApiResponse.error(HttpStatus.BAD_REQUEST.value(), ex.getMessage())
+        );
     }
 
     @ExceptionHandler(Exception.class)

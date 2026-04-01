@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createUserApi,
   deleteUserApi,
+  exportUsersApi,
   fetchStatsApi,
   fetchUsersByPageApi,
   getPresignedUrlApi,
@@ -11,6 +12,11 @@ import {
   updateUserApi,
   uploadUserPhotoApi,
 } from "../../services/userService";
+
+const DEFAULT_USER_STATS = {
+  activeUsers: 0,
+  totalUsers: 0,
+};
 
 export const useCreateUser = () => {
   const queryClient = useQueryClient();
@@ -133,16 +139,20 @@ export const useListUsersByPage = ({
 };
 
 export const useUserStats = () => {
-  const { data: stats } = useQuery({
+  const { data, isPending, isFetching } = useQuery({
     queryKey: ["userStats"],
     queryFn: async () => {
       const response = await fetchStatsApi();
-      console
       return response;
     },
   });
 
-  return { stats };
+  return {
+    stats: data ?? DEFAULT_USER_STATS,
+    hasLoadedStats: data !== undefined,
+    isLoading: isPending,
+    isFetching,
+  };
 };
 
 export const useGetUser = (userId) => {
@@ -154,4 +164,12 @@ export const useGetUser = (userId) => {
     },
   });
   return { user: data || {}, isLoading };
+};
+
+export const useExportUsers = () => {
+  const { mutateAsync: exportUsers } = useMutation({
+    mutationFn: () => exportUsersApi(),
+  });
+
+  return { exportUsers };
 };

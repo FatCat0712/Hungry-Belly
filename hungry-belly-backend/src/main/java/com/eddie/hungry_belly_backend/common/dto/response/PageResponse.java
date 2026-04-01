@@ -1,4 +1,4 @@
-package com.eddie.hungry_belly_backend.user.dto.response;
+package com.eddie.hungry_belly_backend.common.dto.response;
 
 import lombok.*;
 
@@ -9,7 +9,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class PageResponseDto {
+public class PageResponse<T> {
     private int page;
     private int size;
     private long totalElements;
@@ -18,5 +18,5 @@ public class PageResponseDto {
     private boolean last;
     private boolean hasNext;
     private boolean hasPrevious;
-    private List<AdminUserResponse> content;
+    private List<T> content;
 }

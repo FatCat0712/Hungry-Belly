@@ -1,6 +1,8 @@
 package com.eddie.hungry_belly_backend.user.repository;
 
 import com.eddie.hungry_belly_backend.entity.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -15,10 +17,38 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean  existsByEmailAndDeletedFalse(String email);
     User findByEmail(String email);
 
-    @Query("SELECT u FROM User u JOIN FETCH u.roles WHERE u.deleted = false ORDER BY u.id")
-    List<User> findAllWithRoles();
+    // Pagination query - returns IDs only (no collection fetch)
+    @Query("SELECT u.id FROM User u WHERE u.deleted = false")
+    Page<Long> findAllUserIds(Pageable pageable);
 
-    @Query("UPDATE User u SET u.deleted = true WHERE u.id = ?1")
+    @Query("SELECT u.id FROM User u WHERE u.deleted = false AND (" +
+            "u.firstName LIKE %?1% OR " +
+            "u.lastName LIKE %?1% OR " +
+            "CONCAT(u.firstName,' ',u.lastName) LIKE %?1% OR " +
+            "u.email LIKE %?1% OR " +
+            "CONCAT(u.id,'') LIKE ?1)")
+    Page<Long> findAllUserIdsWithKeyword(String keyword, Pageable pageable);
+    
+    // Bulk load users with roles by IDs - efficient fetch
+    @Query("SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.roles WHERE u.id IN :ids")
+    List<User> findAllWithRolesByIds(@Param("ids") List<Long> ids);
+
+    @Query("SELECT u FROM User u JOIN FETCH u.roles WHERE u.deleted = false")
+    List<User> findActiveUsers();
+
+    @Query("SELECT u FROM User u JOIN FETCH u.roles WHERE u.deleted = true")
+    List<User> findDeletedUsers();
+
+
+
+    @Query("SELECT COUNT(*) FROM User u WHERE u.enabled = true")
+    Long countActiveUser();
+
+    @Query("SELECT COUNT(*) FROM User u WHERE u.deleted = false")
+    Long countAllUsers();
+
+
+    @Query("UPDATE User u SET u.deleted = true, u.enabled = false WHERE u.id = ?1")
     @Modifying
     void deleteUserById(Long id);
 
@@ -28,6 +58,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Long countById(Long id);
 
-    @Query("SELECT u FROM User u JOIN FETCH u.roles WHERE u.id = ?1 AND u.deleted = false")
+    @Query("SELECT u FROM User u LEFT JOIN FETCH u.roles WHERE u.id = ?1 AND u.deleted = false")
     Optional<User> findUserById(Long id);
 }

@@ -1,21 +1,22 @@
 package com.eddie.hungry_belly_backend.user.controller;
 
 import com.eddie.hungry_belly_backend.StorageService;
-import com.eddie.hungry_belly_backend.response.ApiResponse;
+import com.eddie.hungry_belly_backend.common.dto.response.ApiResponse;
 import com.eddie.hungry_belly_backend.user.dto.request.AdminUserCreateRequest;
 import com.eddie.hungry_belly_backend.user.dto.request.AdminUserRequest;
 import com.eddie.hungry_belly_backend.user.dto.request.ResetPasswordRequest;
 import com.eddie.hungry_belly_backend.user.dto.request.UploadRequest;
 import com.eddie.hungry_belly_backend.user.dto.response.AdminUserResponse;
+import com.eddie.hungry_belly_backend.user.dto.response.ExportResult;
 import com.eddie.hungry_belly_backend.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/users")
@@ -24,9 +25,20 @@ public class UserController {
     private final StorageService storageService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<AdminUserResponse>>> listUsers() {
-            List<AdminUserResponse> listUsers = userService.fetchAllUsers();
+    public ResponseEntity<ApiResponse<?>> listUsers(
+            @RequestParam(name = "pageNum", required = false) Integer pageNum,
+            @RequestParam(name = "pageSize", required = false) Integer pageSize,
+            @RequestParam(name = "sortField", required = false, defaultValue = "firstName") String sortField,
+            @RequestParam(name = "sortDirection", required = false, defaultValue = "asc") String sortDirection,
+            @RequestParam(name = "keyword", required = false) String keyword
+            ) {
+             var listUsers = userService.listByPage(pageNum, pageSize, sortField, sortDirection, keyword);
             return ResponseEntity.ok(ApiResponse.success(listUsers, "All users fetched successfully"));
+    }
+
+    @GetMapping("/stats")
+    public ResponseEntity<ApiResponse<?>> countActiveUsers() {
+        return ResponseEntity.ok(ApiResponse.success(userService.getUserStats(),"OK"));
     }
 
     @PostMapping
@@ -70,6 +82,13 @@ public class UserController {
         var response = storageService.generateUploadUrl(request.getFolderName(), request.getFileName(), request.getContentType());
         return ResponseEntity.ok(ApiResponse.success(response, "User photo updated successfully"));
     }
+
+    @PostMapping("/export")
+    public ResponseEntity<ApiResponse<?>> exportUsers() {
+        ExportResult exportResult = userService.exportUserCsv();
+        return ResponseEntity.ok(ApiResponse.success(exportResult, "Data exported"));
+    }
+
 
 
 
