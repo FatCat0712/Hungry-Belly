@@ -11,6 +11,7 @@ import {
   useUserStats,
 } from "../../hooks/users/useUser";
 import { toast } from "react-toastify";
+import { useDebounce } from "../../hooks/useDebounce";
 
 export default function UserManagement() {
   const pageSize = 10;
@@ -18,14 +19,19 @@ export default function UserManagement() {
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const [sortField, setSortField] = useState("firstName");
   const [sortDirection, setSortDirection] = useState("asc");
+  const [keyword, setKeyword] = useState("");
+  const debouncedKeyword = useDebounce(keyword, 500);
 
-  const { stats } = useUserStats();
+  const {
+    stats: { totalUsers, activeUsers },
+  } = useUserStats();
 
   const { data, isLoading } = useListUsersByPage({
     pageNum: currentPage,
     pageSize,
     sortField,
     sortDirection,
+    keyword: debouncedKeyword,
   });
   const [userToDelete, setUserToDelete] = useState(null);
 
@@ -104,7 +110,7 @@ export default function UserManagement() {
                 <div className="d-flex align-items-start justify-content-between">
                   <div>
                     <small className="text-muted">Total Users</small>
-                    <h5 className="mb-0">{totalElements}</h5>
+                    <h5 className="mb-0">{totalUsers}</h5>
                   </div>
                   <i className="bi bi-people-fill fs-4 text-primary"></i>
                 </div>
@@ -117,7 +123,7 @@ export default function UserManagement() {
                 <div className="d-flex align-items-start justify-content-between">
                   <div>
                     <small className="text-muted">Active Users</small>
-                    <h5 className="mb-0">{stats}</h5>
+                    <h5 className="mb-0">{activeUsers}</h5>
                   </div>
                   <i className="bi bi-check-circle-fill fs-4 text-success"></i>
                 </div>
@@ -193,6 +199,8 @@ export default function UserManagement() {
                     placeholder="Search users..."
                     aria-label="Search users"
                     aria-describedby="search-addon"
+                    value={keyword}
+                    onChange={(e) => setKeyword(e.target.value)}
                   />
                 </div>
               </div>

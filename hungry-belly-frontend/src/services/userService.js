@@ -7,6 +7,7 @@ export const fetchUsersByPageApi = async ({
   pageSize,
   sortField,
   sortDirection,
+  keyword,
 } = {}) => {
   const response = await axios.get(API_URL, {
     params: {
@@ -14,6 +15,7 @@ export const fetchUsersByPageApi = async ({
       pageSize,
       sortField,
       sortDirection,
+      keyword,
     },
   });
   return response.data.data;

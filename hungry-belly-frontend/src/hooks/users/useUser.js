@@ -113,15 +113,17 @@ export const useListUsersByPage = ({
   pageSize = 10,
   sortField = "firstName",
   sortDirection = "asc",
+  keyword,
 } = {}) => {
   const { data, isLoading } = useQuery({
-    queryKey: ["users", pageNum, pageSize, sortField, sortDirection],
+    queryKey: ["users", pageNum, pageSize, sortField, sortDirection, keyword],
     queryFn: async () => {
       const response = await fetchUsersByPageApi({
         pageNum,
         pageSize,
         sortField,
         sortDirection,
+        keyword,
       });
       return response;
     },
@@ -135,9 +137,11 @@ export const useUserStats = () => {
     queryKey: ["userStats"],
     queryFn: async () => {
       const response = await fetchStatsApi();
+      console
       return response;
     },
   });
+
   return { stats };
 };
 
