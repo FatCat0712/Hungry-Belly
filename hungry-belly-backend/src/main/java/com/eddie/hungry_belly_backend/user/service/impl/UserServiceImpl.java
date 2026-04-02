@@ -144,7 +144,7 @@ public class UserServiceImpl implements UserService {
         Pageable pageable = PageRequest.of(pageNum - 1, pageSize, sort);
 
         // Step 1: Get paginated IDs (efficient DB pagination, no collection fetch)
-        Page<Long> idPage = null;
+        Page<Long> idPage;
         if (keyword != null) {
             idPage = userRepository.findAllUserIdsWithKeyword(keyword, pageable);
         } else {
@@ -176,7 +176,6 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserStatsResponse getUserStats() {
         Long usersCount = userRepository.countAllUsers();
-        ;
         Long userActiveCount = userRepository.countActiveUser();
         return UserStatsResponse.builder()
                 .totalUsers(usersCount)
@@ -203,6 +202,7 @@ public class UserServiceImpl implements UserService {
         }
         throw new IllegalArgumentException("Unsupported format");
     }
+
 
     private User convertToUserEntity(AdminUserCreateRequest request) {
         Set<Role> savedRoles = convertToRoleEntitySet(request.getRoles());

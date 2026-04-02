@@ -1,6 +1,7 @@
 package com.eddie.hungry_belly_backend.user.repository;
 
 import com.eddie.hungry_belly_backend.entity.User;
+import com.eddie.hungry_belly_backend.user.projection.RoleUserCount;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -33,12 +34,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.roles WHERE u.id IN :ids")
     List<User> findAllWithRolesByIds(@Param("ids") List<Long> ids);
 
-    @Query("SELECT u FROM User u JOIN FETCH u.roles WHERE u.deleted = false")
-    List<User> findActiveUsers();
 
-    @Query("SELECT u FROM User u JOIN FETCH u.roles WHERE u.deleted = true")
-    List<User> findDeletedUsers();
-
+    @Query("SELECT r.id AS roleId, COUNT(u) AS userCount FROM User u JOIN u.roles r GROUP BY r.id ORDER BY r.id")
+    List<RoleUserCount> countUsersByRole();
 
 
     @Query("SELECT COUNT(*) FROM User u WHERE u.enabled = true")

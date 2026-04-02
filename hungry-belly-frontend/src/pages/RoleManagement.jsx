@@ -1,9 +1,9 @@
 import { useState } from "react";
 import Spinner from "../components/Spinner";
-import RoleDialog from "../components/admin/RoleDialog";
-import DeleteRoleConfirmDialog from "../components/admin/DeleteRoleConfirmDialog";
+// import RoleDialog from "../components/admin/RoleDialog";
+// import DeleteRoleConfirmDialog from "../components/admin/DeleteRoleConfirmDialog";
+
 import { useRoles } from "../hooks/roles/useRoles";
-import { mockRoles } from "../mockData";
 
 export default function RoleManagement() {
   const [showModal, setShowModal] = useState(false);
@@ -12,14 +12,15 @@ export default function RoleManagement() {
   const [roleToDelete, setRoleToDelete] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const roles = mockRoles;
-  const isLoading = false;
+  const { roles, isLoading } = useRoles();
 
-  const filteredRoles = roles.filter(
-    (role) =>
-      role.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      role.description?.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
+  console.log(roles);
+
+  // const filteredRoles = roles.filter(
+  //   (role) =>
+  //     role.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  //     role.description?.toLowerCase().includes(searchQuery.toLowerCase()),
+  // );
 
   const handleEdit = (role) => {
     setSelectedRole(role);
@@ -31,15 +32,15 @@ export default function RoleManagement() {
     setShowDeleteConfirmModal(true);
   };
 
-  const handleCloseModal = () => {
-    setShowModal(false);
-    setSelectedRole(null);
-  };
+  // const handleCloseModal = () => {
+  //   setShowModal(false);
+  //   setSelectedRole(null);
+  // };
 
-  const handleCloseDeleteModal = () => {
-    setShowDeleteConfirmModal(false);
-    setRoleToDelete(null);
-  };
+  // const handleCloseDeleteModal = () => {
+  //   setShowDeleteConfirmModal(false);
+  //   setRoleToDelete(null);
+  // };
 
   if (isLoading) {
     return <Spinner message="Loading roles..." />;
@@ -81,7 +82,7 @@ export default function RoleManagement() {
                 <div className="d-flex align-items-start justify-content-between">
                   <div>
                     <small className="text-muted">Total Roles</small>
-                    <h5 className="mb-0">{roles.length}</h5>
+                    {/* <h5 className="mb-0">{roles.length}</h5> */}
                   </div>
                   <i className="bi bi-shield-check fs-4 text-primary"></i>
                 </div>
@@ -95,7 +96,7 @@ export default function RoleManagement() {
                   <div>
                     <small className="text-muted">Active Roles</small>
                     <h5 className="mb-0">
-                      {roles.filter((r) => r.status !== "archived").length}
+                      {/* {roles.filter((r) => r.status !== "archived").length} */}
                     </h5>
                   </div>
                   <i className="bi bi-check-circle-fill fs-4 text-success"></i>
@@ -127,8 +128,8 @@ export default function RoleManagement() {
               <div>
                 <h5 className="card-title mb-0">All Roles</h5>
                 <small className="text-muted">
-                  {filteredRoles.length} role
-                  {filteredRoles.length !== 1 ? "s" : ""}
+                  {/* {filteredRoles.length} role
+                  {filteredRoles.length !== 1 ? "s" : ""} */}
                 </small>
               </div>
               <div className="input-group" style={{ maxWidth: 250 }}>
@@ -147,7 +148,7 @@ export default function RoleManagement() {
           </div>
 
           <div className="card-body p-0">
-            {filteredRoles.length === 0 ? (
+            {roles.length === 0 ? (
               <div className="text-center py-5">
                 <i className="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
                 <p className="text-muted">
@@ -168,7 +169,7 @@ export default function RoleManagement() {
               </div>
             ) : (
               <div className="row g-3 p-3">
-                {filteredRoles.map((role) => (
+                {roles.map((role) => (
                   <div key={role.id} className="col-md-6 col-lg-4">
                     <div className="card border h-100 position-relative">
                       {role.isSystem && (
@@ -209,7 +210,7 @@ export default function RoleManagement() {
                             <div className="d-flex flex-wrap gap-1">
                               {role.permissions.slice(0, 3).map((perm) => (
                                 <span
-                                  key={perm}
+                                  key={perm.id}
                                   className="badge bg-primary-light text-primary"
                                   style={{
                                     backgroundColor: "#e7f3ff",
@@ -217,7 +218,7 @@ export default function RoleManagement() {
                                     fontSize: 11,
                                   }}
                                 >
-                                  {perm}
+                                  {perm.name}
                                 </span>
                               ))}
                               {role.permissions.length > 3 && (
@@ -269,20 +270,20 @@ export default function RoleManagement() {
       </div>
 
       {/* Modals */}
-      <RoleDialog
+      {/* <RoleDialog
         open={showModal}
         onClose={handleCloseModal}
         selectedRole={selectedRole}
-      />
+      /> */}
 
-      {roleToDelete && (
+      {/* {roleToDelete && (
         <DeleteRoleConfirmDialog
           open={showDeleteConfirmModal}
           onClose={handleCloseDeleteModal}
           role={roleToDelete}
           onSuccess={() => setRoleToDelete(null)}
         />
-      )}
+      )} */}
     </>
   );
 }
