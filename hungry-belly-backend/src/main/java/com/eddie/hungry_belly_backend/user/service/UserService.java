@@ -15,6 +15,7 @@ public interface UserService {
     AdminUserResponse updateUserInfo(Long id, AdminUserRequest request);
     UserStatsResponse getUserStats();
     ExportResult exportUserCsv();
+    ExportResult exportUserExcel();
     void resetPassword(Long id, @Valid ResetPasswordRequest request);
     void delete(Long id);
     void updateUserStatus(Long id);

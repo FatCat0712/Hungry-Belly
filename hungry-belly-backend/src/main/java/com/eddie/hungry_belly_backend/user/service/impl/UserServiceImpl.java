@@ -4,6 +4,7 @@ import com.eddie.hungry_belly_backend.StorageService;
 import com.eddie.hungry_belly_backend.common.dto.response.PageResponse;
 import com.eddie.hungry_belly_backend.common.mapper.PageMapper;
 import com.eddie.hungry_belly_backend.common.util.CsvExporter;
+import com.eddie.hungry_belly_backend.common.util.ExcelExporter;
 import com.eddie.hungry_belly_backend.entity.Role;
 import com.eddie.hungry_belly_backend.entity.User;
 import com.eddie.hungry_belly_backend.exception.BadRequestException;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -206,6 +208,35 @@ public class UserServiceImpl implements UserService {
 
             return ExportResult.builder()
                     .fileName(fileName + ".csv")
+                    .downloadUrl(signedUrl)
+                    .created(LocalDateTime.now())
+                    .build();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public ExportResult exportUserExcel() {
+        ExcelExporter exporter = new ExcelExporter();
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
+        String timestamp = dateTimeFormatter.format(LocalDateTime.now());
+        String fileName = "users_" + timestamp;
+        String path = "exports/xlsx/" + fileName + ".xlsx";
+
+        try {
+            Path tempFile = Files.createTempFile(fileName, ".xlsx");
+            try (OutputStream os = Files.newOutputStream(tempFile)) {
+                List<UserCsvDto> userCsvDtos = findAllUsers().stream().map(this::convertToCsvDto).toList();
+                exporter.export(userCsvDtos, os);
+            }
+            storageService.removeFolder("exports/xlsx");
+            storageService.uploadFile(path, Files.newInputStream(tempFile), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+
+            String signedUrl = storageService.generateDownloadUrl(path, 3600);
+
+            return ExportResult.builder()
+                    .fileName(fileName + ".xlsx")
                     .downloadUrl(signedUrl)
                     .created(LocalDateTime.now())
                     .build();

@@ -83,11 +83,19 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success(response, "User photo updated successfully"));
     }
 
-    @PostMapping("/export")
-    public ResponseEntity<ApiResponse<?>> exportUsers() {
+    @PostMapping("/export/csv")
+    public ResponseEntity<ApiResponse<?>> exportUsersCsv() {
         ExportResult exportResult = userService.exportUserCsv();
         return ResponseEntity.ok(ApiResponse.success(exportResult, "Data exported"));
     }
+
+    @PostMapping("/export/excel")
+    public ResponseEntity<ApiResponse<?>> exportUsersExcel() {
+        ExportResult exportResult = userService.exportUserExcel();
+        return ResponseEntity.ok(ApiResponse.success(exportResult, "Data exported"));
+    }
+
+
 
 
 

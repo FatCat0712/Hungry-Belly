@@ -104,6 +104,12 @@ export default function UserManagement() {
           </div>
           <div className="d-flex gap-2">
             <button
+              className="btn btn-secondary d-flex align-items-center gap-2"
+              onClick={handleExportUsers}
+            >
+              <i className="bi bi-download"></i> Export Excel
+            </button>
+            <button
               className="btn btn-info d-flex align-items-center gap-2"
               onClick={handleExportUsers}
             >
