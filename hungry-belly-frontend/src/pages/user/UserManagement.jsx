@@ -42,7 +42,9 @@ export default function UserManagement() {
 
   const navigate = useNavigate();
   const { toggleStatus } = useToggleStatus();
-  const { exportUsers } = useExportUsers();
+
+  const [format, setFormat] = useState("");
+  const { exportUsers } = useExportUsers(format);
 
   const toggleUserStatus = (userId, name, status) => {
     toggleStatus(
@@ -105,13 +107,19 @@ export default function UserManagement() {
           <div className="d-flex gap-2">
             <button
               className="btn btn-secondary d-flex align-items-center gap-2"
-              onClick={handleExportUsers}
+              onClick={() => {
+                setFormat("excel");
+                handleExportUsers();
+              }}
             >
               <i className="bi bi-download"></i> Export Excel
             </button>
             <button
               className="btn btn-info d-flex align-items-center gap-2"
-              onClick={handleExportUsers}
+              onClick={() => {
+                setFormat("csv");
+                handleExportUsers();
+              }}
             >
               <i className="bi bi-download"></i> Export CSV
             </button>

@@ -1,10 +1,12 @@
 package com.eddie.hungry_belly_backend.user.service.impl;
 
-import com.eddie.hungry_belly_backend.StorageService;
 import com.eddie.hungry_belly_backend.common.dto.response.PageResponse;
 import com.eddie.hungry_belly_backend.common.mapper.PageMapper;
-import com.eddie.hungry_belly_backend.common.util.CsvExporter;
-import com.eddie.hungry_belly_backend.common.util.ExcelExporter;
+import com.eddie.hungry_belly_backend.common.util.export.CsvExporter;
+import com.eddie.hungry_belly_backend.common.util.export.ExcelExporter;
+import com.eddie.hungry_belly_backend.common.util.export.ExportService;
+import com.eddie.hungry_belly_backend.common.util.export.ExportStrategy;
+import com.eddie.hungry_belly_backend.common.util.storage.StorageService;
 import com.eddie.hungry_belly_backend.entity.Role;
 import com.eddie.hungry_belly_backend.entity.User;
 import com.eddie.hungry_belly_backend.exception.BadRequestException;
@@ -25,13 +27,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.Writer;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -43,11 +38,12 @@ public class UserServiceImpl implements UserService {
     private final RoleService roleService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final ExportService exportService;
     private final StorageService storageService;
 
     public AdminUserResponse createUser(AdminUserCreateRequest request) {
         boolean isEmailUnique = userRepository.existsByEmailAndDeletedFalse(request.getEmail());
-        if(isEmailUnique) {
+        if (isEmailUnique) {
             throw new BadRequestException("email: Email already exists");
         }
         User user = convertToUserEntity(request);
@@ -73,7 +69,7 @@ public class UserServiceImpl implements UserService {
 
         User existUser = userRepository.findByEmail(request.getEmail());
 
-        if(existUser != null && !existUser.getId().equals(userId)) {
+        if (existUser != null && !existUser.getId().equals(userId)) {
             throw new BadRequestException("email: Email already exists");
         }
 
@@ -81,7 +77,7 @@ public class UserServiceImpl implements UserService {
 
         User dbUser = findUserById(userId);
 
-        if(userEntity.getPassword() == null) {
+        if (userEntity.getPassword() == null) {
             dbUser.setPassword(dbUser.getPassword());
         }
 
@@ -91,7 +87,7 @@ public class UserServiceImpl implements UserService {
         dbUser.setRoles(userEntity.getRoles());
         dbUser.setEnabled(userEntity.isEnabled());
 
-        if(userEntity.getPhoto()  != null) {
+        if (userEntity.getPhoto() != null) {
             storageService.removeFolder("user-photos/" + dbUser.getId() + "/" + dbUser.getPhoto());
             dbUser.setPhoto(userEntity.getPhoto());
         }
@@ -130,15 +126,15 @@ public class UserServiceImpl implements UserService {
             String sortDirection,
             String keyword
     ) {
-        if(pageNum == null) {
+        if (pageNum == null) {
             pageNum = 0;
         }
 
-        if(pageSize == null) {
+        if (pageSize == null) {
             pageSize = 10;
         }
 
-        if(pageNum < 0 || pageSize <= 0 || pageSize > 100) {
+        if (pageNum < 0 || pageSize <= 0 || pageSize > 100) {
             throw new IllegalArgumentException("Invalid pagination parameter");
         }
 
@@ -149,25 +145,24 @@ public class UserServiceImpl implements UserService {
 
         // Step 1: Get paginated IDs (efficient DB pagination, no collection fetch)
         Page<Long> idPage = null;
-        if(keyword != null) {
+        if (keyword != null) {
             idPage = userRepository.findAllUserIdsWithKeyword(keyword, pageable);
-        }
-        else {
+        } else {
             idPage = userRepository.findAllUserIds(pageable);
         }
 
         // Step 2: Bulk load users with roles by IDs (single efficient query)
         List<User> users = userRepository.findAllWithRolesByIds(idPage.getContent());
-        
+
         // Step 3: Convert to DTOs
         List<AdminUserResponse> responses = users.stream()
                 .map(this::convertToAdminResponse)
                 .toList();
-        
+
         // Step 4: Reconstruct Page object with original pagination metadata
         Page<AdminUserResponse> responsePage = new PageImpl<>(
-                responses, 
-                pageable, 
+                responses,
+                pageable,
                 idPage.getTotalElements()
         );
 
@@ -175,12 +170,13 @@ public class UserServiceImpl implements UserService {
     }
 
     public List<User> findAllUsers() {
-      return userRepository.findAll();
+        return userRepository.findAll();
     }
 
     @Override
     public UserStatsResponse getUserStats() {
-        Long usersCount = userRepository.countAllUsers();;
+        Long usersCount = userRepository.countAllUsers();
+        ;
         Long userActiveCount = userRepository.countActiveUser();
         return UserStatsResponse.builder()
                 .totalUsers(usersCount)
@@ -189,60 +185,23 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public ExportResult exportUserCsv() {
-        CsvExporter exporter = new CsvExporter();
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
-        String timestamp = dateTimeFormatter.format(LocalDateTime.now());
-        String fileName = "users_" + timestamp;
-        String path = "exports/csv/" + fileName + ".csv";
-        try {
-            Path tempFile = Files.createTempFile(fileName, ".csv");
-            try (Writer writer = Files.newBufferedWriter(tempFile)) {
-                List<UserCsvDto> userCsvDtos = findAllUsers().stream().map(this::convertToCsvDto).toList();
-                exporter.export(writer, userCsvDtos);
-                storageService.removeFolder("exports/csv");
-                storageService.uploadFile(path, Files.newInputStream(tempFile), "text/csv");
-            }
+    public ExportResult exportUser(String format) {
+        List<UserCsvDto> userCsvDtos = findAllUsers().stream().map(this::convertToCsvDto).toList();
 
-            String signedUrl = storageService.generateDownloadUrl(path, 3600);
-
-            return ExportResult.builder()
-                    .fileName(fileName + ".csv")
-                    .downloadUrl(signedUrl)
-                    .created(LocalDateTime.now())
-                    .build();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
-    public ExportResult exportUserExcel() {
-        ExcelExporter exporter = new ExcelExporter();
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
-        String timestamp = dateTimeFormatter.format(LocalDateTime.now());
-        String fileName = "users_" + timestamp;
-        String path = "exports/xlsx/" + fileName + ".xlsx";
+        String[] headers = {"User ID", "Email", "First Name", "Last Name", "Roles", "Status"};
 
         try {
-            Path tempFile = Files.createTempFile(fileName, ".xlsx");
-            try (OutputStream os = Files.newOutputStream(tempFile)) {
-                List<UserCsvDto> userCsvDtos = findAllUsers().stream().map(this::convertToCsvDto).toList();
-                exporter.export(userCsvDtos, os);
+            if ("csv".equals(format)) {
+                ExportStrategy<UserCsvDto> strategy = new CsvExporter<>(headers, new String[]{"id", "email", "firstName", "lastName", "roles", "status"});
+                return exportService.export(userCsvDtos, strategy);
+            } else if ("excel".equals(format)) {
+                ExportStrategy<UserCsvDto> strategy = new ExcelExporter<>(headers, u -> new Object[]{u.getId(), u.getEmail(), u.getFirstName(), u.getLastName(), u.getRoles(), u.getStatus()});
+                return exportService.export(userCsvDtos, strategy);
             }
-            storageService.removeFolder("exports/xlsx");
-            storageService.uploadFile(path, Files.newInputStream(tempFile), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-
-            String signedUrl = storageService.generateDownloadUrl(path, 3600);
-
-            return ExportResult.builder()
-                    .fileName(fileName + ".xlsx")
-                    .downloadUrl(signedUrl)
-                    .created(LocalDateTime.now())
-                    .build();
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
+        throw new IllegalArgumentException("Unsupported format");
     }
 
     private User convertToUserEntity(AdminUserCreateRequest request) {
@@ -273,8 +232,8 @@ public class UserServiceImpl implements UserService {
 
     private String generateUserPhotoPath(User user) {
         String photo = user.getPhoto();
-        if(photo == null) return null;
-        return storageService.generateDownloadUrl("user-photos/" + user.getId() + "/" + photo , 3600);
+        if (photo == null) return null;
+        return storageService.generateDownloadUrl("user-photos/" + user.getId() + "/" + photo, 3600);
     }
 
     private Set<Role> convertToRoleEntitySet(Set<String> roles) {

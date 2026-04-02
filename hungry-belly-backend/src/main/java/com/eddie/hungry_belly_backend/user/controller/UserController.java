@@ -1,6 +1,6 @@
 package com.eddie.hungry_belly_backend.user.controller;
 
-import com.eddie.hungry_belly_backend.StorageService;
+import com.eddie.hungry_belly_backend.common.util.storage.StorageService;
 import com.eddie.hungry_belly_backend.common.dto.response.ApiResponse;
 import com.eddie.hungry_belly_backend.user.dto.request.AdminUserCreateRequest;
 import com.eddie.hungry_belly_backend.user.dto.request.AdminUserRequest;
@@ -83,17 +83,13 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success(response, "User photo updated successfully"));
     }
 
-    @PostMapping("/export/csv")
-    public ResponseEntity<ApiResponse<?>> exportUsersCsv() {
-        ExportResult exportResult = userService.exportUserCsv();
+    @PostMapping("/export/{format}")
+    public ResponseEntity<ApiResponse<?>> exportUsersCsv(@PathVariable String format) {
+        ExportResult exportResult = userService.exportUser(format);
         return ResponseEntity.ok(ApiResponse.success(exportResult, "Data exported"));
     }
 
-    @PostMapping("/export/excel")
-    public ResponseEntity<ApiResponse<?>> exportUsersExcel() {
-        ExportResult exportResult = userService.exportUserExcel();
-        return ResponseEntity.ok(ApiResponse.success(exportResult, "Data exported"));
-    }
+
 
 
 

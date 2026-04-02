@@ -1,4 +1,4 @@
-package com.eddie.hungry_belly_backend;
+package com.eddie.hungry_belly_backend.common.util.storage;
 
 import com.eddie.hungry_belly_backend.exception.BadRequestException;
 import com.eddie.hungry_belly_backend.user.dto.response.PresignedUploadResponse;

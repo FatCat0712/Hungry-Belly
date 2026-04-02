@@ -98,7 +98,7 @@ export const getPresignedUrlApi = async (userId, fileName, contentType) => {
   return response.data.data;
 };
 
-export const exportUsersApi = async () => {
-  const response = await axios.post(`${API_URL}/export`, null, {});
+export const exportUsersApi = async (format) => {
+  const response = await axios.post(`${API_URL}/export/${format}`, null, {});
   return response.data.data;
 };
