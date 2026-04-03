@@ -1,9 +1,8 @@
-package com.eddie.hungry_belly_backend.role.dto;
+package com.eddie.hungry_belly_backend.role.dto.response;
 
-import com.eddie.hungry_belly_backend.entity.Permission;
 import lombok.*;
 
-import java.util.Set;
+import java.util.List;
 
 @Getter
 @Setter
@@ -14,6 +13,6 @@ public class RoleResponse {
     private Long id;
     private String name;
     private String description;
-    private Set<Permission> permissions;
     private Long userCount;
+    private List<PermissionResponse> permissions;
 }

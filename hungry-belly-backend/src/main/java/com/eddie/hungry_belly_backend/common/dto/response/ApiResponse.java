@@ -19,7 +19,7 @@ public class ApiResponse<T> {
         return ApiResponse.<T>builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.OK.value())
-                .message(message)
+                .message(message + " successfully")
                 .data(data)
                 .build();
     }

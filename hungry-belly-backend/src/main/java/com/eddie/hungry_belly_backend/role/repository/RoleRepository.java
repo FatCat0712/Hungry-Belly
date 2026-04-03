@@ -6,6 +6,7 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @Repository
@@ -14,4 +15,9 @@ public interface RoleRepository extends CrudRepository<Role, Long> {
 
     @Query("SELECT r FROM Role r JOIN FETCH r.permissions ORDER BY r.id")
     List<Role> fetchRolesWithPermissions();
+
+    @Query("SELECT r FROM Role r JOIN FETCH r.permissions WHERE r.id = ?1")
+    Optional<Role> fetchRoleById(Long id);
+
+
 }

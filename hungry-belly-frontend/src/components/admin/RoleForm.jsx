@@ -1,51 +1,82 @@
 import React, { useState } from "react";
 import { toast } from "react-toastify";
 import PermissionTree from "./PermissionTree";
-import { useCreateRole } from "../../hooks/roles/useCreateRole";
-import { useUpdateRole } from "../../hooks/roles/useUpdateRole";
-import { usePermissions } from "../../hooks/roles/usePermissions";
+import { useNavigate } from "react-router-dom";
+import { useUpdateRole } from "../../hooks/roles/useRoles";
+// import { useCreateRole } from "../../hooks/roles/useCreateRole";
+// import { useUpdateRole } from "../../hooks/roles/useUpdateRole";
+// import { usePermissions } from "../../hooks/roles/usePermissions";
 
-function RoleForm({ onClose, selectedRole }) {
+function RoleForm({ selectedRole }) {
   const [data, setData] = useState({
     id: selectedRole?.id || null,
     name: selectedRole?.name || "",
     description: selectedRole?.description || "",
-    permissions: selectedRole?.permissions || [],
+    currentPermissions: selectedRole?.currentPermissions || [],
+    allPermissions: selectedRole?.allPermissions || [],
   });
 
   const [errors, setErrors] = useState({});
-  const { mutate: createRole, isPending: isCreating } = useCreateRole();
-  const { mutate: updateRole, isPending: isUpdating } = useUpdateRole();
-  const { permissions, isLoading: isLoadingPermissions } = usePermissions();
+  // const { mutate: createRole, isPending: isCreating } = useCreateRole();
+  const { updateRole } = useUpdateRole();
+  // const { permissions, isLoading: isLoadingPermissions } = usePermissions();
 
-  const handleSubmit = (e) => {
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate
-    if (!data.name.trim()) {
-      setErrors({ name: "Role name is required" });
+    const transferData = {
+      id: data.id,
+      name: data.name,
+      description: data.description,
+      permissions: data.currentPermissions,
+    };
+
+    try {
+      const response = await updateRole(transferData);
+
+      if (response.status === 200) {
+        toast.success("Role updated successfully");
+        navigate("/roles");
+      }
+    } catch (error) {
+      const apiError = error.response?.data;
+      const apiMessage = apiError?.message;
+
+      if (apiMessage && typeof apiMessage === "object") {
+        setErrors((prev) => ({ ...prev, ...apiMessage }));
+        return;
+      }
+
+      toast.error(apiMessage || error.message || "An error occurred");
       return;
     }
 
-    const handler = selectedRole ? updateRole : createRole;
-    const payload = selectedRole
-      ? { roleId: selectedRole.id, roleData: data }
-      : data;
+    // Validate
+    // if (!data.name.trim()) {
+    //   setErrors({ name: "Role name is required" });
+    //   return;
+    // }
 
-    handler(payload, {
-      onSuccess: () => {
-        toast.success(
-          selectedRole
-            ? "Role updated successfully"
-            : "Role created successfully",
-        );
-        onClose();
-      },
-      onError: (error) => {
-        const message = error.response?.data?.message || error.message;
-        toast.error(message || "Failed to save role");
-      },
-    });
+    // const handler = selectedRole ? updateRole : createRole;
+    // const payload = selectedRole
+    //   ? { roleId: selectedRole.id, roleData: data }
+    //   : data;
+
+    // handler(payload, {
+    //   onSuccess: () => {
+    //     toast.success(
+    //       selectedRole
+    //         ? "Role updated successfully"
+    //         : "Role created successfully",
+    //     );
+    //   },
+    //   onError: (error) => {
+    //     const message = error.response?.data?.message || error.message;
+    //     toast.error(message || "Failed to save role");
+    //   },
+    // });
   };
 
   const handleInputChange = (e) => {
@@ -54,11 +85,16 @@ function RoleForm({ onClose, selectedRole }) {
     setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
-  const handlePermissionsChange = (newPermissions) => {
-    setData((prev) => ({ ...prev, permissions: newPermissions }));
+  const handleClose = () => {
+    navigate(-1);
   };
 
-  const isLoading = isLoadingPermissions || isCreating || isUpdating;
+  const handlePermissionsChange = (newPermissionIds) => {
+    setData((prev) => ({ ...prev, currentPermissions: newPermissionIds }));
+  };
+
+  // const isLoading = isLoadingPermissions || isCreating || isUpdating;
+  let isLoadingPermissions = false;
 
   return (
     <form onSubmit={handleSubmit}>
@@ -66,12 +102,6 @@ function RoleForm({ onClose, selectedRole }) {
         <h5 className="modal-title">
           {selectedRole ? "Edit Role" : "Create Role"}
         </h5>
-        <button
-          type="button"
-          className="btn-close"
-          onClick={onClose}
-          disabled={isLoading}
-        ></button>
       </div>
 
       <div
@@ -90,7 +120,7 @@ function RoleForm({ onClose, selectedRole }) {
             value={data.name}
             onChange={handleInputChange}
             placeholder="e.g., Restaurant Manager"
-            disabled={isLoading}
+            // disabled={isLoading}
           />
           {errors.name && <div className="invalid-feedback">{errors.name}</div>}
         </div>
@@ -107,7 +137,7 @@ function RoleForm({ onClose, selectedRole }) {
             onChange={handleInputChange}
             placeholder="Brief description of this role's purpose"
             rows="3"
-            disabled={isLoading}
+            // disabled={isLoading}
           ></textarea>
         </div>
 
@@ -128,10 +158,10 @@ function RoleForm({ onClose, selectedRole }) {
                 <span className="visually-hidden">Loading permissions...</span>
               </div>
             </div>
-          ) : permissions.length > 0 ? (
+          ) : data.allPermissions.length > 0 ? (
             <PermissionTree
-              permissions={permissions}
-              selectedPermissions={data.permissions}
+              permissions={data.currentPermissions}
+              allPermissions={data.allPermissions}
               onPermissionChange={handlePermissionsChange}
             />
           ) : (
@@ -140,27 +170,27 @@ function RoleForm({ onClose, selectedRole }) {
         </div>
       </div>
 
-      <div className="modal-footer border-top">
+      <div className="border-top d-flex justify-content-end gap-3 p-3">
         <button
           type="button"
           className="btn btn-outline-secondary"
-          onClick={onClose}
-          disabled={isLoading}
+          onClick={handleClose}
+          // disabled={isLoading}
         >
           Cancel
         </button>
         <button
           type="submit"
           className="btn btn-primary d-flex align-items-center gap-2"
-          disabled={isLoading}
+          // disabled={isLoading}
         >
-          {isLoading && (
+          {/* {isLoading && (
             <span
               className="spinner-border spinner-border-sm"
               role="status"
               aria-hidden="true"
             ></span>
-          )}
+          )} */}
           {selectedRole ? "Update Role" : "Create Role"}
         </button>
       </div>

@@ -1,20 +1,17 @@
 import { useState } from "react";
-import Spinner from "../components/Spinner";
-// import RoleDialog from "../components/admin/RoleDialog";
+import { useNavigate } from "react-router-dom";
+import Spinner from "../../components/Spinner";
+
 // import DeleteRoleConfirmDialog from "../components/admin/DeleteRoleConfirmDialog";
 
-import { useRoles } from "../hooks/roles/useRoles";
+import { useRoles } from "../../hooks/roles/useRoles";
 
 export default function RoleManagement() {
-  const [showModal, setShowModal] = useState(false);
-  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
-  const [selectedRole, setSelectedRole] = useState(null);
   const [roleToDelete, setRoleToDelete] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
 
+  const navigate = useNavigate();
   const { roles, isLoading } = useRoles();
-
-  console.log(roles);
 
   // const filteredRoles = roles.filter(
   //   (role) =>
@@ -23,13 +20,11 @@ export default function RoleManagement() {
   // );
 
   const handleEdit = (role) => {
-    setSelectedRole(role);
-    setShowModal(true);
+    navigate(`/roles/${role.id}/edit`);
   };
 
   const handleDelete = (role) => {
     setRoleToDelete(role);
-    setShowDeleteConfirmModal(true);
   };
 
   // const handleCloseModal = () => {
@@ -66,7 +61,6 @@ export default function RoleManagement() {
               className="btn btn-primary d-flex align-items-center gap-2"
               onClick={() => {
                 setShowModal(true);
-                setSelectedRole(null);
               }}
             >
               <i className="bi bi-plus-lg"></i> Create Role
@@ -159,7 +153,6 @@ export default function RoleManagement() {
                     className="btn btn-sm btn-primary mt-2"
                     onClick={() => {
                       setShowModal(true);
-                      setSelectedRole(null);
                     }}
                   >
                     <i className="bi bi-plus-lg me-1"></i>
@@ -268,13 +261,6 @@ export default function RoleManagement() {
           </div>
         </div>
       </div>
-
-      {/* Modals */}
-      {/* <RoleDialog
-        open={showModal}
-        onClose={handleCloseModal}
-        selectedRole={selectedRole}
-      /> */}
 
       {/* {roleToDelete && (
         <DeleteRoleConfirmDialog

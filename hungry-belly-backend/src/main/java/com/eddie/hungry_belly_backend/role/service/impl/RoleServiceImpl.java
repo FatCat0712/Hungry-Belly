@@ -1,7 +1,13 @@
 package com.eddie.hungry_belly_backend.role.service.impl;
 
+import com.eddie.hungry_belly_backend.entity.Permission;
 import com.eddie.hungry_belly_backend.entity.Role;
-import com.eddie.hungry_belly_backend.role.dto.RoleResponse;
+import com.eddie.hungry_belly_backend.exception.RoleNotFoundException;
+import com.eddie.hungry_belly_backend.permission.service.PermissionService;
+import com.eddie.hungry_belly_backend.role.dto.request.RoleUpdateRequest;
+import com.eddie.hungry_belly_backend.role.dto.response.PermissionResponse;
+import com.eddie.hungry_belly_backend.role.dto.response.RoleResponse;
+import com.eddie.hungry_belly_backend.role.dto.response.UpdateRoleResponse;
 import com.eddie.hungry_belly_backend.role.repository.RoleRepository;
 import com.eddie.hungry_belly_backend.role.service.RoleService;
 import com.eddie.hungry_belly_backend.user.projection.RoleUserCount;
@@ -9,10 +15,7 @@ import com.eddie.hungry_belly_backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -20,6 +23,7 @@ import java.util.stream.Collectors;
 public class RoleServiceImpl implements RoleService {
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
+    private final PermissionService permissionService;
 
     @Override
     public Set<Role> getRolesByNames(Set<String> names) {
@@ -49,18 +53,78 @@ public class RoleServiceImpl implements RoleService {
         return roleResponses;
     }
 
-
     private RoleResponse convertToRoleResponse(Role role, Long userCount) {
+        List<PermissionResponse> permissionResponses = role.getPermissions().stream()
+                .map(this::convertToPermissionResponse).toList();
+
         return RoleResponse.builder()
                 .id(role.getId())
                 .name(role.getName())
                 .description(role.getDescription())
-                .permissions(role.getPermissions())
+                .permissions(permissionResponses)
                 .userCount(userCount)
                 .build();
+    }
+
+
+    private Role fetchById(Long id) {
+        Optional<Role> dbRole = roleRepository.fetchRoleById(id);
+        if(dbRole.isEmpty()) {
+            throw new RoleNotFoundException("Role with id " + id + " could not be found");
+        }
+        return dbRole.get();
+    }
+
+    @Override
+    public UpdateRoleResponse fetchRoleById(Long id) {
+      return convertToEditRoleResponse(fetchById(id));
+    }
 
 
 
+    @Override
+    public void updateRole(RoleUpdateRequest request) {
+        Role dbRole = fetchById(request.getId());
 
+        dbRole.setName(request.getName());
+        dbRole.setDescription(request.getDescription());
+
+        Set<Permission> dbPermissions = convertToPermission(request.getPermissions());
+
+        dbRole.setPermissions(dbPermissions);
+
+        roleRepository.save(dbRole);
+    }
+
+    private Set<Permission> convertToPermission(List<Long> permissionsId) {
+        return permissionService.fetchPermissionsInIds(permissionsId);
+    }
+
+
+    private UpdateRoleResponse convertToEditRoleResponse(Role role) {
+
+        List<Long> currentPermissions = role.getPermissions().stream()
+                .map(Permission::getId).toList();
+
+        List<PermissionResponse> permissionsResponses = permissionService.fetchAllPermissions().stream()
+                .map(this::convertToPermissionResponse)
+                .toList();
+
+
+        return UpdateRoleResponse.builder()
+                .id(role.getId())
+                .name(role.getName())
+                .description(role.getDescription())
+                .currentPermissions(currentPermissions)
+                .allPermissions(permissionsResponses)
+                .build();
+    }
+
+    private PermissionResponse convertToPermissionResponse(Permission permission) {
+        return PermissionResponse.builder()
+                .id(permission.getId())
+                .name(permission.getName())
+                .resource(permission.getName().split("_")[0])
+                .build();
     }
 }

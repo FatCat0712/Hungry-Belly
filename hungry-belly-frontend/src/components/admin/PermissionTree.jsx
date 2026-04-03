@@ -1,21 +1,39 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
 const PermissionTree = ({
   permissions,
-  selectedPermissions,
+  allPermissions,
   onPermissionChange,
 }) => {
   const [expandedGroups, setExpandedGroups] = useState({});
+  const groupCheckboxRefs = useRef({});
 
   // Group permissions by resource (e.g., "users", "roles", "orders")
-  const groupedPermissions = permissions.reduce((groups, permission) => {
-    const resource = permission.resource || "other";
-    if (!groups[resource]) {
-      groups[resource] = [];
-    }
-    groups[resource].push(permission);
-    return groups;
-  }, {});
+  const groupedPermissions = useMemo(
+    () =>
+      allPermissions.reduce((groups, permission) => {
+        const resource = permission.resource || "other";
+        if (!groups[resource]) {
+          groups[resource] = [];
+        }
+        groups[resource].push(permission);
+        return groups;
+      }, {}),
+    [allPermissions],
+  );
+
+  useEffect(() => {
+    Object.entries(groupedPermissions).forEach(([resource, perms]) => {
+      const checkbox = groupCheckboxRefs.current[resource];
+      if (!checkbox) return;
+
+      const resourcePerms = perms.map((p) => p.id);
+      const allSelected = resourcePerms.every((id) => permissions.includes(id));
+      const someSelected = resourcePerms.some((id) => permissions.includes(id));
+
+      checkbox.indeterminate = someSelected && !allSelected;
+    });
+  }, [groupedPermissions, permissions]);
 
   const toggleGroup = (resource) => {
     setExpandedGroups((prev) => ({
@@ -25,27 +43,25 @@ const PermissionTree = ({
   };
 
   const handlePermissionToggle = (permissionId) => {
-    const newPermissions = selectedPermissions.includes(permissionId)
-      ? selectedPermissions.filter((id) => id !== permissionId)
-      : [...selectedPermissions, permissionId];
-    onPermissionChange(newPermissions);
+    const newPermissionIds = permissions.includes(permissionId)
+      ? permissions.filter((id) => id !== permissionId)
+      : [...permissions, permissionId];
+    onPermissionChange(newPermissionIds);
   };
 
   const handleSelectAll = (resource) => {
     const resourcePermissions = groupedPermissions[resource].map((p) => p.id);
     const allSelected = resourcePermissions.every((id) =>
-      selectedPermissions.includes(id),
+      permissions.includes(id),
     );
 
-    let newPermissions = selectedPermissions;
+    let newPermissions = permissions;
     if (allSelected) {
-      newPermissions = selectedPermissions.filter(
+      newPermissions = permissions.filter(
         (id) => !resourcePermissions.includes(id),
       );
     } else {
-      newPermissions = [
-        ...new Set([...selectedPermissions, ...resourcePermissions]),
-      ];
+      newPermissions = [...new Set([...permissions, ...resourcePermissions])];
     }
     onPermissionChange(newPermissions);
   };
@@ -54,12 +70,8 @@ const PermissionTree = ({
     <div className="permission-tree">
       {Object.entries(groupedPermissions).map(([resource, perms]) => {
         const isExpanded = expandedGroups[resource] !== false;
-        const resourcePerms = perms.map((p) => p.id);
-        const allSelected = resourcePerms.every((id) =>
-          selectedPermissions.includes(id),
-        );
-        const someSelected = resourcePerms.some((id) =>
-          selectedPermissions.includes(id),
+        const allSelected = perms.every((permission) =>
+          permissions.includes(permission.id),
         );
 
         return (
@@ -78,7 +90,9 @@ const PermissionTree = ({
               <input
                 type="checkbox"
                 checked={allSelected}
-                indeterminate={someSelected && !allSelected}
+                ref={(el) => {
+                  groupCheckboxRefs.current[resource] = el;
+                }}
                 onChange={() => handleSelectAll(resource)}
                 onClick={(e) => e.stopPropagation()}
                 style={{
@@ -101,7 +115,7 @@ const PermissionTree = ({
                       type="checkbox"
                       id={`perm-${permission.id}`}
                       className="form-check-input"
-                      checked={selectedPermissions.includes(permission.id)}
+                      checked={permissions.includes(permission.id)}
                       onChange={() => handlePermissionToggle(permission.id)}
                       style={{
                         accentColor: "#0d6efd",
@@ -115,13 +129,8 @@ const PermissionTree = ({
                     >
                       <div>
                         <small className="fw-semibold text-capitalize">
-                          {permission.action}
+                          {permission.name}
                         </small>
-                        {permission.description && (
-                          <div className="text-muted" style={{ fontSize: 12 }}>
-                            {permission.description}
-                          </div>
-                        )}
                       </div>
                     </label>
                   </div>

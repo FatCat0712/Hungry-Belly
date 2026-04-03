@@ -1,13 +1,14 @@
 package com.eddie.hungry_belly_backend.role.controller;
 
 import com.eddie.hungry_belly_backend.common.dto.response.ApiResponse;
-import com.eddie.hungry_belly_backend.role.dto.RoleResponse;
+import com.eddie.hungry_belly_backend.role.dto.request.RoleUpdateRequest;
+import com.eddie.hungry_belly_backend.role.dto.response.RoleResponse;
+import com.eddie.hungry_belly_backend.role.dto.response.UpdateRoleResponse;
 import com.eddie.hungry_belly_backend.role.service.RoleService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Set;
@@ -21,13 +22,25 @@ public class RoleController {
     @GetMapping("/names")
     public ResponseEntity<ApiResponse<?>> fetchAllRoles() {
         Set<String> roles = roleService.fetchAllRoleNames();
-        return ResponseEntity.ok(ApiResponse.success(roles, "Roles fetched successfully"));
+        return ResponseEntity.ok(ApiResponse.success(roles, "Roles fetched"));
     }
 
     @GetMapping
     public ResponseEntity<ApiResponse<?>> fetchRolesWithPermissions() {
         List<RoleResponse> roles = roleService.fetchRolesWithPermissions();
-        return ResponseEntity.ok(ApiResponse.success(roles, "Roles with permissions fetched successfully"));
+        return ResponseEntity.ok(ApiResponse.success(roles, "Roles with permissions fetched"));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<?>> fetchRoleWithId(@PathVariable Long id) {
+        UpdateRoleResponse role = roleService.fetchRoleById(id);
+        return ResponseEntity.ok(ApiResponse.success(role, "Role fetched"));
+    }
+
+    @PutMapping
+    public ResponseEntity<ApiResponse<?>> updateRole(@RequestBody @Valid RoleUpdateRequest request) {
+        roleService.updateRole(request);
+        return ResponseEntity.ok(ApiResponse.success(null, "Role updated"));
     }
 
 }

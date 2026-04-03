@@ -1,5 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
-import { fetchRolesApi } from "../../services/roleService";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  fetchRolesApi,
+  fetchRoleWithIdApi,
+  updateRoleApi,
+} from "../../services/roleService";
 
 // export const useCreateRole = () => {
 //   const queryClient = useQueryClient();
@@ -24,6 +28,32 @@ export const useRoles = () => {
     },
   });
   return { roles: data || [], isLoading };
+};
+
+export const useRole = (roleId) => {
+  const { data, isLoading } = useQuery({
+    queryKey: ["roles", roleId],
+    queryFn: async () => {
+      const response = await fetchRoleWithIdApi(roleId);
+      return response;
+    },
+  });
+  return { role: data || null, isLoading };
+};
+
+export const useUpdateRole = () => {
+  const queryClient = useQueryClient();
+  const { data, mutateAsync: updateRole } = useMutation({
+    mutationFn: async (roleData) => {
+      const response = await updateRoleApi(roleData);
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["roles"] });
+    },
+  });
+
+  return { data, updateRole };
 };
 
 // export const useDeleteRole = () => {
