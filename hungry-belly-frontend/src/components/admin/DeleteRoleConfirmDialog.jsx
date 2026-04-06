@@ -1,16 +1,17 @@
 import React from "react";
-import { toast } from "react-toastify";
-import { useDeleteRole } from "../../hooks/roles/useDeleteRole";
 
-const DeleteRoleConfirmDialog = ({ open, onClose, role, onSuccess }) => {
-  const { mutate: deleteRole, isPending: isDeleting } = useDeleteRole();
+import { useDeleteRole } from "../../hooks/roles/useRole";
+import { toast } from "react-toastify";
+// import { useDeleteRole } from "../../hooks/roles/useDeleteRole";
+
+const DeleteRoleConfirmDialog = ({ open, onClose, role }) => {
+  const { deleteRole } = useDeleteRole();
 
   const handleConfirmDelete = () => {
     deleteRole(role.id, {
       onSuccess: () => {
-        toast.success(`Role "${role.name}" deleted successfully`);
+        toast.success(`Role ${role.name} deleted successfully`);
         onClose();
-        onSuccess?.();
       },
       onError: (error) => {
         const message = error.response?.data?.message || error.message;
@@ -19,95 +20,50 @@ const DeleteRoleConfirmDialog = ({ open, onClose, role, onSuccess }) => {
     });
   };
 
-  if (!open) return null;
+  if (!open || !role) return null;
 
   return (
-    <>
-      <div
-        className="modal-backdrop fade show"
-        style={{
-          display: "block",
-          position: "fixed",
-          top: 0,
-          left: 0,
-          zIndex: 1040,
-          width: "100%",
-          height: "100%",
-          backgroundColor: "rgba(0, 0, 0, 0.5)",
-        }}
-      />
-      <div
-        className="modal fade show"
-        tabIndex="-1"
-        style={{
-          display: "block",
-          position: "fixed",
-          top: 0,
-          left: 0,
-          zIndex: 1050,
-          width: "100%",
-          height: "100%",
-          overflow: "auto",
-          overflowY: "auto",
-        }}
-        aria-modal="true"
-        role="dialog"
-      >
-        <div className="modal-dialog modal-sm" style={{ margin: "auto" }}>
-          <div className="modal-content" style={{ backgroundColor: "#ffffff" }}>
-            <div className="modal-header border-bottom bg-danger bg-opacity-10">
-              <h5 className="modal-title text-danger">
-                <i className="bi bi-exclamation-triangle me-2"></i>
-                Delete Role
-              </h5>
-              <button
-                type="button"
-                className="btn-close"
-                onClick={onClose}
-                disabled={isDeleting}
-              ></button>
-            </div>
-
-            <div className="modal-body">
-              <p className="mb-0">
-                Are you sure you want to delete the role{" "}
-                <strong>"{role.name}"</strong>?
-              </p>
-              <small className="text-muted d-block mt-2">
-                This action cannot be undone. Users with this role may be
-                affected.
-              </small>
-            </div>
-
-            <div className="modal-footer border-top">
-              <button
-                type="button"
-                className="btn btn-outline-secondary"
-                onClick={onClose}
-                disabled={isDeleting}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="btn btn-danger d-flex align-items-center gap-2"
-                onClick={handleConfirmDelete}
-                disabled={isDeleting}
-              >
-                {isDeleting && (
-                  <span
-                    className="spinner-border spinner-border-sm"
-                    role="status"
-                    aria-hidden="true"
-                  ></span>
-                )}
-                Delete Role
-              </button>
-            </div>
+    <div
+      className="modal d-block"
+      style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+      tabIndex="-1"
+    >
+      <div className="modal-dialog modal-dialog-centered" role="document">
+        <div className="modal-content">
+          <div className="modal-header border-bottom">
+            <h5 className="modal-title">Delete Role</h5>
+            <button
+              type="button"
+              className="btn-close"
+              onClick={onClose}
+              aria-label="Close"
+            ></button>
+          </div>
+          <div className="modal-body">
+            <p className="mb-0">
+              Are you sure you want to delete <strong>Role {role.name}</strong>?
+              This action cannot be undone.
+            </p>
+          </div>
+          <div className="modal-footer border-top">
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={onClose}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="btn btn-danger"
+              onClick={handleConfirmDelete}
+            >
+              Delete
+            </button>
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

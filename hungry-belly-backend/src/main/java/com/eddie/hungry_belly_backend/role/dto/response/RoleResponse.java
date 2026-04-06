@@ -1,5 +1,6 @@
 package com.eddie.hungry_belly_backend.role.dto.response;
 
+import com.eddie.hungry_belly_backend.permission.dto.response.PermissionResponse;
 import lombok.*;
 
 import java.util.List;

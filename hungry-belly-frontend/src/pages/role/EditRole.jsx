@@ -1,6 +1,6 @@
 import React from "react";
 import { useParams } from "react-router-dom";
-import { useRole } from "../../hooks/roles/useRoles";
+import { useRole } from "../../hooks/roles/useRole";
 import Spinner from "../../components/Spinner";
 import RoleForm from "../../components/admin/RoleForm";
 

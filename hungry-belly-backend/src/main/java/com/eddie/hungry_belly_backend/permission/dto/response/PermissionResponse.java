@@ -1,4 +1,4 @@
-package com.eddie.hungry_belly_backend.role.dto.response;
+package com.eddie.hungry_belly_backend.permission.dto.response;
 
 import lombok.*;
 

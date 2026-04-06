@@ -1,6 +1,7 @@
 package com.eddie.hungry_belly_backend.role.controller;
 
 import com.eddie.hungry_belly_backend.common.dto.response.ApiResponse;
+import com.eddie.hungry_belly_backend.role.dto.request.RoleCreateRequest;
 import com.eddie.hungry_belly_backend.role.dto.request.RoleUpdateRequest;
 import com.eddie.hungry_belly_backend.role.dto.response.RoleResponse;
 import com.eddie.hungry_belly_backend.role.dto.response.UpdateRoleResponse;
@@ -40,7 +41,21 @@ public class RoleController {
     @PutMapping
     public ResponseEntity<ApiResponse<?>> updateRole(@RequestBody @Valid RoleUpdateRequest request) {
         roleService.updateRole(request);
-        return ResponseEntity.ok(ApiResponse.success(null, "Role updated"));
+        return ResponseEntity.ok(ApiResponse.done(null, "Role updated"));
     }
+
+    @PostMapping
+    public ResponseEntity<ApiResponse<?>> createRole(@RequestBody @Valid RoleCreateRequest request) {
+        roleService.createRole(request);
+        return ResponseEntity.ok(ApiResponse.create(null, "Role created"));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<?>> deleteRole(@PathVariable Long id) {
+        roleService.delete(id);
+        return ResponseEntity.ok(ApiResponse.done(null, "Role deleted"));
+    }
+
+
 
 }

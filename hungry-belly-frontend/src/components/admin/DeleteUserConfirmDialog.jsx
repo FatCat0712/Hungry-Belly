@@ -2,7 +2,7 @@ import React from "react";
 import { useDeleteUser } from "../../hooks/users/useUser";
 import { toast } from "react-toastify";
 
-function DeleteUserConfirmDialog({ open, user, onClose, onConfirm }) {
+function DeleteUserConfirmDialog({ open, user, onClose }) {
   const { deleteUser } = useDeleteUser();
 
   if (!open || !user) return null;

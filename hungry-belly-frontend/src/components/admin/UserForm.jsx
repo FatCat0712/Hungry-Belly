@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import assets from "../../assets/assets";
 
 import { toast } from "react-toastify";
-import { useRoles } from "../../hooks/roles/useRoles";
+import { useRoles } from "../../hooks/roles/useRole";
 
 import { useNavigate } from "react-router-dom";
 import {
@@ -31,8 +31,11 @@ function UserForm({ selectedUser }) {
   const { updateUser } = useUpdateUser();
   const { uploadPhoto } = useUploadPhoto();
   const { getPresignedUrl } = useGetPresignedUrl();
-  const { roles } = useRoles();
+  let { roles } = useRoles();
+
   const queryClient = useQueryClient();
+
+  roles = roles.map((role) => role.name);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -221,7 +224,7 @@ function UserForm({ selectedUser }) {
             >
               <div className="row">
                 {roles.map((role) => (
-                  <div className="col-4" key={role}>
+                  <div className="col-4" key={role.name}>
                     <div className="form-check mb-2">
                       <input
                         className="form-check-input"

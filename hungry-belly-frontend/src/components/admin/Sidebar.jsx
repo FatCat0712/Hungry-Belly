@@ -10,11 +10,11 @@ const navItems = [
   { path: "/restaurants", label: "Restaurants", icon: "house" },
 ];
 
-const Sidebar = ({ isOpen, setIsOpen }) => {
+const Sidebar = ({ isOpen, setIsOpen, mobileOpen, setMobileOpen }) => {
   const width = isOpen ? 240 : 72;
   return (
     <aside
-      className="d-flex flex-column border-end"
+      className={`d-flex flex-column border-end admin-sidebar${mobileOpen ? " mobile-open" : ""}`}
       style={{
         width,
         backgroundColor: "rgb(224, 57, 74)",
@@ -47,8 +47,19 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
           )}
         </div>
 
+        {/* Mobile: show X close button */}
         <button
-          className="btn btn-sm btn-light p-1"
+          className="btn btn-sm btn-light p-1 d-flex d-md-none"
+          onClick={() => setMobileOpen(false)}
+          aria-label="Close menu"
+          style={{ width: 28, height: 28 }}
+        >
+          <i className="bi bi-x" />
+        </button>
+
+        {/* Desktop: show collapse toggle */}
+        <button
+          className="btn btn-sm btn-light p-1 d-none d-md-flex"
           onClick={() => setIsOpen((prev) => !prev)}
           aria-label="Toggle sidebar"
           style={{ width: 28, height: 28 }}

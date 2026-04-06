@@ -2,24 +2,22 @@ import React, { useState } from "react";
 import { toast } from "react-toastify";
 import PermissionTree from "./PermissionTree";
 import { useNavigate } from "react-router-dom";
-import { useUpdateRole } from "../../hooks/roles/useRoles";
-// import { useCreateRole } from "../../hooks/roles/useCreateRole";
-// import { useUpdateRole } from "../../hooks/roles/useUpdateRole";
-// import { usePermissions } from "../../hooks/roles/usePermissions";
+import { useUpdateRole, useCreateRole } from "../../hooks/roles/useRole";
+import { usePermissions } from "../../hooks/permissions/usePermission";
 
 function RoleForm({ selectedRole }) {
+  const { permissions, isLoading: isLoadingPermissions } = usePermissions();
+
   const [data, setData] = useState({
     id: selectedRole?.id || null,
     name: selectedRole?.name || "",
     description: selectedRole?.description || "",
     currentPermissions: selectedRole?.currentPermissions || [],
-    allPermissions: selectedRole?.allPermissions || [],
   });
 
   const [errors, setErrors] = useState({});
-  // const { mutate: createRole, isPending: isCreating } = useCreateRole();
+  const { createRole } = useCreateRole();
   const { updateRole } = useUpdateRole();
-  // const { permissions, isLoading: isLoadingPermissions } = usePermissions();
 
   const navigate = useNavigate();
 
@@ -34,15 +32,26 @@ function RoleForm({ selectedRole }) {
     };
 
     try {
-      const response = await updateRole(transferData);
+      let response;
+      if (selectedRole) {
+        response = await updateRole(transferData);
+      } else {
+        response = await createRole(transferData);
+      }
 
-      if (response.status === 200) {
-        toast.success("Role updated successfully");
+      console.log(response);
+
+      if (response.status === 204 || response.status === 201) {
+        toast.success(
+          `Role ${selectedRole ? "updated" : "created"} successfully`,
+        );
         navigate("/roles");
       }
     } catch (error) {
       const apiError = error.response?.data;
       const apiMessage = apiError?.message;
+
+      console.log(apiMessage);
 
       if (apiMessage && typeof apiMessage === "object") {
         setErrors((prev) => ({ ...prev, ...apiMessage }));
@@ -52,31 +61,6 @@ function RoleForm({ selectedRole }) {
       toast.error(apiMessage || error.message || "An error occurred");
       return;
     }
-
-    // Validate
-    // if (!data.name.trim()) {
-    //   setErrors({ name: "Role name is required" });
-    //   return;
-    // }
-
-    // const handler = selectedRole ? updateRole : createRole;
-    // const payload = selectedRole
-    //   ? { roleId: selectedRole.id, roleData: data }
-    //   : data;
-
-    // handler(payload, {
-    //   onSuccess: () => {
-    //     toast.success(
-    //       selectedRole
-    //         ? "Role updated successfully"
-    //         : "Role created successfully",
-    //     );
-    //   },
-    //   onError: (error) => {
-    //     const message = error.response?.data?.message || error.message;
-    //     toast.error(message || "Failed to save role");
-    //   },
-    // });
   };
 
   const handleInputChange = (e) => {
@@ -92,9 +76,6 @@ function RoleForm({ selectedRole }) {
   const handlePermissionsChange = (newPermissionIds) => {
     setData((prev) => ({ ...prev, currentPermissions: newPermissionIds }));
   };
-
-  // const isLoading = isLoadingPermissions || isCreating || isUpdating;
-  let isLoadingPermissions = false;
 
   return (
     <form onSubmit={handleSubmit}>
@@ -130,7 +111,7 @@ function RoleForm({ selectedRole }) {
             Description
           </label>
           <textarea
-            className="form-control"
+            className={`form-control ${errors.description ? "is-invalid" : ""}`}
             id="roleDescription"
             name="description"
             value={data.description}
@@ -139,6 +120,9 @@ function RoleForm({ selectedRole }) {
             rows="3"
             // disabled={isLoading}
           ></textarea>
+          {errors.description && (
+            <div className="invalid-feedback">{errors.description}</div>
+          )}
         </div>
 
         <div className="mb-3">
@@ -158,10 +142,10 @@ function RoleForm({ selectedRole }) {
                 <span className="visually-hidden">Loading permissions...</span>
               </div>
             </div>
-          ) : data.allPermissions.length > 0 ? (
+          ) : permissions.length > 0 ? (
             <PermissionTree
               permissions={data.currentPermissions}
-              allPermissions={data.allPermissions}
+              allPermissions={permissions}
               onPermissionChange={handlePermissionsChange}
             />
           ) : (

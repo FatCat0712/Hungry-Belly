@@ -21,6 +21,7 @@ export default function UserManagement() {
   const [sortDirection, setSortDirection] = useState("asc");
   const [keyword, setKeyword] = useState("");
   const debouncedKeyword = useDebounce(keyword, 500);
+  const normalizedKeyword = debouncedKeyword.trim();
 
   const {
     stats: { activeUsers, totalUsers },
@@ -33,7 +34,7 @@ export default function UserManagement() {
     pageSize,
     sortField,
     sortDirection,
-    keyword: debouncedKeyword,
+    keyword: normalizedKeyword || undefined,
   });
   const [userToDelete, setUserToDelete] = useState(null);
 
@@ -96,7 +97,7 @@ export default function UserManagement() {
   return (
     <>
       <div className="container-fluid px-0">
-        <div className="d-flex justify-content-between align-items-start mb-3">
+        <div className="d-flex flex-column flex-sm-row justify-content-sm-between align-items-sm-start gap-2 mb-3">
           <div>
             <small className="text-uppercase text-secondary">Admin</small>
             <h1 className="h3 mb-1">User Management</h1>
@@ -104,7 +105,7 @@ export default function UserManagement() {
               Manage platform users, roles, and account status.
             </p>
           </div>
-          <div className="d-flex gap-2">
+          <div className="d-flex flex-wrap gap-2">
             <button
               className="btn btn-secondary d-flex align-items-center gap-2"
               onClick={() => {
@@ -176,7 +177,7 @@ export default function UserManagement() {
 
         <div className="card border-0 shadow-sm">
           <div className="card-body">
-            <div className="d-flex justify-content-between align-items-center mb-3">
+            <div className="d-flex flex-column flex-lg-row justify-content-lg-between align-items-lg-center gap-2 mb-3">
               <div>
                 <h5 className="card-title mb-0">All Users</h5>
                 <small className="text-muted">
@@ -185,15 +186,21 @@ export default function UserManagement() {
                 </small>
               </div>
 
-              <div className="d-flex gap-2 align-items-center">
-                <div className="input-group" style={{ width: 200 }}>
+              <div className="d-flex flex-wrap gap-2 align-items-center">
+                <div
+                  className="input-group"
+                  style={{ minWidth: 150, flex: "1 1 150px" }}
+                >
                   <span className="input-group-text">
                     <i className="bi bi-sort-down"></i>
                   </span>
                   <select
                     className="form-select"
                     aria-label="Sort users by"
-                    onChange={(e) => setSortField(e.target.value)}
+                    onChange={(e) => {
+                      setSortField(e.target.value);
+                      setCurrentPage(1);
+                    }}
                     value={sortField}
                   >
                     <option value="firstName">First Name</option>
@@ -203,14 +210,20 @@ export default function UserManagement() {
                   </select>
                 </div>
 
-                <div className="input-group" style={{ width: 200 }}>
+                <div
+                  className="input-group"
+                  style={{ minWidth: 150, flex: "1 1 150px" }}
+                >
                   <span className="input-group-text">
                     <i className="bi bi-sort-down"></i>
                   </span>
                   <select
                     className="form-select"
                     aria-label="Sort users by"
-                    onChange={(e) => setSortDirection(e.target.value)}
+                    onChange={(e) => {
+                      setSortDirection(e.target.value);
+                      setCurrentPage(1);
+                    }}
                     value={sortDirection}
                   >
                     <option value="asc">Ascending</option>
@@ -218,7 +231,10 @@ export default function UserManagement() {
                   </select>
                 </div>
 
-                <div className="input-group" style={{ width: 280 }}>
+                <div
+                  className="input-group"
+                  style={{ minWidth: 200, flex: "2 1 200px" }}
+                >
                   <span className="input-group-text" id="search-addon">
                     <i className="bi bi-search"></i>
                   </span>
@@ -229,7 +245,10 @@ export default function UserManagement() {
                     aria-label="Search users"
                     aria-describedby="search-addon"
                     value={keyword}
-                    onChange={(e) => setKeyword(e.target.value)}
+                    onChange={(e) => {
+                      setKeyword(e.target.value);
+                      setCurrentPage(1);
+                    }}
                   />
                 </div>
               </div>
@@ -244,11 +263,11 @@ export default function UserManagement() {
                 <thead className="table-light">
                   <tr>
                     <th>Name</th>
-                    <th>First Name</th>
-                    <th>Last Name</th>
-                    <th>Email</th>
-                    <th>Role</th>
-                    <th>Status</th>
+                    <th className="d-none d-lg-table-cell">First Name</th>
+                    <th className="d-none d-lg-table-cell">Last Name</th>
+                    <th className="d-none d-md-table-cell">Email</th>
+                    <th className="d-none d-lg-table-cell">Role</th>
+                    <th className="d-none d-md-table-cell">Status</th>
                     <th className="text-end">Actions</th>
                   </tr>
                 </thead>
@@ -273,19 +292,37 @@ export default function UserManagement() {
                                 user.firstName[0] + user.lastName[0]
                               )}
                             </div>
+                            <div className="d-flex flex-column">
+                              <span
+                                className="fw-semibold text-truncate d-md-none"
+                                style={{ maxWidth: 140 }}
+                              >
+                                {user.firstName} {user.lastName}
+                              </span>
+                              <small
+                                className="text-muted d-md-none text-truncate"
+                                style={{ maxWidth: 140 }}
+                              >
+                                {user.email}
+                              </small>
+                            </div>
                           </div>
                         </td>
-                        <td>{user.firstName}</td>
-                        <td>{user.lastName}</td>
-                        <td>{user.email}</td>
-                        <td>
+                        <td className="d-none d-lg-table-cell">
+                          {user.firstName}
+                        </td>
+                        <td className="d-none d-lg-table-cell">
+                          {user.lastName}
+                        </td>
+                        <td className="d-none d-md-table-cell">{user.email}</td>
+                        <td className="d-none d-lg-table-cell">
                           {user.roles.map((role) => (
                             <span key={role} className="badge bg-primary me-1">
                               {role}
                             </span>
                           ))}
                         </td>
-                        <td>
+                        <td className="d-none d-md-table-cell">
                           <button
                             type="button"
                             className={`btn btn-sm rounded-pill d-inline-flex align-items-center gap-2 ${
@@ -312,38 +349,68 @@ export default function UserManagement() {
                           </button>
                         </td>
 
-                        <td className="text-end">
-                          <button
-                            className="btn btn-sm btn-outline-secondary me-1"
-                            onClick={() => {
-                              navigate(`/users/${user.id}/edit`);
-                            }}
-                            title="Edit user info"
-                          >
-                            <i className="bi bi-pencil"></i>
-                          </button>
-                          <button
-                            className="btn btn-sm btn-outline-warning me-1"
-                            onClick={() =>
-                              navigate(`/users/${user.id}/reset-password`)
-                            }
-                            title="Reset password"
-                          >
-                            <i className="bi bi-key"></i>
-                          </button>
-                          <button
-                            className="btn btn-sm btn-outline-danger"
-                            onClick={() => handleDeleteClick(user)}
-                            title="Delete user"
-                          >
-                            <i className="bi bi-trash"></i>
-                          </button>
+                        <td>
+                          <div className="d-flex justify-content-end flex-wrap gap-1">
+                            <button
+                              type="button"
+                              className={`btn btn-sm d-inline-flex d-md-none align-items-center ${
+                                user.enabled
+                                  ? "btn-success"
+                                  : "btn-outline-secondary"
+                              }`}
+                              role="switch"
+                              aria-checked={user.enabled}
+                              onClick={() =>
+                                toggleUserStatus(
+                                  user.id,
+                                  user.firstName + " " + user.lastName,
+                                  user.enabled,
+                                )
+                              }
+                              title={
+                                user.enabled ? "Set inactive" : "Set active"
+                              }
+                            >
+                              <i
+                                className={`bi ${
+                                  user.enabled
+                                    ? "bi-check-circle-fill"
+                                    : "bi-check-circle"
+                                }`}
+                              ></i>
+                            </button>
+                            <button
+                              className="btn btn-sm btn-outline-secondary"
+                              onClick={() => {
+                                navigate(`/users/${user.id}/edit`);
+                              }}
+                              title="Edit user info"
+                            >
+                              <i className="bi bi-pencil"></i>
+                            </button>
+                            <button
+                              className="btn btn-sm btn-outline-warning"
+                              onClick={() =>
+                                navigate(`/users/${user.id}/reset-password`)
+                              }
+                              title="Reset password"
+                            >
+                              <i className="bi bi-key"></i>
+                            </button>
+                            <button
+                              className="btn btn-sm btn-outline-danger"
+                              onClick={() => handleDeleteClick(user)}
+                              title="Delete user"
+                            >
+                              <i className="bi bi-trash"></i>
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="5" className="text-center text-muted py-4">
+                      <td colSpan="7" className="text-center text-muted py-4">
                         No users found.
                       </td>
                     </tr>

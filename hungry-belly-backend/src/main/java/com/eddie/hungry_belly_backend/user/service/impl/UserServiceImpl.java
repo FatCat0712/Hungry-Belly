@@ -213,6 +213,7 @@ public class UserServiceImpl implements UserService {
                 .lastName(request.getLastName())
                 .password(encodePassword(request.getPassword()))
                 .enabled(request.getEnabled())
+                .photo(request.getPhoto())
                 .roles(savedRoles)
                 .build();
     }

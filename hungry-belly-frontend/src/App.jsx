@@ -13,6 +13,7 @@ import { Edit, Home } from "lucide-react";
 import EditUser from "./pages/user/EditUser";
 import ResetUserPassword from "./pages/user/ResetUserPassword";
 import EditRole from "./pages/role/EditRole";
+import CreateRole from "./pages/role/CreateRole";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -31,13 +32,14 @@ function App() {
           <Route path="/" element={<AdminLayout />}>
             <Route index element={<Home />} />
             <Route path="users" element={<UserManagement />} />
+            <Route path="users/new" element={<CreaterUser />} />
             <Route path="users/:id/edit" element={<EditUser />} />
+            <Route path="roles/new" element={<CreateRole />} />
             <Route path="roles/:id/edit" element={<EditRole />} />
             <Route
               path="users/:id/reset-password"
               element={<ResetUserPassword />}
             />
-            <Route path="users/new" element={<CreaterUser />} />
             <Route path="roles" element={<RoleManagement />} />
             <Route path="restaurants" element={<Restaurants />} />
             <Route path="orders" element={<Orders />} />

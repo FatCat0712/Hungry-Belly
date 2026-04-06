@@ -22,3 +22,12 @@ supabase:
   endpointUrl: ${S3_ENDPOINT}
   serviceRoleKey: ${SERVICE_ROLE_KEY}
   endpointSignUrl: ${SIGN_ENDPOINT}
+auth:
+  token:
+    accessExpirationInMils: 120000
+    refreshExpirationInMils: 300000
+#    accessExpirationInMils: 300000
+#    refreshExpirationInMils: 2592000000
+    jwtSecret: ${JWT_SECRET}
+app:
+  useSecureCookie: false

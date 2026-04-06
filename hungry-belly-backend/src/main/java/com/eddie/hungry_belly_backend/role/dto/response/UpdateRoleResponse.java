@@ -14,6 +14,5 @@ public class UpdateRoleResponse {
     private String name;
     private String description;
     private List<Long> currentPermissions;
-    private List<PermissionResponse> allPermissions;
     private Long userCount;
 }

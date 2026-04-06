@@ -19,5 +19,7 @@ public interface RoleRepository extends CrudRepository<Role, Long> {
     @Query("SELECT r FROM Role r JOIN FETCH r.permissions WHERE r.id = ?1")
     Optional<Role> fetchRoleById(Long id);
 
+    Role findByName(String name);
+
 
 }

@@ -33,6 +33,14 @@ public class ApiResponse<T> {
                 .build();
     }
 
+    public static <T> ApiResponse<T> done(T data, String message) {
+        return ApiResponse.<T>builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.NO_CONTENT.value())
+                .message(message)
+                .data(data)
+                .build();
+    }
 
 
     public static <T> ApiResponse<T> error(int status, Object message) {

@@ -2,10 +2,12 @@ package com.eddie.hungry_belly_backend.role.service.impl;
 
 import com.eddie.hungry_belly_backend.entity.Permission;
 import com.eddie.hungry_belly_backend.entity.Role;
+import com.eddie.hungry_belly_backend.exception.BadRequestException;
 import com.eddie.hungry_belly_backend.exception.RoleNotFoundException;
+import com.eddie.hungry_belly_backend.permission.dto.response.PermissionResponse;
 import com.eddie.hungry_belly_backend.permission.service.PermissionService;
+import com.eddie.hungry_belly_backend.role.dto.request.RoleCreateRequest;
 import com.eddie.hungry_belly_backend.role.dto.request.RoleUpdateRequest;
-import com.eddie.hungry_belly_backend.role.dto.response.PermissionResponse;
 import com.eddie.hungry_belly_backend.role.dto.response.RoleResponse;
 import com.eddie.hungry_belly_backend.role.dto.response.UpdateRoleResponse;
 import com.eddie.hungry_belly_backend.role.repository.RoleRepository;
@@ -53,6 +55,73 @@ public class RoleServiceImpl implements RoleService {
         return roleResponses;
     }
 
+    @Override
+    public UpdateRoleResponse fetchRoleById(Long id) {
+        return convertToEditRoleResponse(fetchById(id));
+    }
+
+    @Override
+    public void updateRole(RoleUpdateRequest request) {
+        Role existRole = getExistRoleWithSameName(request.getName());
+
+        if(existRole != null && !existRole.getId().equals(request.getId())) {
+            throw new BadRequestException("name: Role name is already exists");
+        }
+
+        Role dbRole = fetchById(request.getId());
+
+        dbRole.setName(request.getName());
+        dbRole.setDescription(request.getDescription());
+
+        Set<Permission> dbPermissions = convertToPermission(request.getPermissions());
+
+        dbRole.setPermissions(dbPermissions);
+
+        roleRepository.save(dbRole);
+    }
+
+
+    @Override
+    public void createRole(RoleCreateRequest request) {
+       Role existRole = getExistRoleWithSameName(request.getName());
+
+       if(existRole != null) {
+           throw new BadRequestException("name: Role name is already exists");
+       }
+
+       Set<Permission> dbPermissions = convertToPermission(request.getPermissions());
+
+       Role newRole = new Role();
+       newRole.setName(request.getName());
+       newRole.setDescription(request.getDescription());
+       newRole.setPermissions(dbPermissions);
+
+       roleRepository.save(newRole);
+    }
+
+    @Override
+    public void delete(Long id) {
+        roleRepository.deleteById(id);
+    }
+
+    private Role fetchById(Long id) {
+        Optional<Role> dbRole = roleRepository.fetchRoleById(id);
+        if(dbRole.isEmpty()) {
+            throw new RoleNotFoundException("Role with id " + id + " could not be found");
+        }
+        return dbRole.get();
+    }
+
+    private Role getExistRoleWithSameName(String name) {
+        return roleRepository.findByName(name);
+    }
+
+
+    private Set<Permission> convertToPermission(List<Long> permissionsId) {
+        List<Permission> list = permissionService.fetchPermissionsInIds(permissionsId);
+        return new HashSet<>(list);
+    }
+
     private RoleResponse convertToRoleResponse(Role role, Long userCount) {
         List<PermissionResponse> permissionResponses = role.getPermissions().stream()
                 .map(this::convertToPermissionResponse).toList();
@@ -67,56 +136,16 @@ public class RoleServiceImpl implements RoleService {
     }
 
 
-    private Role fetchById(Long id) {
-        Optional<Role> dbRole = roleRepository.fetchRoleById(id);
-        if(dbRole.isEmpty()) {
-            throw new RoleNotFoundException("Role with id " + id + " could not be found");
-        }
-        return dbRole.get();
-    }
-
-    @Override
-    public UpdateRoleResponse fetchRoleById(Long id) {
-      return convertToEditRoleResponse(fetchById(id));
-    }
-
-
-
-    @Override
-    public void updateRole(RoleUpdateRequest request) {
-        Role dbRole = fetchById(request.getId());
-
-        dbRole.setName(request.getName());
-        dbRole.setDescription(request.getDescription());
-
-        Set<Permission> dbPermissions = convertToPermission(request.getPermissions());
-
-        dbRole.setPermissions(dbPermissions);
-
-        roleRepository.save(dbRole);
-    }
-
-    private Set<Permission> convertToPermission(List<Long> permissionsId) {
-        return permissionService.fetchPermissionsInIds(permissionsId);
-    }
-
-
     private UpdateRoleResponse convertToEditRoleResponse(Role role) {
 
         List<Long> currentPermissions = role.getPermissions().stream()
                 .map(Permission::getId).toList();
-
-        List<PermissionResponse> permissionsResponses = permissionService.fetchAllPermissions().stream()
-                .map(this::convertToPermissionResponse)
-                .toList();
-
 
         return UpdateRoleResponse.builder()
                 .id(role.getId())
                 .name(role.getName())
                 .description(role.getDescription())
                 .currentPermissions(currentPermissions)
-                .allPermissions(permissionsResponses)
                 .build();
     }
 
