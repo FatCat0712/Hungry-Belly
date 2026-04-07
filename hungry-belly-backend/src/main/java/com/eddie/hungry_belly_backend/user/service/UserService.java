@@ -1,6 +1,7 @@
 package com.eddie.hungry_belly_backend.user.service;
 
 import com.eddie.hungry_belly_backend.common.dto.response.PageResponse;
+import com.eddie.hungry_belly_backend.entity.User;
 import com.eddie.hungry_belly_backend.user.dto.request.AdminUserCreateRequest;
 import com.eddie.hungry_belly_backend.user.dto.request.AdminUserRequest;
 import com.eddie.hungry_belly_backend.user.dto.request.ResetPasswordRequest;
@@ -19,4 +20,5 @@ public interface UserService {
     void delete(Long id);
     void updateUserStatus(Long id);
     AdminUserResponse findById(Long id);
+    User findByEmail(String email);
 }

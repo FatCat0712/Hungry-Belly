@@ -21,10 +21,10 @@ public class CookieUtils {
 
         Cookie tokenCookie = new Cookie(tokenName, token);
         tokenCookie.setHttpOnly(true);
-        tokenCookie.setPath("accessToken".equals(tokenName) ? "/" : "/auth/refresh-token");
+        tokenCookie.setPath("/");
         tokenCookie.setMaxAge((int)(maxAge/1000));
         tokenCookie.setSecure(useSecureCookies);
-        String sameSite = useSecureCookies ? "None" : "Lax";
+        String sameSite = "None";
         setResponseHeader(response, tokenCookie, sameSite);
     }
 
@@ -34,7 +34,7 @@ public class CookieUtils {
                 tokenCookie.getValue() +
                 "; HttpOnly; Path=" + tokenCookie.getPath() +
                 "; Max-Age=" + tokenCookie.getMaxAge() +
-                (useSecureCookies ? "; Secure" : "") +
+                "; Secure" +
                 "; SameSite=" + sameSite;
 
         response.addHeader("Set-Cookie", cookieHeader);
@@ -48,6 +48,15 @@ public class CookieUtils {
             }
         }
         return null;
+    }
+
+    public void clearCookie(HttpServletResponse response, String name) {
+        Cookie cookie = new Cookie(name, null);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(0);
+        response.addCookie(cookie);
     }
 
     public void logCookies(HttpServletRequest request) {

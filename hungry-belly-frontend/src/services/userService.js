@@ -1,6 +1,6 @@
-import axios from "axios";
+import api from "./api";
 
-const API_URL = import.meta.env.VITE_API_URL + "/users";
+const API_URL = "/users";
 
 export const fetchUsersByPageApi = async ({
   pageNum,
@@ -9,7 +9,7 @@ export const fetchUsersByPageApi = async ({
   sortDirection,
   keyword,
 } = {}) => {
-  const response = await axios.get(API_URL, {
+  const response = await api.get(API_URL, {
     params: {
       pageNum,
       pageSize,
@@ -22,12 +22,12 @@ export const fetchUsersByPageApi = async ({
 };
 
 export const fetchStatsApi = async () => {
-  const response = await axios.get(`${API_URL}/stats`);
+  const response = await api.get(API_URL + "/stats");
   return response.data.data;
 };
 
 export const fetchAllUsersApi = async () => {
-  const response = await axios.get(API_URL);
+  const response = await api.get(API_URL);
   return response.data.data;
 };
 
@@ -37,7 +37,7 @@ export const createUserApi = async (userData) => {
     photo:
       userData.photo instanceof File ? userData.photo?.name : userData.photo,
   };
-  const data = await axios.post(API_URL, transferData, {
+  const data = await api.post(API_URL, transferData, {
     headers: { "Content-Type": "application/json" },
   });
   return data.data;
@@ -49,31 +49,31 @@ export const updateUserApi = async (userData) => {
     photo:
       userData.photo instanceof File ? userData.photo?.name : userData.photo,
   };
-  const data = await axios.put(`${API_URL}/${userData.id}`, transferData, {
+  const data = await api.put(`${API_URL}/${userData.id}`, transferData, {
     headers: { "Content-Type": "application/json" },
   });
   return data.data;
 };
 
 export const resetPasswordApi = async (userId, userData) => {
-  const data = await axios.put(`${API_URL}/${userId}/password`, userData, {
+  const data = await api.put(`${API_URL}/${userId}/password`, userData, {
     headers: { "Content-Type": "application/json" },
   });
   return data.data;
 };
 
 export const deleteUserApi = async (userId) => {
-  const data = await axios.delete(`${API_URL}/${userId}`);
+  const data = await api.delete(`${API_URL}/${userId}`);
   return data.data;
 };
 
 export const toggleUserStatusApi = async (userId) => {
-  const data = await axios.patch(`${API_URL}/${userId}/status`);
+  const data = await api.patch(`${API_URL}/${userId}/status`);
   return data.data;
 };
 
 export const uploadUserPhotoApi = async (uploadUrl, file, contentType) => {
-  const data = await axios.put(uploadUrl, file, {
+  const data = await api.put(uploadUrl, file, {
     headers: { "Content-Type": contentType },
   });
 
@@ -81,7 +81,7 @@ export const uploadUserPhotoApi = async (uploadUrl, file, contentType) => {
 };
 
 export const getUserApi = async (userId) => {
-  const response = await axios.get(`${API_URL}/${userId}`);
+  const response = await api.get(`${API_URL}/${userId}`);
   return response.data.data;
 };
 
@@ -92,13 +92,13 @@ export const getPresignedUrlApi = async (userId, fileName, contentType) => {
     contentType,
   };
 
-  const response = await axios.post(`${API_URL}/presigned`, data, {
+  const response = await api.post(`${API_URL}/presigned`, data, {
     headers: { "Content-Type": "application/json" },
   });
   return response.data.data;
 };
 
 export const exportUsersApi = async (format) => {
-  const response = await axios.post(`${API_URL}/export/${format}`, null, {});
+  const response = await api.post(`${API_URL}/export/${format}`, null, {});
   return response.data.data;
 };

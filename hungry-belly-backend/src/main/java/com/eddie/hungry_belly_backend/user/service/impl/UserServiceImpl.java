@@ -15,10 +15,7 @@ import com.eddie.hungry_belly_backend.role.service.RoleService;
 import com.eddie.hungry_belly_backend.user.dto.request.AdminUserCreateRequest;
 import com.eddie.hungry_belly_backend.user.dto.request.AdminUserRequest;
 import com.eddie.hungry_belly_backend.user.dto.request.ResetPasswordRequest;
-import com.eddie.hungry_belly_backend.user.dto.response.AdminUserResponse;
-import com.eddie.hungry_belly_backend.user.dto.response.ExportResult;
-import com.eddie.hungry_belly_backend.user.dto.response.UserCsvDto;
-import com.eddie.hungry_belly_backend.user.dto.response.UserStatsResponse;
+import com.eddie.hungry_belly_backend.user.dto.response.*;
 import com.eddie.hungry_belly_backend.user.repository.UserRepository;
 import com.eddie.hungry_belly_backend.user.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -67,7 +64,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public AdminUserResponse updateUserInfo(Long userId, AdminUserRequest request) {
 
-        User existUser = userRepository.findByEmail(request.getEmail());
+        User existUser = findByEmail(request.getEmail());
 
         if (existUser != null && !existUser.getId().equals(userId)) {
             throw new BadRequestException("email: Email already exists");
@@ -203,6 +200,10 @@ public class UserServiceImpl implements UserService {
         throw new IllegalArgumentException("Unsupported format");
     }
 
+    @Override
+    public User findByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
 
     private User convertToUserEntity(AdminUserCreateRequest request) {
         Set<Role> savedRoles = convertToRoleEntitySet(request.getRoles());

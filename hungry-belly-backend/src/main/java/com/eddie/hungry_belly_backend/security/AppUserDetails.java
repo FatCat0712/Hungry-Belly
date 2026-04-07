@@ -13,12 +13,14 @@ import java.util.List;
 public class AppUserDetails implements UserDetails {
     private final Long id;
     private final String email;
+    private final String name;
     private final String password;
     private final Collection<SimpleGrantedAuthority> authorities;
 
-    public AppUserDetails(Long id, String email, String password, Collection<SimpleGrantedAuthority> authorities) {
+    public AppUserDetails(Long id, String email, String name, String password, Collection<SimpleGrantedAuthority> authorities) {
         this.id = id;
         this.email = email;
+        this.name = name;
         this.password = password;
         this.authorities = authorities;
     }
@@ -31,6 +33,7 @@ public class AppUserDetails implements UserDetails {
         return new AppUserDetails(
                 user.getId(),
                 user.getEmail(),
+                user.getFirstName() + " " + user.getLastName(),
                 user.getPassword(),
                 authorities
         );

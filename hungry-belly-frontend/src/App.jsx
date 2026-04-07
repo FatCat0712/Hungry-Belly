@@ -14,6 +14,8 @@ import EditUser from "./pages/user/EditUser";
 import ResetUserPassword from "./pages/user/ResetUserPassword";
 import EditRole from "./pages/role/EditRole";
 import CreateRole from "./pages/role/CreateRole";
+import Login from "./pages/auth/Login";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -29,20 +31,23 @@ function App() {
       <ReactQueryDevtools initialIsOpen={false} />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<AdminLayout />}>
-            <Route index element={<Home />} />
-            <Route path="users" element={<UserManagement />} />
-            <Route path="users/new" element={<CreaterUser />} />
-            <Route path="users/:id/edit" element={<EditUser />} />
-            <Route path="roles/new" element={<CreateRole />} />
-            <Route path="roles/:id/edit" element={<EditRole />} />
-            <Route
-              path="users/:id/reset-password"
-              element={<ResetUserPassword />}
-            />
-            <Route path="roles" element={<RoleManagement />} />
-            <Route path="restaurants" element={<Restaurants />} />
-            <Route path="orders" element={<Orders />} />
+          <Route path="/login" element={<Login />} />
+          <Route element={<ProtectedRoute />}>
+            <Route path="/" element={<AdminLayout />}>
+              <Route index element={<Home />} />
+              <Route path="users" element={<UserManagement />} />
+              <Route path="users/new" element={<CreaterUser />} />
+              <Route path="users/:id/edit" element={<EditUser />} />
+              <Route path="roles/new" element={<CreateRole />} />
+              <Route path="roles/:id/edit" element={<EditRole />} />
+              <Route
+                path="users/:id/reset-password"
+                element={<ResetUserPassword />}
+              />
+              <Route path="roles" element={<RoleManagement />} />
+              <Route path="restaurants" element={<Restaurants />} />
+              <Route path="orders" element={<Orders />} />
+            </Route>
           </Route>
         </Routes>
       </BrowserRouter>

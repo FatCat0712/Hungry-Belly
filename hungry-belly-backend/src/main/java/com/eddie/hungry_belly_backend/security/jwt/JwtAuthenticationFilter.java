@@ -2,14 +2,18 @@ package com.eddie.hungry_belly_backend.security.jwt;
 
 import com.eddie.hungry_belly_backend.common.util.CookieUtils;
 import com.eddie.hungry_belly_backend.security.AppUserDetailsService;
+import jakarta.annotation.Nonnull;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import io.jsonwebtoken.JwtException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -30,20 +34,37 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Autowired
     private AppUserDetailsService userDetailsService;
 
+    @Autowired
+    private JwtAuthenticationEntryPoint authenticationEntryPoint;
+
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        try {
-            String token = cookieUtils.extractTokenFromCookies(request, "accessToken");
-            if(StringUtils.hasText(token) && jwtUtils.validateToken(token)) {
+    protected void doFilterInternal(
+            @Nonnull HttpServletRequest request,
+            @Nonnull HttpServletResponse response,
+            @Nonnull FilterChain filterChain
+    ) throws ServletException, IOException {
+        cookieUtils.logCookies(request);
+        String token = cookieUtils.extractTokenFromCookies(request, "accessToken");
+
+        if (StringUtils.hasText(token)) {
+            try {
+                jwtUtils.validateToken(token);
                 String username  = jwtUtils.getUsernameFromToken(token);
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
                 var auth = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 SecurityContextHolder.getContext().setAuthentication(auth);
+            } catch (JwtException | IllegalArgumentException | UsernameNotFoundException ex) {
+                SecurityContextHolder.clearContext();
+                authenticationEntryPoint.commence(
+                        request,
+                        response,
+                        new BadCredentialsException("Invalid or expired access token", ex)
+                );
+                return;
             }
-        }catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
         }
+
         filterChain.doFilter(request, response);
     }
 

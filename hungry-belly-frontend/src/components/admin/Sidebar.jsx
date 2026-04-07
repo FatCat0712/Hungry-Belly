@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useContext } from "react";
 import logo from "../../assets/logo.png";
 import { NavLink } from "react-router-dom";
+import { AuthContext } from "../../context/auth-context";
 
 const navItems = [
   { path: "/", label: "Dashboard", icon: "speedometer2" },
@@ -11,6 +12,21 @@ const navItems = [
 ];
 
 const Sidebar = ({ isOpen, setIsOpen, mobileOpen, setMobileOpen }) => {
+  const { user } = useContext(AuthContext);
+  const userName = user?.name || "Admin User";
+  const userRoles = Array.isArray(user?.roles)
+    ? user.roles
+        .map((role) => (typeof role === "string" ? role : role?.name))
+        .filter(Boolean)
+    : [];
+  const initials = userName
+    .split(" ")
+    .map((part) => part[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
   const width = isOpen ? 240 : 72;
   return (
     <aside
@@ -96,14 +112,66 @@ const Sidebar = ({ isOpen, setIsOpen, mobileOpen, setMobileOpen }) => {
       <div
         className="p-3"
         style={{
-          borderTop: "1px solid rgba(255,255,255,0.18)",
-          color: "rgba(255,255,255,0.9)",
+          borderTop: "1px solid rgba(255,255,255,0.22)",
+          backgroundColor: "rgba(0,0,0,0.08)",
+          color: "rgba(255,255,255,0.95)",
         }}
       >
         {isOpen ? (
-          "Logged in as Admin"
+          <>
+            <div className="d-flex align-items-center gap-2 mb-2">
+              <div
+                className="rounded-circle d-flex align-items-center justify-content-center fw-bold"
+                style={{
+                  width: 34,
+                  height: 34,
+                  backgroundColor: "rgba(255,255,255,0.2)",
+                  color: "#fff",
+                  fontSize: 12,
+                }}
+              >
+                {initials || "AD"}
+              </div>
+              <div className="d-flex flex-column gap-2">
+                <span style={{ fontSize: 13, fontWeight: 600 }}>
+                  {userName}
+                </span>
+                {userRoles.length > 0 && (
+                  <div className="d-flex flex-wrap gap-1">
+                    {userRoles.slice(0, 2).map((role) => (
+                      <span
+                        key={role}
+                        className="rounded-pill px-2 py-1"
+                        style={{
+                          fontSize: 11,
+                          lineHeight: 1,
+                          backgroundColor: "rgba(255,255,255,0.18)",
+                          color: "#fff",
+                        }}
+                      >
+                        {role}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
         ) : (
-          <i className="bi bi-person-circle fs-5"></i>
+          <div className="d-flex justify-content-center" title={userName}>
+            <div
+              className="rounded-circle d-flex align-items-center justify-content-center fw-bold"
+              style={{
+                width: 32,
+                height: 32,
+                backgroundColor: "rgba(255,255,255,0.2)",
+                color: "#fff",
+                fontSize: 11,
+              }}
+            >
+              {initials || "AD"}
+            </div>
+          </div>
         )}
       </div>
     </aside>
