@@ -1,13 +1,14 @@
 import React, { useContext } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { AuthContext } from "../context/auth-context";
+import Spinner from "./Spinner";
 
 const ProtectedRoute = () => {
   const { user, isAuthLoading } = useContext(AuthContext);
   const location = useLocation();
 
   if (isAuthLoading) {
-    return <div className="p-4 text-center">Checking authentication...</div>;
+    return <Spinner message="Checking authentication..."></Spinner>;
   }
 
   if (!user) {

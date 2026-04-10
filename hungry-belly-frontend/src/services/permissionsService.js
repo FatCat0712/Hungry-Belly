@@ -1,8 +1,8 @@
-import axios from "axios";
+import api from "./api";
 
-const API_URL = import.meta.env.VITE_API_URL + "/permissions";
+const API_URL = "/permissions";
 
 export const fetchPermissionsApi = async () => {
-  const response = await axios.get(API_URL);
+  const response = await api.get(API_URL);
   return response.data.data;
 };

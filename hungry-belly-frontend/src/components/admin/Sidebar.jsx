@@ -1,18 +1,10 @@
 import React, { useContext } from "react";
 import logo from "../../assets/logo.png";
-import { NavLink } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import { AuthContext } from "../../context/auth-context";
 
-const navItems = [
-  { path: "/", label: "Dashboard", icon: "speedometer2" },
-  { path: "/users", label: "Users", icon: "people" },
-  { path: "/roles", label: "Roles", icon: "shield-lock" },
-  { path: "/orders", label: "Orders", icon: "receipt" },
-  { path: "/restaurants", label: "Restaurants", icon: "house" },
-];
-
 const Sidebar = ({ isOpen, setIsOpen, mobileOpen, setMobileOpen }) => {
-  const { user } = useContext(AuthContext);
+  const { user, logoutUser } = useContext(AuthContext);
   const userName = user?.name || "Admin User";
   const userRoles = Array.isArray(user?.roles)
     ? user.roles
@@ -28,6 +20,25 @@ const Sidebar = ({ isOpen, setIsOpen, mobileOpen, setMobileOpen }) => {
     .toUpperCase();
 
   const width = isOpen ? 240 : 72;
+
+  let navItems = [
+    { path: "/", label: "Dashboard", icon: "speedometer2" },
+    { path: "/users", label: "Users", icon: "people" },
+    { path: "/roles", label: "Roles", icon: "shield-lock" },
+    { path: "/orders", label: "Orders", icon: "receipt" },
+    { path: "/restaurants", label: "Restaurants", icon: "house" },
+  ];
+
+  if (userRoles.includes("ROLE_STAFF")) {
+    navItems = navItems.filter(
+      (item) => item.path !== "/users" && item.path !== "/roles",
+    ); // Hide sidebar for staff
+  }
+
+  const handleLogout = async () => {
+    await logoutUser();
+  };
+
   return (
     <aside
       className={`d-flex flex-column border-end admin-sidebar${mobileOpen ? " mobile-open" : ""}`}
@@ -119,42 +130,62 @@ const Sidebar = ({ isOpen, setIsOpen, mobileOpen, setMobileOpen }) => {
       >
         {isOpen ? (
           <>
-            <div className="d-flex align-items-center gap-2 mb-2">
-              <div
-                className="rounded-circle d-flex align-items-center justify-content-center fw-bold"
-                style={{
-                  width: 34,
-                  height: 34,
-                  backgroundColor: "rgba(255,255,255,0.2)",
-                  color: "#fff",
-                  fontSize: 12,
-                }}
+            <div className="d-flex align-items-center justify-content-between gap-2 mb-2">
+              <Link
+                className="d-flex align-items-center justify-content-between text-decoration-none text-white gap-4"
+                to="/profile"
               >
-                {initials || "AD"}
-              </div>
-              <div className="d-flex flex-column gap-2">
-                <span style={{ fontSize: 13, fontWeight: 600 }}>
-                  {userName}
-                </span>
-                {userRoles.length > 0 && (
-                  <div className="d-flex flex-wrap gap-1">
-                    {userRoles.slice(0, 2).map((role) => (
-                      <span
-                        key={role}
-                        className="rounded-pill px-2 py-1"
-                        style={{
-                          fontSize: 11,
-                          lineHeight: 1,
-                          backgroundColor: "rgba(255,255,255,0.18)",
-                          color: "#fff",
-                        }}
-                      >
-                        {role}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
+                <div
+                  className="rounded-circle d-flex align-items-center justify-content-center fw-bold"
+                  style={{
+                    width: 34,
+                    height: 34,
+                    backgroundColor: "rgba(255,255,255,0.2)",
+                    color: "#fff",
+                    fontSize: 12,
+                  }}
+                >
+                  {initials || "AD"}
+                </div>
+                <div className="d-flex flex-column gap-2">
+                  <span style={{ fontSize: 13, fontWeight: 600 }}>
+                    {userName}
+                  </span>
+                  {userRoles.length > 0 && (
+                    <div className="d-flex flex-wrap gap-1">
+                      {userRoles.slice(0, 2).map((role) => (
+                        <span
+                          key={role}
+                          className="rounded-pill px-2 py-1"
+                          style={{
+                            fontSize: 11,
+                            lineHeight: 1,
+                            backgroundColor: "rgba(255,255,255,0.18)",
+                            color: "#fff",
+                          }}
+                        >
+                          {role.replace("ROLE_", "")}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </Link>
+              <button
+                className="btn btn-sm"
+                style={{ color: "rgba(255,255,255,0.85)" }}
+                title="Logout"
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.backgroundColor =
+                    "rgba(255,255,255,0.2)")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.backgroundColor = "transparent")
+                }
+                onClick={handleLogout}
+              >
+                <i className="bi bi-box-arrow-right"></i>
+              </button>
             </div>
           </>
         ) : (

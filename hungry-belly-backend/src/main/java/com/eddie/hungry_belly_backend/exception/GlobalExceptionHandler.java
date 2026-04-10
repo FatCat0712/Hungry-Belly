@@ -3,6 +3,7 @@ package com.eddie.hungry_belly_backend.exception;
 import com.eddie.hungry_belly_backend.common.dto.response.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -22,6 +23,13 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.badRequest().body(
                 ApiResponse.error(HttpStatus.BAD_REQUEST.value(), errors)
+        );
+    }
+
+    @ExceptionHandler(InvalidOperationException.class)
+    public ResponseEntity<ApiResponse<?>> handleInvalidOperationRequest(InvalidOperationException ex) {
+        return ResponseEntity.badRequest().body(
+                ApiResponse.error(HttpStatus.BAD_REQUEST.value(), ex.getMessage())
         );
     }
 
@@ -47,6 +55,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(
                 ApiResponse.error(HttpStatus.BAD_REQUEST.value(), ex.getMessage())
         );
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<?> handleBadCredentials(BadCredentialsException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.error(HttpStatus.UNAUTHORIZED.value(), "Invalid email or password"));
     }
 
     @ExceptionHandler(Exception.class)

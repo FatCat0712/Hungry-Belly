@@ -2,27 +2,19 @@ package com.eddie.hungry_belly_backend.user.controller;
 
 import com.eddie.hungry_belly_backend.common.dto.response.ApiResponse;
 import com.eddie.hungry_belly_backend.common.util.storage.StorageService;
-import com.eddie.hungry_belly_backend.security.AppUserDetails;
 import com.eddie.hungry_belly_backend.user.dto.request.AdminUserCreateRequest;
 import com.eddie.hungry_belly_backend.user.dto.request.AdminUserRequest;
 import com.eddie.hungry_belly_backend.user.dto.request.ResetPasswordRequest;
 import com.eddie.hungry_belly_backend.user.dto.request.UploadRequest;
 import com.eddie.hungry_belly_backend.user.dto.response.AdminUserResponse;
-import com.eddie.hungry_belly_backend.user.dto.response.AuthUserResponse;
 import com.eddie.hungry_belly_backend.user.dto.response.ExportResult;
-import com.eddie.hungry_belly_backend.user.service.UserService;
+import com.eddie.hungry_belly_backend.user.service.impl.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -97,20 +89,7 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success(exportResult, "Data exported"));
     }
 
-    @GetMapping("/me")
-    public ResponseEntity<ApiResponse<?>> getLoggedInUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        AppUserDetails userDetails = (AppUserDetails) authentication.getPrincipal();
 
-        Set<String> roles = userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toSet());
-
-        AuthUserResponse response = AuthUserResponse.builder()
-                .id(userDetails.getId())
-                .name(userDetails.getName())
-                .roles(roles)
-                .build();
-        return ResponseEntity.ok(ApiResponse.success(response, "Authenticated info fetched"));
-    }
 
 
 

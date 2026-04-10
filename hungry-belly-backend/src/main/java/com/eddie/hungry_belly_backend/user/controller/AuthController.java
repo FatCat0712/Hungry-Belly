@@ -8,6 +8,7 @@ import com.eddie.hungry_belly_backend.security.AppUserDetailsService;
 import com.eddie.hungry_belly_backend.security.jwt.JwtUtils;
 import com.eddie.hungry_belly_backend.token.service.RefreshTokenService;
 import com.eddie.hungry_belly_backend.user.dto.request.LoginRequest;
+import com.eddie.hungry_belly_backend.user.dto.response.AuthUserResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -18,12 +19,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -97,6 +99,21 @@ public class AuthController {
         refreshTokenService.invalidateTokenByUserId(userDetails.getId());
 
         return ResponseEntity.ok(ApiResponse.success(null, "Logout"));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<?>> getLoggedInUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        AppUserDetails userDetails = (AppUserDetails) authentication.getPrincipal();
+
+        Set<String> roles = userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toSet());
+
+        AuthUserResponse response = AuthUserResponse.builder()
+                .id(userDetails.getId())
+                .name(userDetails.getName())
+                .roles(roles)
+                .build();
+        return ResponseEntity.ok(ApiResponse.success(response, "Authenticated info fetched"));
     }
 
 

@@ -1,5 +1,6 @@
 package com.eddie.hungry_belly_backend.security;
 
+import com.eddie.hungry_belly_backend.security.jwt.CustomAccessDeniedHandler;
 import com.eddie.hungry_belly_backend.security.jwt.JwtAuthenticationEntryPoint;
 import com.eddie.hungry_belly_backend.security.jwt.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,7 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtFilter;
     private final JwtAuthenticationEntryPoint authenticationEntryPoint;
     private final AppUserDetailsService userDetailsService;
+    private final CustomAccessDeniedHandler accessDeniedHandler;
 
     @Value("${api.prefix}")
     private String API;
@@ -43,9 +45,13 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(request -> request
                         .requestMatchers(whiteList).permitAll()
+                        .requestMatchers(API + "/users/**", API + "/roles/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
-                .exceptionHandling(exception -> exception.authenticationEntryPoint(authenticationEntryPoint))
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler)
+                )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 

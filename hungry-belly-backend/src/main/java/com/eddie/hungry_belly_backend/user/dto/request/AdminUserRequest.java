@@ -30,6 +30,8 @@ public class AdminUserRequest {
     @Length(min = 2, max = 50)
     private String lastName;
 
+    private String password;
+
     @NotEmpty(message = "At least one role is required")
     private Set<String> roles;
 

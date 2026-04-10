@@ -10,16 +10,21 @@ import com.eddie.hungry_belly_backend.common.util.storage.StorageService;
 import com.eddie.hungry_belly_backend.entity.Role;
 import com.eddie.hungry_belly_backend.entity.User;
 import com.eddie.hungry_belly_backend.exception.BadRequestException;
+import com.eddie.hungry_belly_backend.exception.InvalidOperationException;
 import com.eddie.hungry_belly_backend.exception.UserNotFoundException;
 import com.eddie.hungry_belly_backend.role.service.RoleService;
+import com.eddie.hungry_belly_backend.security.AppUserDetails;
 import com.eddie.hungry_belly_backend.user.dto.request.AdminUserCreateRequest;
 import com.eddie.hungry_belly_backend.user.dto.request.AdminUserRequest;
 import com.eddie.hungry_belly_backend.user.dto.request.ResetPasswordRequest;
-import com.eddie.hungry_belly_backend.user.dto.response.*;
+import com.eddie.hungry_belly_backend.user.dto.response.AdminUserResponse;
+import com.eddie.hungry_belly_backend.user.dto.response.ExportResult;
+import com.eddie.hungry_belly_backend.user.dto.response.UserCsvDto;
+import com.eddie.hungry_belly_backend.user.dto.response.UserStatsResponse;
 import com.eddie.hungry_belly_backend.user.repository.UserRepository;
-import com.eddie.hungry_belly_backend.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,7 +36,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class UserServiceImpl implements UserService {
+public class UserService {
     private final RoleService roleService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -56,12 +61,10 @@ public class UserServiceImpl implements UserService {
         return dbUser.get();
     }
 
-    @Override
     public AdminUserResponse findById(Long id) {
         return convertToAdminResponse(findUserById(id));
     }
 
-    @Override
     public AdminUserResponse updateUserInfo(Long userId, AdminUserRequest request) {
 
         User existUser = findByEmail(request.getEmail());
@@ -74,8 +77,12 @@ public class UserServiceImpl implements UserService {
 
         User dbUser = findUserById(userId);
 
-        if (userEntity.getPassword() == null) {
+        if (userEntity.getPassword() == null || userEntity.getPassword().isEmpty() || userEntity.getPassword().isBlank()) {
             dbUser.setPassword(dbUser.getPassword());
+        }
+        else {
+            String encodedPassword = encodePassword(userEntity.getPassword());
+            dbUser.setPassword(encodedPassword);
         }
 
         dbUser.setEmail(userEntity.getEmail());
@@ -93,21 +100,31 @@ public class UserServiceImpl implements UserService {
         return convertToAdminResponse(dbUser);
     }
 
-    @Override
     public void resetPassword(Long id, ResetPasswordRequest request) {
         User dbUser = findUserById(id);
         dbUser.setPassword(encodePassword(request.getNewPassword()));
         userRepository.save(dbUser);
     }
 
-    @Override
     @Transactional
     public void delete(Long id) {
-        User dbUser = findUserById(id);
-        userRepository.deleteUserById(dbUser.getId());
+        User currentUser = findUserById(id);
+        Role roleAdmin = roleService.getExistRoleWithSameName("Admin");
+
+        if(currentUser.getRoles().contains(roleAdmin)) {
+            long activeAdminCount = userRepository.countActiveAdmins();
+            if (activeAdminCount <= 1) {
+                throw new InvalidOperationException("At least one active admin is required");
+            }
+        }
+
+        if(getCurrentLoginUser().getId().equals(id)) {
+            throw new InvalidOperationException("You cannot delete your own account");
+        }
+
+        userRepository.deleteUserById(id);
     }
 
-    @Override
     @Transactional
     public void updateUserStatus(Long id) {
         User dbUser = findUserById(id);
@@ -115,7 +132,6 @@ public class UserServiceImpl implements UserService {
     }
 
 
-    @Override
     public PageResponse<AdminUserResponse> listByPage(
             Integer pageNum,
             Integer pageSize,
@@ -170,7 +186,6 @@ public class UserServiceImpl implements UserService {
         return userRepository.findAll();
     }
 
-    @Override
     public UserStatsResponse getUserStats() {
         Long usersCount = userRepository.countAllUsers();
         Long userActiveCount = userRepository.countActiveUser();
@@ -180,7 +195,6 @@ public class UserServiceImpl implements UserService {
                 .build();
     }
 
-    @Override
     public ExportResult exportUser(String format) {
         List<UserCsvDto> userCsvDtos = findAllUsers().stream().map(this::convertToCsvDto).toList();
 
@@ -200,7 +214,6 @@ public class UserServiceImpl implements UserService {
         throw new IllegalArgumentException("Unsupported format");
     }
 
-    @Override
     public User findByEmail(String email) {
         return userRepository.findByEmail(email);
     }
@@ -228,6 +241,7 @@ public class UserServiceImpl implements UserService {
                 .lastName(request.getLastName())
                 .enabled(request.getEnabled())
                 .roles(savedRoles)
+                .password(request.getPassword())
                 .photo(request.getPhoto())
                 .build();
     }
@@ -276,5 +290,13 @@ public class UserServiceImpl implements UserService {
                 .roles(user.getRoles().toString())
                 .status(user.isEnabled() ? "ACTIVE" : "INACTIVE")
                 .build();
+    }
+
+    public AppUserDetails getCurrentLoginUser() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principal instanceof AppUserDetails) {
+            return (AppUserDetails) principal;
+        }
+        throw new IllegalStateException("No authenticated user found");
     }
 }

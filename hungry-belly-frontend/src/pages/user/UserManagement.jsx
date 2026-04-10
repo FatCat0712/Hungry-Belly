@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import Pagination from "../../components/Pagination";
@@ -12,6 +12,8 @@ import {
 } from "../../hooks/users/useUser";
 import { toast } from "react-toastify";
 import { useDebounce } from "../../hooks/useDebounce";
+import { AuthContext } from "../../context/auth-context";
+import AccessDenied from "../AccessDenied";
 
 export default function UserManagement() {
   const pageSize = 10;
@@ -46,6 +48,8 @@ export default function UserManagement() {
 
   const [format, setFormat] = useState("");
   const { exportUsers } = useExportUsers(format);
+
+  const { user: loggedInUser } = useContext(AuthContext);
 
   const toggleUserStatus = (userId, name, status) => {
     toggleStatus(
@@ -92,6 +96,10 @@ export default function UserManagement() {
 
   if ((!data && isLoading) || (!hasLoadedStats && isStatsLoading)) {
     return <Spinner message="Loading users..." minHeight="50vh" />;
+  }
+
+  if (loggedInUser?.roles.includes("ROLE_ADMIN") === false) {
+    return <AccessDenied />;
   }
 
   return (
@@ -278,18 +286,37 @@ export default function UserManagement() {
                         <td>
                           <div className="d-flex align-items-center gap-2">
                             <div
-                              className="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center"
+                              className="position-relative"
                               style={{ width: 40, height: 40 }}
                             >
-                              {user.photo ? (
-                                <img
-                                  src={user.photo}
-                                  alt="User"
-                                  className="rounded-circle"
-                                  style={{ width: 40, height: 40 }}
-                                />
-                              ) : (
-                                user.firstName[0] + user.lastName[0]
+                              <div
+                                className="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center"
+                                style={{ width: 40, height: 40 }}
+                              >
+                                {user.photo ? (
+                                  <img
+                                    src={user.photo}
+                                    alt="User"
+                                    className="rounded-circle"
+                                    style={{ width: 40, height: 40 }}
+                                  />
+                                ) : (
+                                  user.firstName[0] + user.lastName[0]
+                                )}
+                              </div>
+                              {loggedInUser?.id === user.id && (
+                                <span
+                                  className="badge bg-info position-absolute"
+                                  style={{
+                                    top: 0,
+                                    left: "50%",
+                                    transform: "translateY(-50%)",
+                                    fontSize: 10,
+                                    whiteSpace: "nowrap",
+                                  }}
+                                >
+                                  Current user
+                                </span>
                               )}
                             </div>
                             <div className="d-flex flex-column">

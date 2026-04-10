@@ -4,7 +4,7 @@ import com.eddie.hungry_belly_backend.entity.RefreshToken;
 import com.eddie.hungry_belly_backend.entity.User;
 import com.eddie.hungry_belly_backend.security.jwt.JwtUtils;
 import com.eddie.hungry_belly_backend.token.repository.RefreshTokenRepository;
-import com.eddie.hungry_belly_backend.user.service.UserService;
+import com.eddie.hungry_belly_backend.user.service.impl.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;

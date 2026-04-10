@@ -2,12 +2,12 @@ import { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import assets from "../../assets/assets";
-import { login } from "../../services/authService";
+
 import "../../styles/Login.css";
 import { AuthContext } from "../../context/auth-context";
 
 const Login = () => {
-  const { fetchUser } = useContext(AuthContext);
+  const { loginUser } = useContext(AuthContext);
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,8 +18,7 @@ const Login = () => {
 
     try {
       setIsSubmitting(true);
-      await login(email, password);
-      await fetchUser({ force: true });
+      await loginUser(email, password);
       toast.success("Welcome back!");
       navigate("/");
     } catch (error) {
@@ -84,20 +83,7 @@ const Login = () => {
             />
           </div>
 
-          <div className="d-flex justify-content-between align-items-center mb-4">
-            <div className="form-check m-0">
-              <input
-                className="form-check-input"
-                type="checkbox"
-                id="rememberMe"
-              />
-              <label
-                className="form-check-label login-check"
-                htmlFor="rememberMe"
-              >
-                Remember me
-              </label>
-            </div>
+          <div className="d-flex justify-content-end align-items-center mb-4">
             <button type="button" className="btn btn-link p-0 login-link">
               Forgot password?
             </button>

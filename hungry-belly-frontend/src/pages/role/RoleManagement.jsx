@@ -1,13 +1,15 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Spinner from "../../components/Spinner";
 import DeleteRoleConfirmDialog from "../../components/admin/DeleteRoleConfirmDialog";
 
 import { useRoles } from "../../hooks/roles/useRole";
+import { AuthContext } from "../../context/auth-context";
 
 export default function RoleManagement() {
   const [roleToDelete, setRoleToDelete] = useState(null);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+  const { user: loggedInUser } = useContext(AuthContext);
 
   const navigate = useNavigate();
   const { roles, isLoading } = useRoles();
@@ -25,6 +27,10 @@ export default function RoleManagement() {
     setShowDeleteConfirmModal(false);
     setRoleToDelete(null);
   };
+
+  if (loggedInUser?.roles.includes("ROLE_ADMIN") === false) {
+    return <AccessDenied />;
+  }
 
   if (isLoading) {
     return <Spinner message="Loading roles..." />;

@@ -37,7 +37,7 @@ public class CsvExporter<T> implements ExportStrategy<T>{
 
     @Override
     public String getFileExtension() {
-        return "csv";
+        return ".csv";
     }
 
     @Override

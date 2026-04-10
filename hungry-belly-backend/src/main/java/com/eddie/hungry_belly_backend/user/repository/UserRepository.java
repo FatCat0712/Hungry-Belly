@@ -34,17 +34,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.roles WHERE u.id IN :ids")
     List<User> findAllWithRolesByIds(@Param("ids") List<Long> ids);
 
-
     @Query("SELECT r.id AS roleId, COUNT(u) AS userCount FROM User u JOIN u.roles r GROUP BY r.id ORDER BY r.id")
     List<RoleUserCount> countUsersByRole();
-
 
     @Query("SELECT COUNT(*) FROM User u WHERE u.enabled = true")
     Long countActiveUser();
 
     @Query("SELECT COUNT(*) FROM User u WHERE u.deleted = false")
     Long countAllUsers();
-
 
     @Query("UPDATE User u SET u.deleted = true, u.enabled = false WHERE u.id = ?1")
     @Modifying
@@ -58,4 +55,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT u FROM User u LEFT JOIN FETCH u.roles WHERE u.id = ?1 AND u.deleted = false")
     Optional<User> findUserById(Long id);
+
+    @Query("SELECT COUNT(*) FROM User u JOIN u.roles r WHERE r.name = 'Admin' AND u.enabled = true AND u.deleted = false")
+    long countActiveAdmins();
 }

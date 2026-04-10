@@ -26,10 +26,9 @@ api:
   prefix: /api/v1
 auth:
   token:
-    accessExpirationInMils: 120000
-    refreshExpirationInMils: 120000
-#    accessExpirationInMils: 300000
-#    refreshExpirationInMils: 2592000000
+#    5 minutes for access token, 30 days for refresh token
+    accessExpirationInMils: 300000
+    refreshExpirationInMils: 2592000000
     jwtSecret: ${JWT_SECRET}
 app:
   useSecureCookie: false

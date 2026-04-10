@@ -16,6 +16,8 @@ import EditRole from "./pages/role/EditRole";
 import CreateRole from "./pages/role/CreateRole";
 import Login from "./pages/auth/Login";
 import ProtectedRoute from "./components/ProtectedRoute";
+import UserAccountUpdate from "./pages/user/UserAccountUpdate";
+import AccessDenied from "./pages/AccessDenied";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -32,9 +34,10 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
+
           <Route element={<ProtectedRoute />}>
             <Route path="/" element={<AdminLayout />}>
-              <Route index element={<Home />} />
+              <Route index element={<AdminDashboard />} />
               <Route path="users" element={<UserManagement />} />
               <Route path="users/new" element={<CreaterUser />} />
               <Route path="users/:id/edit" element={<EditUser />} />
@@ -44,9 +47,11 @@ function App() {
                 path="users/:id/reset-password"
                 element={<ResetUserPassword />}
               />
+              <Route path="/profile" element={<UserAccountUpdate />} />
               <Route path="roles" element={<RoleManagement />} />
               <Route path="restaurants" element={<Restaurants />} />
               <Route path="orders" element={<Orders />} />
+              <Route path="access-denied" element={<AccessDenied />} />
             </Route>
           </Route>
         </Routes>

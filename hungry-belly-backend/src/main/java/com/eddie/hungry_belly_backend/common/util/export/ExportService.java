@@ -34,7 +34,7 @@ public class ExportService {
         String signedUrl = storageService.generateDownloadUrl(path, 3600);
 
         return ExportResult.builder()
-                .fileName(fileName + ".csv")
+                .fileName(fileName + strategy.getFileExtension())
                 .downloadUrl(signedUrl)
                 .created(LocalDateTime.now())
                 .build();

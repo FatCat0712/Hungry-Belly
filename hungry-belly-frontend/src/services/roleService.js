@@ -1,24 +1,24 @@
-import axios from "axios";
+import api from "./api";
 
-const API_URL = import.meta.env.VITE_API_URL + "/roles";
+const API_URL = "/roles";
 
 export const fetchRolesApi = async () => {
-  const res = await axios.get(API_URL);
+  const res = await api.get(API_URL);
   return res.data;
 };
 
 export const fetchRoleNamesApi = async () => {
-  const res = await axios.get(`${API_URL}/names`);
+  const res = await api.get(`${API_URL}/names`);
   return res.data;
 };
 
 export const fetchRoleWithIdApi = async (roleId) => {
-  const res = await axios.get(`${API_URL}/${roleId}`);
+  const res = await api.get(`${API_URL}/${roleId}`);
   return res.data;
 };
 
 export const createRoleApi = async (roleData) => {
-  const res = await axios.post(`${API_URL}`, roleData, {
+  const res = await api.post(`${API_URL}`, roleData, {
     headers: { "Content-Type": "application/json" },
   });
 
@@ -26,7 +26,7 @@ export const createRoleApi = async (roleData) => {
 };
 
 export const updateRoleApi = async (roleData) => {
-  const res = await axios.put(`${API_URL}`, roleData, {
+  const res = await api.put(`${API_URL}`, roleData, {
     headers: { "Content-Type": "application/json" },
   });
 
@@ -34,6 +34,6 @@ export const updateRoleApi = async (roleData) => {
 };
 
 export const deleteRoleApi = async (roleId) => {
-  const res = await axios.delete(`${API_URL}/${roleId}`);
+  const res = await api.delete(`${API_URL}/${roleId}`);
   return res.data;
 };

@@ -44,7 +44,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @Nonnull HttpServletResponse response,
             @Nonnull FilterChain filterChain
     ) throws ServletException, IOException {
-        cookieUtils.logCookies(request);
         String token = cookieUtils.extractTokenFromCookies(request, "accessToken");
 
         if (StringUtils.hasText(token)) {

@@ -1,3 +1,4 @@
+import axios from "axios";
 import api from "./api";
 
 const API_URL = "/users";
@@ -73,7 +74,7 @@ export const toggleUserStatusApi = async (userId) => {
 };
 
 export const uploadUserPhotoApi = async (uploadUrl, file, contentType) => {
-  const data = await api.put(uploadUrl, file, {
+  const data = await axios.put(uploadUrl, file, {
     headers: { "Content-Type": contentType },
   });
 

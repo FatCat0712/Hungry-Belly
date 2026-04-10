@@ -133,8 +133,8 @@ function UserForm({ selectedUser }) {
   };
 
   return (
-    <div className="modal-content">
-      <div className="modal-body border-bottom mb-2">
+    <div>
+      <div className="border-bottom mb-2">
         <form onSubmit={handleSubmit}>
           <div className="mb-3">
             <label htmlFor="email" className="form-label">
