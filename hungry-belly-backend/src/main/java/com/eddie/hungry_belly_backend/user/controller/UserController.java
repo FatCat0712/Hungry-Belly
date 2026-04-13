@@ -1,14 +1,15 @@
 package com.eddie.hungry_belly_backend.user.controller;
 
 import com.eddie.hungry_belly_backend.common.dto.response.ApiResponse;
+import com.eddie.hungry_belly_backend.common.util.paginate.PageRequestDto;
 import com.eddie.hungry_belly_backend.common.util.storage.StorageService;
 import com.eddie.hungry_belly_backend.user.dto.request.AdminUserCreateRequest;
-import com.eddie.hungry_belly_backend.user.dto.request.AdminUserRequest;
 import com.eddie.hungry_belly_backend.user.dto.request.ResetPasswordRequest;
 import com.eddie.hungry_belly_backend.user.dto.request.UploadRequest;
-import com.eddie.hungry_belly_backend.user.dto.response.AdminUserResponse;
+import com.eddie.hungry_belly_backend.user.dto.request.UserRequest;
 import com.eddie.hungry_belly_backend.user.dto.response.ExportResult;
-import com.eddie.hungry_belly_backend.user.service.impl.UserService;
+import com.eddie.hungry_belly_backend.user.dto.response.UserResponse;
+import com.eddie.hungry_belly_backend.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,15 +25,9 @@ public class UserController {
     private final UserService userService;
     private final StorageService storageService;
 
-    @GetMapping
-    public ResponseEntity<ApiResponse<?>> listUsers(
-            @RequestParam(name = "pageNum", required = false) Integer pageNum,
-            @RequestParam(name = "pageSize", required = false) Integer pageSize,
-            @RequestParam(name = "sortField", required = false, defaultValue = "firstName") String sortField,
-            @RequestParam(name = "sortDirection", required = false, defaultValue = "asc") String sortDirection,
-            @RequestParam(name = "keyword", required = false) String keyword
-            ) {
-             var listUsers = userService.listByPage(pageNum, pageSize, sortField, sortDirection, keyword);
+    @PostMapping("/page")
+    public ResponseEntity<ApiResponse<?>> listUsers(@RequestBody PageRequestDto request) {
+             var listUsers = userService.listByPage(request);
             return ResponseEntity.ok(ApiResponse.success(listUsers, "All users fetched"));
     }
 
@@ -48,14 +43,14 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<AdminUserResponse>> findUserById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<UserResponse>> findUserById(@PathVariable Long id) {
         var response = userService.findById(id);
         return ResponseEntity.ok(ApiResponse.success(response, "User fetched"));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<?>> updateUser(@PathVariable Long id, @Valid @RequestBody AdminUserRequest request) {
-        AdminUserResponse response = userService.updateUserInfo(id, request);
+    public ResponseEntity<ApiResponse<?>> updateUser(@PathVariable Long id, @Valid @RequestBody UserRequest request) {
+        UserResponse response = userService.updateUserInfo(id, request);
         return ResponseEntity.ok(ApiResponse.success(response, "User updated successfully"));
     }
 

@@ -1,6 +1,7 @@
 package com.eddie.hungry_belly_backend.exception;
 
 import com.eddie.hungry_belly_backend.common.dto.response.ApiResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -11,12 +12,15 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ApiResponse<?>> handleBadRequest(BadRequestException ex) {
         Map<String, String> errors = new HashMap<>();
+
+        log.error("Bad request: {}", ex.getMessage(), ex);
 
         String[] errorEntry = ex.getMessage().split(":");
         errors.put(errorEntry[0], errorEntry[1]);
@@ -45,6 +49,7 @@ public class GlobalExceptionHandler {
         ex.getBindingResult().getFieldErrors().forEach(entry -> errors
                 .put(entry.getField(), entry.getDefaultMessage())
         );
+        log.error("Invalid arguments: {}", ex.getMessage(), ex);
         return ResponseEntity.badRequest()
                 .body(ApiResponse.error(HttpStatus.BAD_REQUEST.value(), errors));
 
@@ -65,6 +70,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<?> handleGeneralException(Exception ex) {
+        log.error("An unexpected error occurred: {}", ex.getMessage(), ex);
         return ResponseEntity.internalServerError()
                 .body(ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Something went wrong"));
     }

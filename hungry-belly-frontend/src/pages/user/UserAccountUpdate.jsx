@@ -1,36 +1,29 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useState } from "react";
 import { AuthContext } from "../../context/auth-context";
-import { getUserApi } from "../../services/userService";
 import assets from "../../assets/assets";
 import { useNavigate } from "react-router-dom";
 
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import {
-  useGetPresignedUrl,
-  useUpdateUser,
-  useUploadPhoto,
-} from "../../hooks/users/useUser";
+  useGetAccountPresignedUrl,
+  useUpdateAccount,
+} from "../../hooks/auth/useAuth";
+
+import { useUploadPhoto } from "../../hooks/users/useUser";
+
 
 const UserAccountUpdate = () => {
   const { user: loggedInUser } = useContext(AuthContext);
 
-  const [user, setUser] = useState({});
+  const [user, setUser] = useState(loggedInUser || {});
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { updateUser } = useUpdateUser();
-  const { getPresignedUrl } = useGetPresignedUrl();
+  const { updateAccount } = useUpdateAccount();
+  const { getPresignedUrl } = useGetAccountPresignedUrl();
   const { uploadPhoto } = useUploadPhoto();
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      const result = await getUserApi(loggedInUser.id);
-      setUser(result);
-    };
-    fetchUser();
-  }, [loggedInUser.id]);
 
   const handlePhotoChange = (e) => {
     const file = e.target.files?.[0];
@@ -69,7 +62,7 @@ const UserAccountUpdate = () => {
     try {
       if (user.photo !== null && user.photo instanceof File) {
         const transferData = { ...user, photo: user.photo.name };
-        result = await updateUser(transferData);
+        result = await updateAccount(transferData);
       } else {
         const transferData = {
           id: user.id,
@@ -80,30 +73,27 @@ const UserAccountUpdate = () => {
           roles: user.roles,
           enabled: user.enabled,
         };
-        result = await updateUser(transferData);
+        result = await updateAccount(transferData);
       }
 
       if (user.photo !== null && user.photo instanceof File) {
-        const { id } = result.data;
+        const { id } = result;
         const presignedResult = await getPresignedUrl({
           userId: id,
           fileName: user.photo.name,
           contentType: user.photo.type,
         });
 
-        console.log(presignedResult);
-
         await uploadPhoto({
           uploadUrl: presignedResult.uploadUrl,
           file: user.photo,
           contentType: user.photo.type,
         });
-
-        await queryClient.invalidateQueries({ queryKey: ["users"] });
-        await queryClient.invalidateQueries({ queryKey: ["users", id] });
-
-        toast.success("Profile updated successfully");
       }
+      await queryClient.invalidateQueries({ queryKey: ["users"] });
+      await queryClient.invalidateQueries({ queryKey: ["users", user?.id] });
+
+      toast.success("Profile updated successfully");
     } catch (error) {
       const apiError = error.response?.data;
       const apiMessage = apiError?.message;

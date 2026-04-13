@@ -15,7 +15,7 @@ import java.util.Set;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class AdminUserRequest {
+public class UserRequest {
     private Long id;
 
     @Email(message = "Invalid email format")

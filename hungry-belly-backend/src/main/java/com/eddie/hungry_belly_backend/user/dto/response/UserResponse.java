@@ -6,11 +6,15 @@ import java.util.Set;
 
 @Getter
 @Setter
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 @Builder
-public class AuthUserResponse {
+public class UserResponse {
     private Long id;
-    private String name;
+    private String email;
+    private String firstName;
+    private String lastName;
+    private String photo;
+    private boolean enabled;
     private Set<String> roles;
 }

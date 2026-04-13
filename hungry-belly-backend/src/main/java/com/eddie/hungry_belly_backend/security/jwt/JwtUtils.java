@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 import java.security.Key;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 @Data
 @Component
@@ -45,6 +46,7 @@ public class JwtUtils {
                 .setSubject(email)
                 .setIssuedAt(new Date())
                 .setExpiration(calculateExpirationDate(refreshExpirationInMils))
+                .claim("jti", UUID.randomUUID().toString())
                 .signWith(key(), SignatureAlgorithm.HS256)
                 .compact();
     }

@@ -345,7 +345,7 @@ export default function UserManagement() {
                         <td className="d-none d-lg-table-cell">
                           {user.roles.map((role) => (
                             <span key={role} className="badge bg-primary me-1">
-                              {role}
+                              {role.replace("ROLE_", "")}
                             </span>
                           ))}
                         </td>

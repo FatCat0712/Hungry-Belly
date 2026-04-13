@@ -6,6 +6,11 @@ import Spinner from "./Spinner";
 const ProtectedRoute = () => {
   const { user, isAuthLoading } = useContext(AuthContext);
   const location = useLocation();
+  const isAccessDeniedRoute = location.pathname === "/access-denied";
+
+  if (isAccessDeniedRoute) {
+    return <Outlet />;
+  }
 
   if (isAuthLoading) {
     return <Spinner message="Checking authentication..."></Spinner>;

@@ -5,7 +5,7 @@ import { AuthContext } from "../../context/auth-context";
 
 const Sidebar = ({ isOpen, setIsOpen, mobileOpen, setMobileOpen }) => {
   const { user, logoutUser } = useContext(AuthContext);
-  const userName = user?.name || "Admin User";
+  const userName = user?.firstName + " " + user?.lastName || "Admin User";
   const userRoles = Array.isArray(user?.roles)
     ? user.roles
         .map((role) => (typeof role === "string" ? role : role?.name))
@@ -41,7 +41,7 @@ const Sidebar = ({ isOpen, setIsOpen, mobileOpen, setMobileOpen }) => {
 
   return (
     <aside
-      className={`d-flex flex-column border-end admin-sidebar${mobileOpen ? " mobile-open" : ""}`}
+      className={`d-flex flex-column border-end flex-shrink-0 admin-sidebar${mobileOpen ? " mobile-open" : ""}`}
       style={{
         width,
         backgroundColor: "rgb(224, 57, 74)",
@@ -49,6 +49,7 @@ const Sidebar = ({ isOpen, setIsOpen, mobileOpen, setMobileOpen }) => {
         boxShadow: "2px 0 12px rgba(0, 0, 0, 0.11)",
         transition: "width 220ms ease",
         minWidth: 72,
+        flexShrink: 0,
       }}
     >
       <div

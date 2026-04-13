@@ -10,7 +10,7 @@ import org.hibernate.validator.constraints.Length;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class AdminUserCreateRequest extends AdminUserRequest {
+public class AdminUserCreateRequest extends UserRequest {
     @NotBlank(message = "Password is required")
     @Length(min = 6, message = "Password must be at least 6 characters")
     private String password;

@@ -67,7 +67,7 @@ public class RoleService{
 
         Role dbRole = fetchById(request.getId());
 
-        dbRole.setName(request.getName());
+        dbRole.setName("ROLE_" + request.getName());
         dbRole.setDescription(request.getDescription());
 
         Set<Permission> dbPermissions = convertToPermission(request.getPermissions());
@@ -89,7 +89,7 @@ public class RoleService{
        Set<Permission> dbPermissions = convertToPermission(request.getPermissions());
 
        Role newRole = new Role();
-       newRole.setName(request.getName());
+       newRole.setName("ROLE_" + request.getName());
        newRole.setDescription(request.getDescription());
        newRole.setPermissions(dbPermissions);
 

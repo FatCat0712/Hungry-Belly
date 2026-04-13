@@ -23,7 +23,10 @@ export default function AdminLayout() {
         setMobileOpen={setMobileOpen}
       />
 
-      <main className="flex-grow-1 bg-light d-flex flex-column overflow-hidden position-relative">
+      <main
+        className="flex-grow-1 bg-light d-flex flex-column overflow-hidden position-relative"
+        style={{ minWidth: 0 }}
+      >
         {/* Mobile topbar — only visible below md */}
         <div className="d-flex d-md-none align-items-center gap-2 px-3 py-2 bg-white border-bottom shadow-sm flex-shrink-0">
           <button

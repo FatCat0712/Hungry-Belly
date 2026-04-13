@@ -10,15 +10,19 @@ export const fetchUsersByPageApi = async ({
   sortDirection,
   keyword,
 } = {}) => {
-  const response = await api.get(API_URL, {
-    params: {
+  const response = await api.post(
+    API_URL + "/page",
+    {
       pageNum,
       pageSize,
       sortField,
       sortDirection,
       keyword,
     },
-  });
+    {
+      headers: { "Content-Type": "application/json" },
+    },
+  );
   return response.data.data;
 };
 

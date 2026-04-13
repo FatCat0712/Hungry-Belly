@@ -6,7 +6,6 @@ import RoleManagement from "./pages/role/RoleManagement";
 import Restaurants from "./pages/Restaurants";
 import Orders from "./pages/Orders";
 import CreaterUser from "./pages/user/CreaterUser";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { ToastContainer } from "react-toastify";
 import { Edit, Home } from "lucide-react";
@@ -18,18 +17,11 @@ import Login from "./pages/auth/Login";
 import ProtectedRoute from "./components/ProtectedRoute";
 import UserAccountUpdate from "./pages/user/UserAccountUpdate";
 import AccessDenied from "./pages/AccessDenied";
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 0,
-    },
-  },
-});
+import RestaurantManagement from "./pages/restaurant/RestaurantManagement";
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
+    <>
       <ReactQueryDevtools initialIsOpen={false} />
       <BrowserRouter>
         <Routes>
@@ -49,7 +41,7 @@ function App() {
               />
               <Route path="/profile" element={<UserAccountUpdate />} />
               <Route path="roles" element={<RoleManagement />} />
-              <Route path="restaurants" element={<Restaurants />} />
+              <Route path="restaurants" element={<RestaurantManagement />} />
               <Route path="orders" element={<Orders />} />
               <Route path="access-denied" element={<AccessDenied />} />
             </Route>
@@ -57,7 +49,7 @@ function App() {
         </Routes>
       </BrowserRouter>
       <ToastContainer position="top-center" />
-    </QueryClientProvider>
+    </>
   );
 }
 

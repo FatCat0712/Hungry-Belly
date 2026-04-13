@@ -1,7 +1,7 @@
-import React from "react";
+import RestaurantManagement from "./restaurant/RestaurantManagement";
 
 const Restaurants = () => {
-  return <div>Retaurants</div>;
+  return <RestaurantManagement />;
 };
 
 export default Restaurants;

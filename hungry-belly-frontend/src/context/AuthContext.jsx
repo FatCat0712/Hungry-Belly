@@ -1,60 +1,66 @@
 import { useEffect, useState } from "react";
-import { fetchCurrentUser } from "../services/authService";
+import { loginApi, logoutApi } from "../services/authService";
 import { AuthContext } from "./auth-context";
-import { login, logout } from "../services/authService";
-
-let currentUserRequest = null;
-
-const requestCurrentUserOnce = async () => {
-  if (currentUserRequest) {
-    return currentUserRequest;
-  }
-
-  currentUserRequest = fetchCurrentUser()
-    .then((data) => data)
-    .finally(() => {
-      currentUserRequest = null;
-    });
-
-  return currentUserRequest;
-};
+import { useFetchCurrentUser } from "../hooks/auth/useAuth";
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const isOnLoginPage = () => window.location.pathname === "/login";
+  const {
+    currentUser,
+    isLoading: isCurrentUserLoading,
+    refetch,
+  } = useFetchCurrentUser({ enabled: !isOnLoginPage() });
 
   const loginUser = async (email, password) => {
-    await login(email, password);
+    await loginApi(email, password);
     await fetchUser({ force: true });
   };
 
   const logoutUser = async () => {
-    await logout();
+    await logoutApi();
     setUser(null);
   };
 
   const fetchUser = async ({ force = false } = {}) => {
-    if (!force && window.location.pathname === "/login") {
+    if (!force && isOnLoginPage()) {
       setUser(null);
       setIsAuthLoading(false);
-      return;
+      return null;
     }
 
     setIsAuthLoading(true);
 
     try {
-      const data = await requestCurrentUserOnce();
-      setUser(data);
+      const result = await refetch();
+
+      if (result.error) {
+        setUser(null);
+        return null;
+      }
+
+      const nextUser = result.data || null;
+      setUser(nextUser);
+      return nextUser;
     } catch {
       setUser(null);
+      return null;
     } finally {
       setIsAuthLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchUser();
-  }, []);
+    if (isOnLoginPage()) {
+      setUser(null);
+      setIsAuthLoading(false);
+      return;
+    }
+
+    setUser(currentUser || null);
+    setIsAuthLoading(isCurrentUserLoading);
+  }, [currentUser, isCurrentUserLoading]);
 
   return (
     <AuthContext.Provider

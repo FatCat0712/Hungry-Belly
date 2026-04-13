@@ -1,11 +1,14 @@
-package com.eddie.hungry_belly_backend.user.service.impl;
+package com.eddie.hungry_belly_backend.user.service;
 
+import com.eddie.hungry_belly_backend.auth.service.AuthService;
 import com.eddie.hungry_belly_backend.common.dto.response.PageResponse;
 import com.eddie.hungry_belly_backend.common.mapper.PageMapper;
 import com.eddie.hungry_belly_backend.common.util.export.CsvExporter;
 import com.eddie.hungry_belly_backend.common.util.export.ExcelExporter;
 import com.eddie.hungry_belly_backend.common.util.export.ExportService;
 import com.eddie.hungry_belly_backend.common.util.export.ExportStrategy;
+import com.eddie.hungry_belly_backend.common.util.paginate.PageRequestDto;
+import com.eddie.hungry_belly_backend.common.util.paginate.PaginationUtils;
 import com.eddie.hungry_belly_backend.common.util.storage.StorageService;
 import com.eddie.hungry_belly_backend.entity.Role;
 import com.eddie.hungry_belly_backend.entity.User;
@@ -13,18 +16,18 @@ import com.eddie.hungry_belly_backend.exception.BadRequestException;
 import com.eddie.hungry_belly_backend.exception.InvalidOperationException;
 import com.eddie.hungry_belly_backend.exception.UserNotFoundException;
 import com.eddie.hungry_belly_backend.role.service.RoleService;
-import com.eddie.hungry_belly_backend.security.AppUserDetails;
 import com.eddie.hungry_belly_backend.user.dto.request.AdminUserCreateRequest;
-import com.eddie.hungry_belly_backend.user.dto.request.AdminUserRequest;
 import com.eddie.hungry_belly_backend.user.dto.request.ResetPasswordRequest;
-import com.eddie.hungry_belly_backend.user.dto.response.AdminUserResponse;
+import com.eddie.hungry_belly_backend.user.dto.request.UserRequest;
 import com.eddie.hungry_belly_backend.user.dto.response.ExportResult;
 import com.eddie.hungry_belly_backend.user.dto.response.UserCsvDto;
+import com.eddie.hungry_belly_backend.user.dto.response.UserResponse;
 import com.eddie.hungry_belly_backend.user.dto.response.UserStatsResponse;
 import com.eddie.hungry_belly_backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.*;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,8 +45,9 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final ExportService exportService;
     private final StorageService storageService;
+    private final AuthService authService;
 
-    public AdminUserResponse createUser(AdminUserCreateRequest request) {
+    public UserResponse createUser(AdminUserCreateRequest request) {
         boolean isEmailUnique = userRepository.existsByEmailAndDeletedFalse(request.getEmail());
         if (isEmailUnique) {
             throw new BadRequestException("email: Email already exists");
@@ -61,11 +65,11 @@ public class UserService {
         return dbUser.get();
     }
 
-    public AdminUserResponse findById(Long id) {
+    public UserResponse findById(Long id) {
         return convertToAdminResponse(findUserById(id));
     }
 
-    public AdminUserResponse updateUserInfo(Long userId, AdminUserRequest request) {
+    public UserResponse updateUserInfo(Long userId, UserRequest request) {
 
         User existUser = findByEmail(request.getEmail());
 
@@ -118,7 +122,7 @@ public class UserService {
             }
         }
 
-        if(getCurrentLoginUser().getId().equals(id)) {
+        if(authService.getCurrentLoginUser().getId().equals(id)) {
             throw new InvalidOperationException("You cannot delete your own account");
         }
 
@@ -132,32 +136,12 @@ public class UserService {
     }
 
 
-    public PageResponse<AdminUserResponse> listByPage(
-            Integer pageNum,
-            Integer pageSize,
-            String sortField,
-            String sortDirection,
-            String keyword
-    ) {
-        if (pageNum == null) {
-            pageNum = 0;
-        }
-
-        if (pageSize == null) {
-            pageSize = 10;
-        }
-
-        if (pageNum < 0 || pageSize <= 0 || pageSize > 100) {
-            throw new IllegalArgumentException("Invalid pagination parameter");
-        }
-
-        Sort sort = Sort.by(sortField);
-        sort = sortDirection.equals("asc") ? sort.ascending() : sort.descending();
-
-        Pageable pageable = PageRequest.of(pageNum - 1, pageSize, sort);
+    public PageResponse<UserResponse> listByPage(PageRequestDto request) {
+        Pageable pageable = PaginationUtils.buildPageable(request);
 
         // Step 1: Get paginated IDs (efficient DB pagination, no collection fetch)
         Page<Long> idPage;
+        String keyword = request.getKeyword();
         if (keyword != null) {
             idPage = userRepository.findAllUserIdsWithKeyword(keyword, pageable);
         } else {
@@ -167,14 +151,8 @@ public class UserService {
         // Step 2: Bulk load users with roles by IDs (single efficient query)
         List<User> users = userRepository.findAllWithRolesByIds(idPage.getContent());
 
-        // Step 3: Convert to DTOs
-        List<AdminUserResponse> responses = users.stream()
-                .map(this::convertToAdminResponse)
-                .toList();
-
-        // Step 4: Reconstruct Page object with original pagination metadata
-        Page<AdminUserResponse> responsePage = new PageImpl<>(
-                responses,
+        PageImpl<UserResponse> responsePage = new PageImpl<>(
+                users.stream().map(this::convertToAdminResponse).toList(),
                 pageable,
                 idPage.getTotalElements()
         );
@@ -232,7 +210,7 @@ public class UserService {
                 .build();
     }
 
-    private User convertToUserEntity(AdminUserRequest request) {
+    private User convertToUserEntity(UserRequest request) {
         Set<Role> savedRoles = convertToRoleEntitySet(request.getRoles());
 
         return User.builder()
@@ -246,7 +224,7 @@ public class UserService {
                 .build();
     }
 
-    private String generateUserPhotoPath(User user) {
+    public String generateUserPhotoPath(User user) {
         String photo = user.getPhoto();
         if (photo == null) return null;
         return storageService.generateDownloadUrl("user-photos/" + user.getId() + "/" + photo, 3600);
@@ -266,11 +244,11 @@ public class UserService {
         return passwordEncoder.encode(rawPassword);
     }
 
-    private AdminUserResponse convertToAdminResponse(User user) {
+    private UserResponse convertToAdminResponse(User user) {
         Set<String> roles = user.getRoles().stream()
                 .map(Role::toString).collect(Collectors.toSet());
 
-        return AdminUserResponse.builder()
+        return UserResponse.builder()
                 .id(user.getId())
                 .email(user.getEmail())
                 .firstName(user.getFirstName())
@@ -292,11 +270,5 @@ public class UserService {
                 .build();
     }
 
-    public AppUserDetails getCurrentLoginUser() {
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (principal instanceof AppUserDetails) {
-            return (AppUserDetails) principal;
-        }
-        throw new IllegalStateException("No authenticated user found");
-    }
+
 }

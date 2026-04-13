@@ -59,12 +59,10 @@ public class StorageService {
             int contentLength = inputStream.available();
             s3Client.putObject(request, RequestBody.fromInputStream(inputStream, contentLength));
         } catch (IOException e) {
-            log.error(e.getMessage());
+            log.error("Error while uploading file: {}", e.getMessage());
         }
 
     }
-
-
 
     public void removeFolder(String folderName) {
 
