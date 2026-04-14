@@ -24,8 +24,10 @@ public class Restaurant {
     @Column(length = 11, nullable = false, unique = true)
     private String phone;
 
-    private String imageUrl;
+    private String photo;
     private Boolean enabled;
+
+    private String address;
 
     @Column(nullable = false)
     private Double rating;

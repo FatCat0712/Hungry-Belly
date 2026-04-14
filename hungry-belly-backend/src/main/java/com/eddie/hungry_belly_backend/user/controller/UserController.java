@@ -2,10 +2,8 @@ package com.eddie.hungry_belly_backend.user.controller;
 
 import com.eddie.hungry_belly_backend.common.dto.response.ApiResponse;
 import com.eddie.hungry_belly_backend.common.util.paginate.PageRequestDto;
-import com.eddie.hungry_belly_backend.common.util.storage.StorageService;
 import com.eddie.hungry_belly_backend.user.dto.request.AdminUserCreateRequest;
 import com.eddie.hungry_belly_backend.user.dto.request.ResetPasswordRequest;
-import com.eddie.hungry_belly_backend.user.dto.request.UploadRequest;
 import com.eddie.hungry_belly_backend.user.dto.request.UserRequest;
 import com.eddie.hungry_belly_backend.user.dto.response.ExportResult;
 import com.eddie.hungry_belly_backend.user.dto.response.UserResponse;
@@ -23,7 +21,6 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("${api.prefix}/users")
 public class UserController {
     private final UserService userService;
-    private final StorageService storageService;
 
     @PostMapping("/page")
     public ResponseEntity<ApiResponse<?>> listUsers(@RequestBody PageRequestDto request) {
@@ -51,7 +48,7 @@ public class UserController {
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<?>> updateUser(@PathVariable Long id, @Valid @RequestBody UserRequest request) {
         UserResponse response = userService.updateUserInfo(id, request);
-        return ResponseEntity.ok(ApiResponse.success(response, "User updated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(response, "User updated"));
     }
 
     @PutMapping("/{id}/password")
@@ -70,12 +67,6 @@ public class UserController {
     public ResponseEntity<ApiResponse<?>> updateUserStatus(@PathVariable Long id) {
         userService.updateUserStatus(id);
         return ResponseEntity.ok(ApiResponse.success(null, null));
-    }
-
-    @PostMapping("/presigned")
-    public ResponseEntity<ApiResponse<?>> getUploadUrl(@RequestBody UploadRequest request) {
-        var response = storageService.generateUploadUrl(request.getFolderName(), request.getFileName(), request.getContentType());
-        return ResponseEntity.ok(ApiResponse.success(response, "User photo updated"));
     }
 
     @PostMapping("/export/{format}")
