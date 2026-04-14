@@ -1,7 +1,9 @@
-package com.eddie.hungry_belly_backend.entity;
+package com.eddie.hungry_belly_backend.entity.restaurant;
 
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.List;
 
 @Table(name = "restaurants")
 @Entity
@@ -24,7 +26,9 @@ public class Restaurant {
     @Column(length = 11, nullable = false, unique = true)
     private String phone;
 
-    private String photo;
+    @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<RestaurantImage> images;
+
     private Boolean enabled;
 
     private String address;

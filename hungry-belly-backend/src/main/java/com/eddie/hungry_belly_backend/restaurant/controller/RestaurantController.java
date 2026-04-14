@@ -3,8 +3,8 @@ package com.eddie.hungry_belly_backend.restaurant.controller;
 import com.eddie.hungry_belly_backend.common.dto.response.ApiResponse;
 import com.eddie.hungry_belly_backend.common.dto.response.PageResponse;
 import com.eddie.hungry_belly_backend.common.util.paginate.PageRequestDto;
-import com.eddie.hungry_belly_backend.restaurant.dto.request.RestaurantUpdateRequest;
-import com.eddie.hungry_belly_backend.restaurant.dto.response.RestaurantResponse;
+import com.eddie.hungry_belly_backend.restaurant.dto.response.RestaurantDetailResponse;
+import com.eddie.hungry_belly_backend.restaurant.dto.response.RestaurantSummaryResponse;
 import com.eddie.hungry_belly_backend.restaurant.service.RestaurantService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +18,7 @@ public class RestaurantController {
 
     @PostMapping("/page")
     public ResponseEntity<ApiResponse<?>> getAllRestaurants(@RequestBody PageRequestDto request) {
-        PageResponse<RestaurantResponse> restaurants = restaurantService.getRestaurants(request);
+        PageResponse<RestaurantSummaryResponse> restaurants = restaurantService.getRestaurants(request);
         return ResponseEntity.ok(ApiResponse.success(restaurants, "Get all restaurants"));
     }
 
@@ -30,13 +30,13 @@ public class RestaurantController {
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<?>> getRestaurantById(@PathVariable Long id) {
-        RestaurantResponse restaurant = restaurantService.getRestaurantById(id);
+        RestaurantDetailResponse restaurant = restaurantService.getRestaurantById(id);
         return ResponseEntity.ok(ApiResponse.success(restaurant, "Get restaurant by id"));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<?>> updateRestaurant(@PathVariable Long id, @RequestBody RestaurantUpdateRequest request) {
-        RestaurantResponse response = restaurantService.updateRestaurant(id, request);
-        return ResponseEntity.ok(ApiResponse.success(response, "Restaurant updated"));
-    }
+//    @PutMapping("/{id}")
+//    public ResponseEntity<ApiResponse<?>> updateRestaurant(@PathVariable Long id, @RequestBody RestaurantUpdateRequest request) {
+//        RestaurantResponse response = restaurantService.updateRestaurant(id, request);
+//        return ResponseEntity.ok(ApiResponse.success(response, "Restaurant updated"));
+//    }
 }

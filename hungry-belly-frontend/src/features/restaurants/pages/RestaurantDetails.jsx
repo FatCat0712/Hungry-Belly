@@ -81,6 +81,58 @@ const formatMetric = (value, suffix = "") => {
   return `${value}${suffix}`;
 };
 
+const sampleRestaurantImages = [
+  {
+    src: "https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=1200&q=80",
+    alt: "Warm dining room with prepared tables",
+  },
+  {
+    src: "https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=900&q=80",
+    alt: "Restaurant terrace with ambient lighting",
+  },
+  {
+    src: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=900&q=80",
+    alt: "Signature plated dish served in a modern restaurant",
+  },
+  {
+    src: "https://images.unsplash.com/photo-1515669097368-22e68427d265?auto=format&fit=crop&w=900&q=80",
+    alt: "Chef preparing food in an open kitchen",
+  },
+];
+
+const normalizeGalleryImages = (value) => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((item, index) => {
+      if (typeof item === "string") {
+        return {
+          src: item,
+          alt: `Restaurant gallery image ${index + 1}`,
+        };
+      }
+
+      const src =
+        item?.imageUrl || item?.url || item?.src || item?.photoUrl || null;
+
+      if (!src) {
+        return null;
+      }
+
+      return {
+        src,
+        alt:
+          item?.alt ||
+          item?.caption ||
+          item?.title ||
+          `Restaurant gallery image ${index + 1}`,
+      };
+    })
+    .filter(Boolean);
+};
+
 export default function RestaurantDetails() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -166,6 +218,17 @@ export default function RestaurantDetails() {
   const heroImage =
     pickFirst(restaurant, ["imageUrl", "bannerUrl", "coverImageUrl"]) ||
     "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80";
+  const galleryImagesFromData = normalizeGalleryImages(
+    pickFirst(restaurant, ["images", "gallery", "photos", "media"]),
+  );
+  const galleryImages =
+    galleryImagesFromData.length > 0
+      ? galleryImagesFromData
+      : sampleRestaurantImages.map((image, index) => ({
+          ...image,
+          alt: `${restaurantName} sample image ${index + 1}: ${image.alt}`,
+        }));
+  const isUsingSampleGallery = galleryImagesFromData.length === 0;
   const featureTags = ensureArray(
     pickFirst(restaurant, ["categories", "tags", "features"]),
   );
@@ -366,6 +429,47 @@ export default function RestaurantDetails() {
                       available.
                     </small>
                   </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="restaurant-panel card border-0 shadow-sm mt-4">
+            <div className="card-body p-4">
+              <div className="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-4">
+                <div>
+                  <span className="restaurant-section-kicker">Gallery</span>
+                  <h2 className="h4 mb-1">Visual preview</h2>
+                </div>
+                {isUsingSampleGallery ? (
+                  <span className="restaurant-chip restaurant-chip--outline">
+                    Sample imagery
+                  </span>
+                ) : null}
+              </div>
+
+              <div className="restaurant-gallery">
+                <figure className="restaurant-gallery__featured mb-0">
+                  <img
+                    src={galleryImages[0].src}
+                    alt={galleryImages[0].alt}
+                    className="restaurant-gallery__image"
+                  />
+                </figure>
+
+                <div className="restaurant-gallery__grid">
+                  {galleryImages.slice(1).map((image) => (
+                    <figure
+                      key={image.src}
+                      className="restaurant-gallery__tile mb-0"
+                    >
+                      <img
+                        src={image.src}
+                        alt={image.alt}
+                        className="restaurant-gallery__image"
+                      />
+                    </figure>
+                  ))}
                 </div>
               </div>
             </div>
