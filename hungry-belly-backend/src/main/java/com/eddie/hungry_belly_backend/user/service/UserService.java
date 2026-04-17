@@ -9,7 +9,7 @@ import com.eddie.hungry_belly_backend.common.util.export.ExportService;
 import com.eddie.hungry_belly_backend.common.util.export.ExportStrategy;
 import com.eddie.hungry_belly_backend.common.util.paginate.PageRequestDto;
 import com.eddie.hungry_belly_backend.common.util.paginate.PaginationUtils;
-import com.eddie.hungry_belly_backend.common.util.storage.StorageService;
+import com.eddie.hungry_belly_backend.common.util.storage.service.StorageService;
 import com.eddie.hungry_belly_backend.entity.Role;
 import com.eddie.hungry_belly_backend.entity.User;
 import com.eddie.hungry_belly_backend.exception.BadRequestException;

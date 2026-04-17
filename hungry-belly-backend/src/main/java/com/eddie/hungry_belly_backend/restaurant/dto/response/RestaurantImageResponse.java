@@ -8,8 +8,9 @@ import lombok.*;
 @NoArgsConstructor
 @Builder
 public class RestaurantImageResponse {
-    private Long id;
     private String url;
+    private String path;
     private String type;
+    private String status;
     private Boolean isPrimary;
 }

@@ -29,7 +29,7 @@ function UserForm({ selectedUser }) {
   const { createUser } = useCreateUser();
   const { updateUser } = useUpdateUser();
   const { uploadPhoto } = useUploadPhoto("users");
-  const { getPresignedUrl } = useGetPresignedUrl("user");
+  const { getPresignedUrl } = useGetPresignedUrl("users");
   let { roles } = useRoles();
 
   const queryClient = useQueryClient();

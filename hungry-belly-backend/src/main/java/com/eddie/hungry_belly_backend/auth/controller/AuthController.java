@@ -3,7 +3,7 @@ package com.eddie.hungry_belly_backend.auth.controller;
 import com.eddie.hungry_belly_backend.auth.service.AuthService;
 import com.eddie.hungry_belly_backend.common.dto.response.ApiResponse;
 import com.eddie.hungry_belly_backend.common.util.CookieUtils;
-import com.eddie.hungry_belly_backend.common.util.storage.StorageService;
+import com.eddie.hungry_belly_backend.common.util.storage.service.StorageService;
 import com.eddie.hungry_belly_backend.entity.Role;
 import com.eddie.hungry_belly_backend.entity.User;
 import com.eddie.hungry_belly_backend.security.AppUserDetails;
@@ -105,7 +105,7 @@ public class AuthController {
 
     @PostMapping("/presigned")
     public ResponseEntity<ApiResponse<?>> getUploadUrl(@RequestBody UploadRequest request) {
-        var response = storageService.generateUploadUrl(request.getFolderName(), request.getFileName(), request.getContentType());
+        var response = storageService.generateUploadUrl(request);
         return ResponseEntity.ok(ApiResponse.success(response, "Account photo updated"));
     }
 

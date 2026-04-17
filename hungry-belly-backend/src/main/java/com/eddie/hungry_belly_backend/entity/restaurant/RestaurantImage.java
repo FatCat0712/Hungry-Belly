@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Objects;
+
 @Entity
 @Table(name = "restaurant_images")
 @Getter
@@ -14,7 +16,7 @@ public class RestaurantImage {
     private Long id;
 
     @Column(nullable = false)
-    private String url;
+    private String path;
 
     @Enumerated(EnumType.STRING)
     private ImageType type;
@@ -24,4 +26,23 @@ public class RestaurantImage {
     @ManyToOne
     @JoinColumn(name = "restaurant_id")
     private Restaurant restaurant;
+
+    public RestaurantImage() {
+    }
+
+    public RestaurantImage(String path) {
+        this.path = path;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        RestaurantImage that = (RestaurantImage) o;
+        return Objects.equals(path, that.path);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(path);
+    }
 }

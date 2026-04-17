@@ -9,7 +9,7 @@ import java.util.List;
 
 @Getter
 @Setter
-public class RestaurantUpdateRequest {
+public class RestaurantCreateRequest {
     @Length(min = 2, max = 128, message = "Restaurant name must be between 2 and 128 characters")
     private String name;
 
@@ -28,4 +28,6 @@ public class RestaurantUpdateRequest {
     private List<RestaurantImageRequest> images;
 
     private Boolean enabled;
+
+    private String owner;
 }

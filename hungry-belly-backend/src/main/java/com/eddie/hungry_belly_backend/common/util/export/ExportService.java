@@ -1,6 +1,6 @@
 package com.eddie.hungry_belly_backend.common.util.export;
 
-import com.eddie.hungry_belly_backend.common.util.storage.StorageService;
+import com.eddie.hungry_belly_backend.common.util.storage.service.StorageService;
 import com.eddie.hungry_belly_backend.user.dto.response.ExportResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

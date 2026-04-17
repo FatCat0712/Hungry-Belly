@@ -14,7 +14,7 @@ public class RestaurantSummaryResponse {
     private Long id;
     private String name;
     private String cuisine;
-    private String photo;
+    private String path;
     private Double rating;
     private String owner;
     private Integer orders;

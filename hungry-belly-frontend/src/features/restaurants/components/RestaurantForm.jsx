@@ -1,13 +1,18 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import assets from "../../../shared/assets/assets";
 import "../../../shared/styles/RestaurantForm.css";
 import { useUpdateRestaurant } from "../hooks/useRestaurant";
+import {
+  useGetPresignedUrl,
+  useUploadPhoto,
+} from "../../../shared/hooks/useStorage";
 
 const RestaurantForm = ({ selectedRestaurant }) => {
   const navigate = useNavigate();
-  const { updateRestaurant } = useUpdateRestaurant();
+  const [errors, setErrors] = useState({});
+  const [isSaving, setIsSaving] = useState(false);
   const [data, setData] = useState({
     id: selectedRestaurant?.id || null,
     name: selectedRestaurant?.name || "",
@@ -15,11 +20,14 @@ const RestaurantForm = ({ selectedRestaurant }) => {
     phone: selectedRestaurant?.phone || "",
     address: selectedRestaurant?.address || "",
     description: selectedRestaurant?.description || "",
+    owner: selectedRestaurant?.owner || null,
     enabled: selectedRestaurant?.enabled || false,
-    photos: selectedRestaurant?.photos || [],
+    images: selectedRestaurant?.images || [],
   });
-  const [errors, setErrors] = useState({});
-  const [isSaving, setIsSaving] = useState(false);
+  const fileInputRef = useRef(null);
+  const { updateRestaurant } = useUpdateRestaurant();
+  const { getPresignedUrl } = useGetPresignedUrl("restaurants");
+  const { uploadPhoto } = useUploadPhoto();
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
@@ -31,55 +39,131 @@ const RestaurantForm = ({ selectedRestaurant }) => {
   };
 
   const handleAddImage = () => {
-    setData((prev) => ({
-      ...prev,
-      photos: [...prev.photos, ""],
-    }));
+    fileInputRef.current?.click();
   };
 
-  // const handleRemoveImage = (index) => {
-  //   setData((prev) => {
-  //     const nextImages = prev.images.filter(
-  //       (_, imageIndex) => imageIndex !== index,
-  //     );
+  const handleFileChange = async (event) => {
+    const files = Array.from(event.target.files || []);
+    if (files.length === 0) return;
 
-  //     return {
-  //       ...prev,
-  //       images: nextImages.length > 0 ? nextImages : [""],
-  //     };
-  //   });
+    const uploads = await handleUploadFiles(files);
+    setData((prev) => {
+      const nextImages = [...prev.images];
 
-  //   setErrors((prev) => {
-  //     const nextErrors = { ...prev };
-  //     delete nextErrors[`image-${index}`];
-  //     return nextErrors;
-  //   });
-  // };
+      uploads.forEach((image) => {
+        if (nextImages.length === 0) {
+          nextImages.push({
+            url: image.publicUrl,
+            path: image.path,
+            type: "COVER",
+            status: "new",
+            isPrimary: true,
+          });
+        } else {
+          nextImages.push({
+            url: image.publicUrl,
+            path: image.path,
+            type: "GALLERY",
+            status: "new",
+            isPrimary: false,
+          });
+        }
+      });
+
+      return {
+        ...prev,
+        images: nextImages,
+      };
+    });
+  };
+
+  const handleUploadFiles = async (files) => {
+    try {
+      const uploads = await getPresignedUrl({
+        files: files.map((f) => ({
+          fileName: f.name,
+          contentType: f.type,
+        })),
+        entityType: "RESTAURANT",
+      });
+
+      await Promise.all(
+        uploads.map(async (u, index) => {
+          await uploadPhoto({
+            uploadUrl: u.uploadUrl,
+            file: files[index],
+            contentType: files[index].type,
+          });
+        }),
+      );
+
+      return uploads;
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleRemoveImage = (index) => {
+    let removedImage = data.images.at(index);
+
+    if (removedImage.isPrimary) {
+      let nextPrimary;
+      if (data.images.length > 1) {
+        nextPrimary = data.images.find(
+          (img, i) => i !== index && img.status !== "removed",
+        );
+        nextPrimary.isPrimary = true;
+        nextPrimary.type = "COVER";
+      }
+    }
+
+    removedImage = {
+      ...removedImage,
+      status: "removed",
+      isPrimary: false,
+      type: "GALLERY",
+    };
+
+    setData((prev) => {
+      let nextImages = prev.images.filter((_, i) => i !== index);
+      nextImages = [...nextImages, removedImage];
+
+      return {
+        ...prev,
+        images: nextImages.length > 0 ? nextImages : [],
+      };
+    });
+
+    setErrors((prev) => {
+      const nextErrors = { ...prev };
+      delete nextErrors[`image-${index}`];
+      return nextErrors;
+    });
+  };
 
   const handleSetCoverImage = (index) => {
     setData((prev) => {
-      let image = data.photos.at(index);
+      let image = prev.images.at(index);
+      image = { ...image, type: "COVER", isPrimary: true };
 
       if (!image) {
         return prev;
       }
 
-      let nextImages = [...prev.photos];
+      let nextImages = prev.images.filter((_, i) => i !== index);
 
-      nextImages = nextImages.map((img) => ({
-        ...img,
-        type: "GALLERY",
-        isPrimary: false,
-      }));
+      nextImages = nextImages.map((img) => {
+        if (img.status === "removed") {
+          return img;
+        }
+        return { ...img, type: "GALLERY", isPrimary: false };
+      });
 
-      image = { ...image, type: "COVER", isPrimary: true };
-
-      nextImages.splice(index, 1);
-      nextImages.unshift(image);
+      nextImages = [image, ...nextImages];
 
       return {
         ...prev,
-        photos: nextImages,
+        images: nextImages,
       };
     });
   };
@@ -87,38 +171,39 @@ const RestaurantForm = ({ selectedRestaurant }) => {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (!data.id) {
-      toast.error("Restaurant updates require an existing restaurant record.");
-      return;
-    }
-
-    const cleanedImages = data.images
-      .map((image) => image.trim())
-      .filter(Boolean);
-    const coverImage = cleanedImages[0] || "";
+    const imagePaths = data.images.map((image) => {
+      const { path, type, isPrimary, status } = image;
+      return { path, type, status, isPrimary };
+    });
 
     try {
       setIsSaving(true);
 
-      const payload = {
+      let payload = {
         name: data.name.trim(),
         cuisine: data.cuisine.trim(),
         phone: data.phone.trim(),
         address: data.address.trim(),
         description: data.description.trim(),
         enabled: data.enabled,
-        photo: coverImage,
-        imageUrl: coverImage,
-        images: cleanedImages,
+        images: imagePaths,
       };
 
-      const response = await updateRestaurant({
-        id: data.id,
-        data: payload,
-      });
+      if (!data.id) {
+        payload = { ...payload, owner: data.owner.trim() };
+      }
 
-      toast.success(response?.message || "Restaurant updated successfully");
-      navigate(`/restaurants/${data.id}`);
+      console.log("Payload:", payload);
+
+      if (data.id) {
+        const response = await updateRestaurant({
+          id: data.id,
+          data: payload,
+        });
+
+        toast.success(response?.message || "Restaurant updated successfully");
+        navigate(`/restaurants/${data.id}`);
+      }
     } catch (error) {
       const apiError = error.response?.data;
       const apiMessage = apiError?.message;
@@ -134,6 +219,13 @@ const RestaurantForm = ({ selectedRestaurant }) => {
       setIsSaving(false);
     }
   };
+
+  const coverImage = data.images.find((img) => img.type === "COVER");
+  const galleryImages = data.images.slice().sort((a, b) => {
+    if (a.isPrimary) return -1;
+    if (b.isPrimary) return 1;
+    return 0;
+  });
 
   return (
     <form
@@ -211,6 +303,25 @@ const RestaurantForm = ({ selectedRestaurant }) => {
                 ) : null}
               </div>
 
+              {!data.id && (
+                <div className="col-12">
+                  <label className="form-label" htmlFor="owner">
+                    Owner <span className="text-danger">*</span>
+                  </label>
+                  <input
+                    id="owner"
+                    name="owner"
+                    className={`form-control ${errors.owner ? "is-invalid" : ""}`}
+                    value={data.owner}
+                    onChange={handleInputChange}
+                    placeholder="Owner name"
+                  />
+                  {errors.owner ? (
+                    <div className="invalid-feedback">{errors.owner}</div>
+                  ) : null}
+                </div>
+              )}
+
               <div className="col-12">
                 <label className="form-label" htmlFor="address">
                   Address <span className="text-danger">*</span>
@@ -268,19 +379,15 @@ const RestaurantForm = ({ selectedRestaurant }) => {
               </span>
               <div className="restaurant-form__cover-frame">
                 <img
-                  src={data.photos[0]?.url || assets.upload}
+                  src={coverImage?.url || assets.upload}
                   alt={
-                    data.photos[0]?.type
+                    coverImage?.type
                       ? `${data.name || "Restaurant"} cover`
                       : "Upload placeholder"
                   }
                   className="restaurant-form__cover-image"
                 />
               </div>
-              <p className="text-muted small mb-0">
-                The first image is used as the primary restaurant cover and list
-                thumbnail.
-              </p>
             </div>
           </div>
 
@@ -305,6 +412,14 @@ const RestaurantForm = ({ selectedRestaurant }) => {
                   <i className="bi bi-plus-lg me-2"></i>
                   Add image
                 </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  multiple
+                  hidden
+                />
               </div>
 
               {errors.images ? (
@@ -315,10 +430,12 @@ const RestaurantForm = ({ selectedRestaurant }) => {
 
               <div className="restaurant-form__gallery-list">
                 <div className="restaurant-form__gallery-row">
-                  {data.photos.map((image, index) => {
+                  {galleryImages.map((image, index) => {
                     const trimmedImage = image.url.trim();
                     const imageError = errors[`image-${index}`];
-
+                    if (image.status === "removed") {
+                      return null;
+                    }
                     return (
                       <div key={`${index}-${trimmedImage || "empty"}`}>
                         <div className="restaurant-form__gallery-fields">
@@ -360,7 +477,7 @@ const RestaurantForm = ({ selectedRestaurant }) => {
                           <button
                             type="button"
                             className="btn btn-sm btn-outline-danger"
-                            // onClick={() => handleRemoveImage(index)}
+                            onClick={() => handleRemoveImage(index)}
                           >
                             Remove
                           </button>

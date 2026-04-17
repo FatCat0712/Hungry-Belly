@@ -14,7 +14,7 @@ public class RestaurantDetailResponse {
     private Long id;
     private String name;
     private String cuisine;
-    private List<RestaurantImageResponse> photos;
+    private List<RestaurantImageResponse> images;
     private String phone;
     private String address;
     private String description;

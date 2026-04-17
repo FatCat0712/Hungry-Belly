@@ -246,7 +246,7 @@ export default function RestaurantManagement() {
                           <div className="d-flex align-items-center gap-2">
                             <div style={{ width: 50, height: 40 }}>
                               <img
-                                src={restaurant.photo}
+                                src={restaurant.path}
                                 alt={restaurant.name}
                                 className="rounded"
                                 style={{ width: "100%", height: "100%" }}

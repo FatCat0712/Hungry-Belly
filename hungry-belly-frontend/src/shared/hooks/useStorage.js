@@ -19,8 +19,8 @@ export const useGetPresignedUrl = (module) => {
   const queryClient = useQueryClient();
 
   const { mutateAsync: getPresignedUrl, error } = useMutation({
-    mutationFn: ({ userId, fileName, contentType }) =>
-      getPresignedUrlApi(module, userId, fileName, contentType),
+    mutationFn: ({ files, entityType }) =>
+      getPresignedUrlApi(files, entityType),
     onSuccess: () => {
       queryClient.invalidateQueries([module]);
     },

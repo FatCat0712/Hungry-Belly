@@ -1,7 +1,9 @@
-package com.eddie.hungry_belly_backend.common.util.storage;
+package com.eddie.hungry_belly_backend.common.util.storage.service;
 
+import com.eddie.hungry_belly_backend.common.util.storage.dto.request.FileRequest;
+import com.eddie.hungry_belly_backend.common.util.storage.dto.response.PresignedUploadResponse;
 import com.eddie.hungry_belly_backend.exception.BadRequestException;
-import com.eddie.hungry_belly_backend.user.dto.response.PresignedUploadResponse;
+import com.eddie.hungry_belly_backend.user.dto.request.UploadRequest;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +19,9 @@ import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequ
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Data
 @Component
@@ -98,30 +102,47 @@ public class StorageService {
         return presigned.url().toString();
     }
 
-    public PresignedUploadResponse generateUploadUrl(String folderName, String fileName, String contentType) {
-        if (contentType != null && !contentType.startsWith("image/")) {
-            throw new BadRequestException("photo: only images allowed");
+    public List<PresignedUploadResponse> generateUploadUrl(UploadRequest uploadRequest) {
+
+        List<PresignedUploadResponse> result = new ArrayList<>();
+        String folderName = getFolderName(uploadRequest);
+
+        for(FileRequest fileRequest: uploadRequest.getFiles()) {
+            String fileName = fileRequest.getFileName();
+            String contentType = fileRequest.getContentType();
+
+            if (contentType != null && !contentType.startsWith("image/")) {
+                throw new BadRequestException("photo: only images allowed");
+            }
+
+            String key = folderName + "/" + UUID.randomUUID() + "-" + fileName;
+
+            PutObjectRequest request = PutObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(key)
+                    .contentType(contentType)
+                    .build();
+
+            PresignedPutObjectRequest presignedRequest =
+                    S3presigner.presignPutObject(builder -> builder
+                            .signatureDuration(Duration.ofMinutes(10))
+                            .putObjectRequest(request)
+                    );
+
+            String uploadUrl = presignedRequest.url().toString();
+            String publicUrl = generateDownloadUrl(key, 3600);
+
+            result.add(new PresignedUploadResponse(uploadUrl, publicUrl, key));
         }
 
-        String key = folderName + "/" + fileName;
+        return result;
+    }
 
-        PutObjectRequest request = PutObjectRequest.builder()
-                .bucket(bucketName)
-                .key(key)
-                .contentType(contentType)
-                .build();
-
-        PresignedPutObjectRequest presignedRequest =
-                S3presigner.presignPutObject(builder -> builder
-                        .signatureDuration(Duration.ofMinutes(10))
-                        .putObjectRequest(request)
-                );
-
-
-        return new PresignedUploadResponse(
-                presignedRequest.url().toString(),
-                key
-        );
+    private String getFolderName(UploadRequest uploadRequest) {
+        return switch (uploadRequest.getEntityType()) {
+            case USER -> "user-photos";
+            case RESTAURANT -> "restaurant-photos";
+        };
     }
 
 }
