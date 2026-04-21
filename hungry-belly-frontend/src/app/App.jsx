@@ -18,7 +18,6 @@ import EditUser from "../features/users/pages/EditUser";
 import ResetUserPassword from "../features/users/pages/ResetUserPassword";
 import UserAccountUpdate from "../features/users/pages/UserAccountUpdate";
 import UserManagement from "../features/users/pages/UserManagement";
-import RestaurantForm from "../features/restaurants/components/RestaurantForm";
 import CreateRestaurant from "../features/restaurants/pages/CreateRestaurant";
 
 function App() {
@@ -45,6 +44,7 @@ function App() {
               <Route path="roles" element={<RoleManagement />} />
               <Route path="restaurants" element={<RestaurantManagement />} />
               <Route path="restaurants/new" element={<CreateRestaurant />} />
+              <Route path="restaurants/:id" element={<RestaurantDetails />} />
               <Route path="restaurants/:id/edit" element={<EditRestaurant />} />
               <Route path="orders" element={<Orders />} />
               <Route path="access-denied" element={<AccessDenied />} />

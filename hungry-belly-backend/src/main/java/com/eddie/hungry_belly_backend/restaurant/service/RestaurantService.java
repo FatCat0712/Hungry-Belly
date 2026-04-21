@@ -9,8 +9,9 @@ import com.eddie.hungry_belly_backend.entity.restaurant.Restaurant;
 import com.eddie.hungry_belly_backend.entity.restaurant.RestaurantImage;
 import com.eddie.hungry_belly_backend.exception.BadRequestException;
 import com.eddie.hungry_belly_backend.exception.RestaurantNotFoundException;
+import com.eddie.hungry_belly_backend.restaurant.dto.request.RestaurantCreateRequest;
 import com.eddie.hungry_belly_backend.restaurant.dto.request.RestaurantImageRequest;
-import com.eddie.hungry_belly_backend.restaurant.dto.request.RestaurantUpdateRequest;
+import com.eddie.hungry_belly_backend.restaurant.dto.request.RestaurantRequest;
 import com.eddie.hungry_belly_backend.restaurant.dto.response.RestaurantDetailResponse;
 import com.eddie.hungry_belly_backend.restaurant.dto.response.RestaurantImageResponse;
 import com.eddie.hungry_belly_backend.restaurant.dto.response.RestaurantSummaryResponse;
@@ -22,6 +23,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -70,78 +72,94 @@ public class RestaurantService {
     }
 
     @Transactional
-    public RestaurantDetailResponse updateRestaurant(Long id, RestaurantUpdateRequest request) {
+    public RestaurantDetailResponse updateRestaurant(Long id, RestaurantRequest request) {
         Restaurant dbRestaurant = retrieveRestaurantFromDbById(id);
 
-        Restaurant restaurantWithSamePhone = restaurantRepository.findByPhone(request.getPhone());
-        if (restaurantWithSamePhone != null && !restaurantWithSamePhone.getId().equals(id)) {
-            throw new BadRequestException("phone : Phone number already exists for another restaurant");
-        }
-
-        Restaurant restaurantWithSameName = restaurantRepository.findByName(request.getName());
-        if (restaurantWithSameName != null && !restaurantWithSameName.getId().equals(id)) {
-            throw new BadRequestException("name : Restaurant name already exists for another restaurant");
-        }
-
-        dbRestaurant.setCuisine(request.getCuisine());
-        dbRestaurant.setPhone(request.getPhone());
-        dbRestaurant.setName(request.getName());
-
-        dbRestaurant.setDescription(request.getDescription());
-        dbRestaurant.setAddress(request.getAddress());
-        dbRestaurant.setEnabled(request.getEnabled());
-
+        validateRestaurantRequest(id, request);
+        assignData(dbRestaurant, request);
         deleteRemovedImages(dbRestaurant, request);
         saveNewImages(dbRestaurant, request);
-
 
         Restaurant updatedRestaurant = restaurantRepository.save(dbRestaurant);
         return convertToRestaurantDetailResponse(updatedRestaurant);
     }
 
-    private void deleteRemovedImages(Restaurant restaurant, RestaurantUpdateRequest request) {
+    private void deleteRemovedImages(Restaurant restaurant, RestaurantRequest request) {
         List<RestaurantImage> removeImages = request.getImages().stream()
                 .filter(image -> image.getStatus().equals("removed"))
                 .map(image -> {
-                  RestaurantImage removedItem = new RestaurantImage();
+                    RestaurantImage removedItem = new RestaurantImage();
                     removedItem.setPath(image.getPath());
                     return removedItem;
                 })
                 .toList();
 
-        for(RestaurantImage image : removeImages) {
+        for (RestaurantImage image : removeImages) {
             restaurant.getImages().removeIf(item -> item.getPath().equals(image.getPath()));
             storageService.deleteFile(image.getPath());
         }
     }
 
-    private void saveNewImages(Restaurant restaurant, RestaurantUpdateRequest request) {
+    private void saveNewImages(Restaurant restaurant, RestaurantRequest request) {
         List<RestaurantImageRequest> images = request.getImages();
         List<RestaurantImage> existingImages = restaurant.getImages();
 
-        for(RestaurantImageRequest image: images) {
-            if(!"removed".equals(image.getStatus())) {
-                if("new".equals(image.getStatus())) {
-                    RestaurantImage newImage = new RestaurantImage();
-                    newImage.setPath(image.getPath());
-                    newImage.setType(image.getType());
-                    newImage.setPrimary(image.getIsPrimary());
-                    newImage.setRestaurant(restaurant);
-                     existingImages.add(newImage);
-                }
-                else {
-                   RestaurantImage existingImage = new RestaurantImage(image.getPath());
-                    existingImage.setType(image.getType());
-                    existingImage.setPrimary(image.getIsPrimary());
-                    existingImage.setRestaurant(restaurant);
+        for (RestaurantImageRequest item : images) {
+            RestaurantImage image = new RestaurantImage(item.getPath());
+            image.setType(item.getType());
+            image.setTempId(item.getUploadId());
+            image.setPrimary(item.getIsPrimary());
+            image.setRestaurant(restaurant);
 
-                    int index = existingImages.indexOf(existingImage);
-                    if(index != -1) {
-                        existingImages.set(index, existingImage);
+            if (!"removed".equals(item.getStatus())) {
+                if ("new".equals(item.getStatus())) {
+                    if (existingImages == null) {
+                        existingImages = new ArrayList<>();
+                    }
+                    existingImages.add(image);
+                } else {
+//                    update existing image
+                    int index = existingImages.indexOf(image);
+                    if (index != -1) {
+                        existingImages.set(index, image);
                     }
                 }
             }
         }
+        restaurant.setImages(existingImages);
+    }
+
+    public RestaurantDetailResponse createRestaurant(RestaurantCreateRequest request) {
+        validateRestaurantRequest(null, request);
+
+        Restaurant newRestaurant = new Restaurant();
+        assignData(newRestaurant, request);
+        newRestaurant.setOwner(request.getOwner());
+        saveNewImages(newRestaurant, request);
+
+        newRestaurant = restaurantRepository.save(newRestaurant);
+        return convertToRestaurantDetailResponse(newRestaurant);
+    }
+
+    private void validateRestaurantRequest(Long id, RestaurantRequest request) {
+        Restaurant restaurantWithSamePhone = restaurantRepository.findByPhone(request.getPhone());
+        if (restaurantWithSamePhone != null && !restaurantWithSamePhone.getId().equals(id)) {
+            throw new BadRequestException("phone: Phone number already exists for another restaurant");
+        }
+
+        Restaurant restaurantWithSameName = restaurantRepository.findByName(request.getName());
+        if (restaurantWithSameName != null && !restaurantWithSameName.getId().equals(id)) {
+            throw new BadRequestException("name: Restaurant name already exists for another restaurant");
+        }
+    }
+
+    private void assignData(Restaurant restaurant, RestaurantRequest request) {
+        restaurant.setCuisine(request.getCuisine());
+        restaurant.setPhone(request.getPhone());
+        restaurant.setName(request.getName());
+        restaurant.setDescription(request.getDescription());
+        restaurant.setAddress(request.getAddress());
+        restaurant.setEnabled(request.getEnabled());
     }
 
 

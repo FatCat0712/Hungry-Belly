@@ -12,16 +12,23 @@ import { toast } from "react-toastify";
 import DeleteUserConfirmDialog from "../components/DeleteUserConfirmDialog";
 import AccessDenied from "../../access/pages/AccessDenied";
 import { useDebounce } from "../../../shared/hooks/useDebounce";
+import { useTableSearchParams } from "../../../shared/hooks/useTableSearchParams";
 import Pagination from "../../../shared/ui/Pagination";
 import Spinner from "../../../shared/ui/Spinner";
 
 export default function UserManagement() {
   const pageSize = 10;
-  const [currentPage, setCurrentPage] = useState(1);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
-  const [sortField, setSortField] = useState("firstName");
-  const [sortDirection, setSortDirection] = useState("asc");
-  const [keyword, setKeyword] = useState("");
+  const {
+    currentPage,
+    sortField,
+    sortDirection,
+    keyword,
+    setPage,
+    updateParams,
+  } = useTableSearchParams({
+    defaultSortField: "firstName",
+  });
   const debouncedKeyword = useDebounce(keyword, 500);
   const normalizedKeyword = debouncedKeyword.trim();
 
@@ -82,9 +89,7 @@ export default function UserManagement() {
   };
 
   const handlePageChange = (page) => {
-    const totalPages = Math.max(1, Math.ceil(totalElements / pageSize));
-    const nextPage = Math.min(Math.max(page, 1), totalPages);
-    setCurrentPage(nextPage);
+    setPage(page, { totalItems: totalElements, pageSize });
   };
 
   const handleExportUsers = async () => {
@@ -206,8 +211,10 @@ export default function UserManagement() {
                     className="form-select"
                     aria-label="Sort users by"
                     onChange={(e) => {
-                      setSortField(e.target.value);
-                      setCurrentPage(1);
+                      updateParams(
+                        { sortField: e.target.value },
+                        { resetPage: true },
+                      );
                     }}
                     value={sortField}
                   >
@@ -229,8 +236,10 @@ export default function UserManagement() {
                     className="form-select"
                     aria-label="Sort users by"
                     onChange={(e) => {
-                      setSortDirection(e.target.value);
-                      setCurrentPage(1);
+                      updateParams(
+                        { sortDirection: e.target.value },
+                        { resetPage: true },
+                      );
                     }}
                     value={sortDirection}
                   >
@@ -254,8 +263,10 @@ export default function UserManagement() {
                     aria-describedby="search-addon"
                     value={keyword}
                     onChange={(e) => {
-                      setKeyword(e.target.value);
-                      setCurrentPage(1);
+                      updateParams(
+                        { keyword: e.target.value },
+                        { resetPage: true },
+                      );
                     }}
                   />
                 </div>

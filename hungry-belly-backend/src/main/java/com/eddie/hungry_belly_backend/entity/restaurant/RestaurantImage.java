@@ -23,6 +23,8 @@ public class RestaurantImage {
 
     private boolean isPrimary;
 
+    private String tempId;
+
     @ManyToOne
     @JoinColumn(name = "restaurant_id")
     private Restaurant restaurant;

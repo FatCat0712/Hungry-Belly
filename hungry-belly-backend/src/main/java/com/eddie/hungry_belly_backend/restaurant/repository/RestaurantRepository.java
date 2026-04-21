@@ -36,9 +36,9 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
     Restaurant findByPhone(String phone);
     Restaurant findByName(String name);
 
-
-
     @Query("UPDATE Restaurant r SET r.enabled = ?2 WHERE r.id = ?1")
     @Modifying
     void updateRestaurantStatus(Long restaurantId, boolean isActive);
+
+
 }

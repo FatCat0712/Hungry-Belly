@@ -16,4 +16,5 @@ import java.util.List;
 public class UploadRequest {
     List<FileRequest> files;
     private EntityType entityType;
+    private String uploadId;
 }

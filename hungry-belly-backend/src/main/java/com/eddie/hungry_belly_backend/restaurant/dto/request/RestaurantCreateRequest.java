@@ -1,33 +1,10 @@
 package com.eddie.hungry_belly_backend.restaurant.dto.request;
 
-import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.validator.constraints.Length;
-
-import java.util.List;
 
 @Getter
 @Setter
-public class RestaurantCreateRequest {
-    @Length(min = 2, max = 128, message = "Restaurant name must be between 2 and 128 characters")
-    private String name;
-
-    @Length(min = 2, message = "Restaurant description must be at least 2 characters")
-    private String description;
-
-    @Length(min = 10, max = 11, message = "Phone number must be between 10 and 11 characters")
-    private String phone;
-
-    @NotBlank(message = "Restaurant cuisine is required")
-    private String cuisine;
-
-    @NotBlank(message = "Restaurant address is required")
-    private String address;
-
-    private List<RestaurantImageRequest> images;
-
-    private Boolean enabled;
-
+public class RestaurantCreateRequest extends RestaurantRequest {
     private String owner;
 }

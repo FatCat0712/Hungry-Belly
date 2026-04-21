@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  createRestaurantApi,
   getRestaurantByIdApi,
   getRestaurantsApi,
   updateRestaurantApi,
@@ -81,11 +82,26 @@ export const useUpdateRestaurant = () => {
   const queryClient = useQueryClient();
   const { mutateAsync: updateRestaurant } = useMutation({
     mutationFn: ({ id, data }) => updateRestaurantApi(id, data),
-    onSuccess: (_, { id }) => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["restaurants"] });
-      queryClient.invalidateQueries({ queryKey: ["restaurant", id] });
+      queryClient.invalidateQueries(
+        { queryKey: ["restaurant", data.id] },
+        { exact: true },
+      ); // Update the individual restaurant query with the new data
     },
   });
 
   return { updateRestaurant };
+};
+
+export const useCreateRestaurant = () => {
+  const queryClient = useQueryClient();
+  const { mutateAsync: createRestaurant } = useMutation({
+    mutationFn: (data) => createRestaurantApi(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["restaurants"] });
+    },
+  });
+
+  return { createRestaurant };
 };

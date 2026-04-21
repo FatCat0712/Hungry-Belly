@@ -1,5 +1,6 @@
 package com.eddie.hungry_belly_backend.common.util.storage.service;
 
+import com.eddie.hungry_belly_backend.common.util.storage.dto.StorageObject;
 import com.eddie.hungry_belly_backend.common.util.storage.dto.request.FileRequest;
 import com.eddie.hungry_belly_backend.common.util.storage.dto.response.PresignedUploadResponse;
 import com.eddie.hungry_belly_backend.exception.BadRequestException;
@@ -41,6 +42,27 @@ public class StorageService {
 
     @Autowired
     private S3Presigner S3presigner;
+
+    public List<StorageObject> listFiles(String folder) {
+       ListObjectsRequest listRequest =  ListObjectsRequest.builder()
+                .bucket(bucketName)
+                .prefix(folder)
+                .build();
+
+       ListObjectsResponse response = s3Client.listObjects(listRequest);
+
+       List<S3Object> contents = response.contents();
+       List<StorageObject> storageObjectList = new ArrayList<>();
+
+       for(S3Object object: contents) {
+           StorageObject storageObject = new StorageObject();
+           storageObject.setName(object.key());
+           storageObject.setUpdatedAt(object.lastModified());
+           storageObjectList.add(storageObject);
+       }
+
+       return storageObjectList;
+    }
 
     public void deleteFile(String fileName) {
         DeleteObjectRequest request = DeleteObjectRequest.builder()
@@ -108,14 +130,15 @@ public class StorageService {
         String folderName = getFolderName(uploadRequest);
 
         for(FileRequest fileRequest: uploadRequest.getFiles()) {
-            String fileName = fileRequest.getFileName();
             String contentType = fileRequest.getContentType();
 
             if (contentType != null && !contentType.startsWith("image/")) {
                 throw new BadRequestException("photo: only images allowed");
             }
 
-            String key = folderName + "/" + UUID.randomUUID() + "-" + fileName;
+            String fileName = fileRequest.getFileName();
+
+            String key = folderName + "/temp-" +  uploadRequest.getUploadId() + "-" + UUID.randomUUID() + fileName.substring(fileName.indexOf("."));
 
             PutObjectRequest request = PutObjectRequest.builder()
                     .bucket(bucketName)

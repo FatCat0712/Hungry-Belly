@@ -4,7 +4,7 @@ import com.eddie.hungry_belly_backend.common.dto.response.ApiResponse;
 import com.eddie.hungry_belly_backend.common.dto.response.PageResponse;
 import com.eddie.hungry_belly_backend.common.util.paginate.PageRequestDto;
 import com.eddie.hungry_belly_backend.restaurant.dto.request.RestaurantCreateRequest;
-import com.eddie.hungry_belly_backend.restaurant.dto.request.RestaurantUpdateRequest;
+import com.eddie.hungry_belly_backend.restaurant.dto.request.RestaurantRequest;
 import com.eddie.hungry_belly_backend.restaurant.dto.response.RestaurantDetailResponse;
 import com.eddie.hungry_belly_backend.restaurant.dto.response.RestaurantSummaryResponse;
 import com.eddie.hungry_belly_backend.restaurant.service.RestaurantService;
@@ -39,12 +39,14 @@ public class RestaurantController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<?>> updateRestaurant(@PathVariable Long id, @RequestBody RestaurantUpdateRequest request) {
+    public ResponseEntity<ApiResponse<?>> updateRestaurant(@PathVariable Long id, @RequestBody RestaurantRequest request) {
         RestaurantDetailResponse response = restaurantService.updateRestaurant(id, request);
         return ResponseEntity.ok(ApiResponse.success(response, "Restaurant updated"));
     }
 
+    @PostMapping
     public ResponseEntity<ApiResponse<?>> createRestaurant(@RequestBody RestaurantCreateRequest request) {
-        return ResponseEntity.ok(ApiResponse.success(null, "Create restaurant"));
+        RestaurantDetailResponse response = restaurantService.createRestaurant(request);
+        return ResponseEntity.ok(ApiResponse.success(response, "Create restaurant"));
     }
 }

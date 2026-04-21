@@ -1,5 +1,5 @@
 import { useContext, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { AuthContext } from "../../auth/context/auth-context";
 import {
@@ -8,30 +8,39 @@ import {
 } from "../hooks/useRestaurant";
 import AccessDenied from "../../access/pages/AccessDenied";
 import { useDebounce } from "../../../shared/hooks/useDebounce";
+import { useTableSearchParams } from "../../../shared/hooks/useTableSearchParams";
 import Pagination from "../../../shared/ui/Pagination";
 import Spinner from "../../../shared/ui/Spinner";
 
 export default function RestaurantManagement() {
   const pageSize = 10;
-  const [currentPage, setCurrentPage] = useState(1);
-  const [keyword, setKeyword] = useState("");
-  const [sortField, setSortField] = useState("name");
-  const [sortDirection, setSortDirection] = useState("asc");
   const [restaurantToDelete, setRestaurantToDelete] = useState(null);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+
+  const location = useLocation();
+
+  const navigate = useNavigate();
+  const { user: loggedInUser } = useContext(AuthContext);
+  const {
+    currentPage,
+    sortField,
+    sortDirection,
+    keyword,
+    setPage,
+    updateParams,
+  } = useTableSearchParams({
+    defaultSortField: "name",
+  });
 
   const debouncedKeyword = useDebounce(keyword, 500);
   const normalizedKeyword = debouncedKeyword.trim().toLowerCase();
 
-  const navigate = useNavigate();
-  const { user: loggedInUser } = useContext(AuthContext);
-
   const { data, isLoading: isLoadingRestaurants } = useListRestaurantsByPage({
     pageNum: currentPage,
     pageSize,
-    sortField,
-    sortDirection,
-    keyword: normalizedKeyword || "",
+    sortField: sortField,
+    sortDirection: sortDirection,
+    keyword: normalizedKeyword,
   });
 
   const restaurants = data?.content || [];
@@ -41,9 +50,7 @@ export default function RestaurantManagement() {
 
   // Filter and sort restaurants
   const handlePageChange = (page) => {
-    const totalPages = Math.max(1, Math.ceil(totalElements / pageSize));
-    const nextPage = Math.min(Math.max(page, 1), totalPages);
-    setCurrentPage(nextPage);
+    setPage(page, { totalItems: totalElements, pageSize });
   };
 
   const handleDeleteClick = (restaurant) => {
@@ -61,6 +68,24 @@ export default function RestaurantManagement() {
       toast.success(`${restaurantToDelete.name} deleted successfully`);
       handleCloseDeleteModal();
     }
+  };
+
+  const handleSortFieldChange = (field) => {
+    updateParams(
+      {
+        sortField: field,
+        sortDirection: sortDirection === "asc" ? "desc" : "asc",
+      },
+      { resetPage: true },
+    );
+  };
+
+  const handleSortDirectionChange = (direction) => {
+    updateParams({ sortDirection: direction }, { resetPage: true });
+  };
+
+  const handleKeyWordChange = (keyword) => {
+    updateParams({ keyword }, { resetPage: true });
   };
 
   const toggleRestaurantStatus = async (restaurant) => {
@@ -170,8 +195,7 @@ export default function RestaurantManagement() {
                     className="form-select"
                     aria-label="Sort by"
                     onChange={(e) => {
-                      setSortField(e.target.value);
-                      setCurrentPage(1);
+                      handleSortFieldChange(e.target.value);
                     }}
                     value={sortField}
                   >
@@ -194,7 +218,7 @@ export default function RestaurantManagement() {
                     className="form-select"
                     aria-label="Sort direction"
                     onChange={(e) => {
-                      setSortDirection(e.target.value);
+                      handleSortDirectionChange(e.target.value);
                     }}
                     value={sortDirection}
                   >
@@ -218,7 +242,7 @@ export default function RestaurantManagement() {
                     aria-describedby="search-addon"
                     value={keyword}
                     onChange={(e) => {
-                      setKeyword(e.target.value);
+                      handleKeyWordChange(e.target.value);
                     }}
                   />
                 </div>
@@ -353,7 +377,9 @@ export default function RestaurantManagement() {
                             <button
                               className="btn btn-sm btn-outline-secondary"
                               onClick={() => {
-                                navigate(`/restaurants/${restaurant.id}/edit`);
+                                navigate(
+                                  `/restaurants/${restaurant.id}/edit${location.search}`,
+                                );
                               }}
                               title="Edit restaurant"
                             >

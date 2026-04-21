@@ -11,4 +11,5 @@ public class RestaurantImageRequest {
     private ImageType type;
     private Boolean isPrimary;
     private String status;
+    private String uploadId;
 }

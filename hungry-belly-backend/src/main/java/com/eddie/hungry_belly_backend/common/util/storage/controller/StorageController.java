@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Random;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("${api.prefix}/storage")
@@ -20,4 +22,13 @@ public class StorageController {
         var response = storageService.generateUploadUrl(request);
         return ResponseEntity.ok(ApiResponse.success(response, "Generated upload URL"));
     }
+
+    @PostMapping("/temp-session")
+    public ResponseEntity<ApiResponse<?>> createTempSession() {
+        Random random = new Random();
+        String tempId = random.nextInt(1, 1001) + "";
+        return ResponseEntity.ok(ApiResponse.success(tempId, "Upload session created"));
+    }
+
+
 }

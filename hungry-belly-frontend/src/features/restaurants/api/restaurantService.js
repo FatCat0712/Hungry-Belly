@@ -42,3 +42,11 @@ export const updateRestaurantApi = async (id, data) => {
 
   return response.data;
 };
+
+export const createRestaurantApi = async (data) => {
+  const response = await api.post(API_URL, data, {
+    headers: { "Content-Type": "application/json" },
+  });
+
+  return response.data.data;
+};

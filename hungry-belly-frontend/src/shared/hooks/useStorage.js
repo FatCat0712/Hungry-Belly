@@ -1,5 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { getPresignedUrlApi, uploadPhotoApi } from "../api/storageService";
+import {
+  createTempSessionApi,
+  getPresignedUrlApi,
+  uploadPhotoApi,
+} from "../api/storageService";
 
 export const useUploadPhoto = (queryKey) => {
   const queryClient = useQueryClient();
@@ -19,12 +23,22 @@ export const useGetPresignedUrl = (module) => {
   const queryClient = useQueryClient();
 
   const { mutateAsync: getPresignedUrl, error } = useMutation({
-    mutationFn: ({ files, entityType }) =>
-      getPresignedUrlApi(files, entityType),
+    mutationFn: ({ uploadId, files, entityType }) => {
+      return getPresignedUrlApi(uploadId, files, entityType);
+    },
+
     onSuccess: () => {
       queryClient.invalidateQueries([module]);
     },
   });
 
   return { getPresignedUrl, error };
+};
+
+export const useCreateTempSession = () => {
+  const { mutateAsync: createTempSession } = useMutation({
+    mutationFn: () => createTempSessionApi(),
+  });
+
+  return { createTempSession };
 };

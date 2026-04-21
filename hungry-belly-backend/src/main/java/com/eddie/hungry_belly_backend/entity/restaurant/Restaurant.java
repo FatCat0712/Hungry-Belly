@@ -33,7 +33,6 @@ public class Restaurant {
 
     private String address;
 
-    @Column(nullable = false)
     private Double rating;
 
     @Column(nullable = false, length = 30)
@@ -42,6 +41,5 @@ public class Restaurant {
     @Column(nullable = false)
     private String cuisine;
 
-    @Column(nullable = false)
     private int orders;
 }

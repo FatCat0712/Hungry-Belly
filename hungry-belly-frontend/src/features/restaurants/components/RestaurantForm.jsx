@@ -1,39 +1,66 @@
-import { useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import assets from "../../../shared/assets/assets";
 import "../../../shared/styles/RestaurantForm.css";
-import { useUpdateRestaurant } from "../hooks/useRestaurant";
 import {
+  useCreateRestaurant,
+  useUpdateRestaurant,
+} from "../hooks/useRestaurant";
+import {
+  useCreateTempSession,
   useGetPresignedUrl,
   useUploadPhoto,
 } from "../../../shared/hooks/useStorage";
+import CreateRestaurant from "../pages/CreateRestaurant";
+import { useSyncedFormState } from "../../../shared/hooks/useSyncedFormState";
+
+const buildRestaurantFormData = (restaurant) => ({
+  id: restaurant?.id || null,
+  name: restaurant?.name || "",
+  cuisine: restaurant?.cuisine || "",
+  phone: restaurant?.phone || "",
+  address: restaurant?.address || "",
+  description: restaurant?.description || "",
+  owner: restaurant?.owner || null,
+  enabled: restaurant?.enabled || false,
+  images: restaurant?.images || [],
+});
 
 const RestaurantForm = ({ selectedRestaurant }) => {
   const navigate = useNavigate();
   const [errors, setErrors] = useState({});
   const [isSaving, setIsSaving] = useState(false);
-  const [data, setData] = useState({
-    id: selectedRestaurant?.id || null,
-    name: selectedRestaurant?.name || "",
-    cuisine: selectedRestaurant?.cuisine || "",
-    phone: selectedRestaurant?.phone || "",
-    address: selectedRestaurant?.address || "",
-    description: selectedRestaurant?.description || "",
-    owner: selectedRestaurant?.owner || null,
-    enabled: selectedRestaurant?.enabled || false,
-    images: selectedRestaurant?.images || [],
-  });
+  const [uploadId, setUploadId] = useState(null);
+  const { data, setData, isDirty, setIsDirty, resetForm } = useSyncedFormState(
+    selectedRestaurant,
+    buildRestaurantFormData,
+  );
   const fileInputRef = useRef(null);
   const { updateRestaurant } = useUpdateRestaurant();
   const { getPresignedUrl } = useGetPresignedUrl("restaurants");
+  const { createRestaurant } = useCreateRestaurant();
   const { uploadPhoto } = useUploadPhoto();
+  const { createTempSession } = useCreateTempSession();
+  const location = useLocation();
+
+  useEffect(() => {
+    async function initializeUploadSession() {
+      if (uploadId) {
+        return;
+      }
+      const response = await createTempSession("restaurants");
+      setUploadId(response);
+    }
+    initializeUploadSession();
+  }, [createTempSession, uploadId]);
 
   const handleInputChange = (event) => {
-    const { name, value } = event.target;
+    const { name, value, type, checked } = event.target;
+    setIsDirty(true);
     setData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: type === "checkbox" ? checked : value,
     }));
     setErrors((prev) => ({ ...prev, [name]: "" }));
   };
@@ -43,10 +70,12 @@ const RestaurantForm = ({ selectedRestaurant }) => {
   };
 
   const handleFileChange = async (event) => {
+    setIsDirty(true);
     const files = Array.from(event.target.files || []);
     if (files.length === 0) return;
 
     const uploads = await handleUploadFiles(files);
+
     setData((prev) => {
       const nextImages = [...prev.images];
 
@@ -80,6 +109,7 @@ const RestaurantForm = ({ selectedRestaurant }) => {
   const handleUploadFiles = async (files) => {
     try {
       const uploads = await getPresignedUrl({
+        uploadId: uploadId,
         files: files.map((f) => ({
           fileName: f.name,
           contentType: f.type,
@@ -104,11 +134,15 @@ const RestaurantForm = ({ selectedRestaurant }) => {
   };
 
   const handleRemoveImage = (index) => {
+    setIsDirty(true);
     let removedImage = data.images.at(index);
 
     if (removedImage.isPrimary) {
       let nextPrimary;
-      if (data.images.length > 1) {
+      const nonRemovedImages = data.images.filter(
+        (img, i) => i !== index && img.status !== "removed",
+      ).length;
+      if (nonRemovedImages > 0) {
         nextPrimary = data.images.find(
           (img, i) => i !== index && img.status !== "removed",
         );
@@ -142,6 +176,7 @@ const RestaurantForm = ({ selectedRestaurant }) => {
   };
 
   const handleSetCoverImage = (index) => {
+    setIsDirty(true);
     setData((prev) => {
       let image = prev.images.at(index);
       image = { ...image, type: "COVER", isPrimary: true };
@@ -173,7 +208,7 @@ const RestaurantForm = ({ selectedRestaurant }) => {
 
     const imagePaths = data.images.map((image) => {
       const { path, type, isPrimary, status } = image;
-      return { path, type, status, isPrimary };
+      return { path, type, status, isPrimary, uploadId };
     });
 
     try {
@@ -189,23 +224,23 @@ const RestaurantForm = ({ selectedRestaurant }) => {
         images: imagePaths,
       };
 
-      if (!data.id) {
-        payload = { ...payload, owner: data.owner.trim() };
-      }
-
-      console.log("Payload:", payload);
+      let response;
 
       if (data.id) {
-        const response = await updateRestaurant({
+        response = await updateRestaurant({
           id: data.id,
           data: payload,
         });
-
-        toast.success(response?.message || "Restaurant updated successfully");
-        navigate(`/restaurants/${data.id}`);
+      } else {
+        payload = { ...payload, owner: data.owner.trim() };
+        response = await createRestaurant(payload);
       }
+
+      toast.success(response?.message);
+      navigate(`/restaurants${location.search}`);
     } catch (error) {
       const apiError = error.response?.data;
+      console.error("API error:", apiError);
       const apiMessage = apiError?.message;
 
       if (apiMessage && typeof apiMessage === "object") {
@@ -312,7 +347,7 @@ const RestaurantForm = ({ selectedRestaurant }) => {
                     id="owner"
                     name="owner"
                     className={`form-control ${errors.owner ? "is-invalid" : ""}`}
-                    value={data.owner}
+                    value={data.owner || ""}
                     onChange={handleInputChange}
                     placeholder="Owner name"
                   />
