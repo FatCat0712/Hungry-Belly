@@ -1,19 +1,20 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import assets from "../../../shared/assets/assets";
 import "../../../shared/styles/RestaurantForm.css";
 import {
+  appendUploadedImages,
+  buildRestaurantImagePayload,
+  removeImagePath,
+  setCoverImageByPath,
   useCreateRestaurant,
   useUpdateRestaurant,
 } from "../hooks/useRestaurant";
-import {
-  useCreateTempSession,
-  useGetPresignedUrl,
-  useUploadPhoto,
-} from "../../../shared/hooks/useStorage";
+
 import CreateRestaurant from "../pages/CreateRestaurant";
 import { useSyncedFormState } from "../../../shared/hooks/useSyncedFormState";
+import { useEntityUploader } from "../../../shared/hooks/useEntityUploader";
 
 const buildRestaurantFormData = (restaurant) => ({
   id: restaurant?.id || null,
@@ -31,29 +32,19 @@ const RestaurantForm = ({ selectedRestaurant }) => {
   const navigate = useNavigate();
   const [errors, setErrors] = useState({});
   const [isSaving, setIsSaving] = useState(false);
-  const [uploadId, setUploadId] = useState(null);
-  const { data, setData, isDirty, setIsDirty, resetForm } = useSyncedFormState(
+  const { data, setData, setIsDirty } = useSyncedFormState(
     selectedRestaurant,
     buildRestaurantFormData,
   );
   const fileInputRef = useRef(null);
   const { updateRestaurant } = useUpdateRestaurant();
-  const { getPresignedUrl } = useGetPresignedUrl("restaurants");
   const { createRestaurant } = useCreateRestaurant();
-  const { uploadPhoto } = useUploadPhoto();
-  const { createTempSession } = useCreateTempSession();
-  const location = useLocation();
+  const { uploadId, uploadFiles } = useEntityUploader({
+    queryKey: "restaurants",
+    entityType: "RESTAURANT",
+  });
 
-  useEffect(() => {
-    async function initializeUploadSession() {
-      if (uploadId) {
-        return;
-      }
-      const response = await createTempSession("restaurants");
-      setUploadId(response);
-    }
-    initializeUploadSession();
-  }, [createTempSession, uploadId]);
+  const location = useLocation();
 
   const handleInputChange = (event) => {
     const { name, value, type, checked } = event.target;
@@ -72,133 +63,46 @@ const RestaurantForm = ({ selectedRestaurant }) => {
   const handleFileChange = async (event) => {
     setIsDirty(true);
     const files = Array.from(event.target.files || []);
-    if (files.length === 0) return;
+    if (!files.length) return;
 
-    const uploads = await handleUploadFiles(files);
+    const uploads = await uploadFiles(files);
+    if (!uploads.length) return;
 
     setData((prev) => {
-      const nextImages = [...prev.images];
-
-      uploads.forEach((image) => {
-        if (nextImages.length === 0) {
-          nextImages.push({
-            url: image.publicUrl,
-            path: image.path,
-            type: "COVER",
-            status: "new",
-            isPrimary: true,
-          });
-        } else {
-          nextImages.push({
-            url: image.publicUrl,
-            path: image.path,
-            type: "GALLERY",
-            status: "new",
-            isPrimary: false,
-          });
-        }
-      });
-
       return {
         ...prev,
-        images: nextImages,
+        images: appendUploadedImages(prev.images, uploads),
       };
     });
   };
 
-  const handleUploadFiles = async (files) => {
-    try {
-      const uploads = await getPresignedUrl({
-        uploadId: uploadId,
-        files: files.map((f) => ({
-          fileName: f.name,
-          contentType: f.type,
-        })),
-        entityType: "RESTAURANT",
-      });
-
-      await Promise.all(
-        uploads.map(async (u, index) => {
-          await uploadPhoto({
-            uploadUrl: u.uploadUrl,
-            file: files[index],
-            contentType: files[index].type,
-          });
-        }),
-      );
-
-      return uploads;
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const handleRemoveImage = (index) => {
+  const handleRemoveImage = (path) => {
     setIsDirty(true);
-    let removedImage = data.images.at(index);
-
-    if (removedImage.isPrimary) {
-      let nextPrimary;
-      const nonRemovedImages = data.images.filter(
-        (img, i) => i !== index && img.status !== "removed",
-      ).length;
-      if (nonRemovedImages > 0) {
-        nextPrimary = data.images.find(
-          (img, i) => i !== index && img.status !== "removed",
-        );
-        nextPrimary.isPrimary = true;
-        nextPrimary.type = "COVER";
-      }
-    }
-
-    removedImage = {
-      ...removedImage,
-      status: "removed",
-      isPrimary: false,
-      type: "GALLERY",
-    };
 
     setData((prev) => {
-      let nextImages = prev.images.filter((_, i) => i !== index);
-      nextImages = [...nextImages, removedImage];
-
       return {
         ...prev,
-        images: nextImages.length > 0 ? nextImages : [],
+        images: removeImagePath(prev.images, path),
       };
     });
 
     setErrors((prev) => {
       const nextErrors = { ...prev };
-      delete nextErrors[`image-${index}`];
+      Object.keys(nextErrors).forEach((key) => {
+        if (key.startsWith("image-")) {
+          delete nextErrors[key];
+        }
+      });
       return nextErrors;
     });
   };
 
-  const handleSetCoverImage = (index) => {
+  const handleSetCoverImage = (path) => {
     setIsDirty(true);
     setData((prev) => {
-      let image = prev.images.at(index);
-      image = { ...image, type: "COVER", isPrimary: true };
-
-      if (!image) {
-        return prev;
-      }
-
-      let nextImages = prev.images.filter((_, i) => i !== index);
-
-      nextImages = nextImages.map((img) => {
-        if (img.status === "removed") {
-          return img;
-        }
-        return { ...img, type: "GALLERY", isPrimary: false };
-      });
-
-      nextImages = [image, ...nextImages];
-
       return {
         ...prev,
-        images: nextImages,
+        images: setCoverImageByPath(prev.images, path),
       };
     });
   };
@@ -206,10 +110,7 @@ const RestaurantForm = ({ selectedRestaurant }) => {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    const imagePaths = data.images.map((image) => {
-      const { path, type, isPrimary, status } = image;
-      return { path, type, status, isPrimary, uploadId };
-    });
+    const imagePaths = buildRestaurantImagePayload(data.images, uploadId);
 
     try {
       setIsSaving(true);
@@ -255,12 +156,13 @@ const RestaurantForm = ({ selectedRestaurant }) => {
     }
   };
 
-  const coverImage = data.images.find((img) => img.type === "COVER");
-  const galleryImages = data.images.slice().sort((a, b) => {
-    if (a.isPrimary) return -1;
-    if (b.isPrimary) return 1;
-    return 0;
-  });
+  const coverImage = data.images.find(
+    (img) => img.status !== "removed" && img.isPrimary,
+  );
+  const galleryImages = data.images
+    .filter((image) => image.status !== "removed")
+    .slice()
+    .sort((a, b) => a.displayOrder - b.displayOrder);
 
   return (
     <form
@@ -472,7 +374,7 @@ const RestaurantForm = ({ selectedRestaurant }) => {
                       return null;
                     }
                     return (
-                      <div key={`${index}-${trimmedImage || "empty"}`}>
+                      <div key={image.path}>
                         <div className="restaurant-form__gallery-fields">
                           <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
                             <span className="restaurant-form__image-order">
@@ -504,7 +406,7 @@ const RestaurantForm = ({ selectedRestaurant }) => {
                             <button
                               type="button"
                               className="btn btn-sm btn-outline-secondary"
-                              onClick={() => handleSetCoverImage(index)}
+                              onClick={() => handleSetCoverImage(image.path)}
                             >
                               Set as cover
                             </button>
@@ -512,7 +414,7 @@ const RestaurantForm = ({ selectedRestaurant }) => {
                           <button
                             type="button"
                             className="btn btn-sm btn-outline-danger"
-                            onClick={() => handleRemoveImage(index)}
+                            onClick={() => handleRemoveImage(image.path)}
                           >
                             Remove
                           </button>

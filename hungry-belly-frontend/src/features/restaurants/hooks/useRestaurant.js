@@ -105,3 +105,99 @@ export const useCreateRestaurant = () => {
 
   return { createRestaurant };
 };
+
+const normalizeImages = (images) => {
+  let displayOrder = 0;
+  let coverAssigned = false;
+
+  return images.map((image) => {
+    if (image.status === "removed") {
+      return {
+        ...image,
+        isPrimary: false,
+        type: "GALLERY",
+      };
+    }
+
+    const isCover = !coverAssigned;
+    if (isCover) {
+      coverAssigned = true;
+    }
+    return {
+      ...image,
+      isPrimary: isCover,
+      type: isCover ? "COVER" : "GALLERY",
+      displayOrder: displayOrder++,
+    };
+  });
+};
+
+export const appendUploadedImages = (currentImages, uploads) => {
+  const uploadedImages = uploads.map((image) => ({
+    url: image.publicUrl,
+    path: image.path,
+    status: "new",
+  }));
+
+  const activeImages = [
+    ...currentImages.filter((image) => image.status !== "removed"),
+    ...uploadedImages,
+  ];
+
+  const removedImages = currentImages.filter(
+    (image) => image.status === "removed",
+  );
+
+  return normalizeImages([...activeImages, ...removedImages]);
+};
+
+export const removeImagePath = (currentImages, path) => {
+  const nextImages = currentImages.map((image) =>
+    image.path === path
+      ? {
+          ...image,
+          status: "removed",
+          isPrimary: false,
+          type: "GALLERY",
+        }
+      : { ...image },
+  );
+
+  const activeImages = nextImages.filter((image) => image.status !== "removed");
+
+  const removedImages = nextImages.filter(
+    (image) => image.status === "removed",
+  );
+
+  return normalizeImages([...activeImages, ...removedImages]);
+};
+
+export const setCoverImageByPath = (currentImages, path) => {
+  const targetImage = currentImages.find(
+    (image) => image.path === path && image.status !== "removed",
+  );
+
+  if (!targetImage) return currentImages;
+
+  const activeImages = currentImages
+    .filter((image) => image.status !== "removed")
+    .map((image) => ({ ...image }));
+
+  const removedImages = currentImages
+    .filter((image) => image.status === "removed")
+    .map((image) => ({ ...image }));
+
+  const reorderedActiveImages = [
+    activeImages.find((img) => img.path === path),
+    ...activeImages.filter((img) => img.path !== path),
+  ];
+
+  return normalizeImages([...reorderedActiveImages, ...removedImages]);
+};
+
+export const buildRestaurantImagePayload = (images, uploadId) => {
+  return images.map((image) => {
+    const { path, type, isPrimary, status, displayOrder, id } = image;
+    return { path, type, isPrimary, status, displayOrder, uploadId, id };
+  });
+};

@@ -16,9 +16,10 @@ import com.eddie.hungry_belly_backend.exception.BadRequestException;
 import com.eddie.hungry_belly_backend.exception.InvalidOperationException;
 import com.eddie.hungry_belly_backend.exception.UserNotFoundException;
 import com.eddie.hungry_belly_backend.role.service.RoleService;
-import com.eddie.hungry_belly_backend.user.dto.request.AdminUserCreateRequest;
+import com.eddie.hungry_belly_backend.user.dto.request.UserCreateRequest;
 import com.eddie.hungry_belly_backend.user.dto.request.ResetPasswordRequest;
-import com.eddie.hungry_belly_backend.user.dto.request.UserRequest;
+
+import com.eddie.hungry_belly_backend.user.dto.request.UserUpdateRequest;
 import com.eddie.hungry_belly_backend.user.dto.response.ExportResult;
 import com.eddie.hungry_belly_backend.user.dto.response.UserCsvDto;
 import com.eddie.hungry_belly_backend.user.dto.response.UserResponse;
@@ -28,6 +29,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,7 +49,7 @@ public class UserService {
     private final StorageService storageService;
     private final AuthService authService;
 
-    public UserResponse createUser(AdminUserCreateRequest request) {
+    public UserResponse createUser(UserCreateRequest request) {
         boolean isEmailUnique = userRepository.existsByEmailAndDeletedFalse(request.getEmail());
         if (isEmailUnique) {
             throw new BadRequestException("email: Email already exists");
@@ -69,7 +71,7 @@ public class UserService {
         return convertToAdminResponse(findUserById(id));
     }
 
-    public UserResponse updateUserInfo(Long userId, UserRequest request) {
+    public UserResponse updateUserInfo(Long userId, UserUpdateRequest request) {
 
         User existUser = findByEmail(request.getEmail());
 
@@ -96,7 +98,6 @@ public class UserService {
         dbUser.setEnabled(userEntity.isEnabled());
 
         if (userEntity.getPhoto() != null) {
-            storageService.removeFolder("user-photos/" + dbUser.getId() + "/" + dbUser.getPhoto());
             dbUser.setPhoto(userEntity.getPhoto());
         }
 
@@ -110,6 +111,7 @@ public class UserService {
         userRepository.save(dbUser);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public void delete(Long id) {
         User currentUser = findUserById(id);
@@ -196,7 +198,7 @@ public class UserService {
         return userRepository.findByEmail(email);
     }
 
-    private User convertToUserEntity(AdminUserCreateRequest request) {
+    private User convertToUserEntity(UserCreateRequest request) {
         Set<Role> savedRoles = convertToRoleEntitySet(request.getRoles());
 
         return User.builder()
@@ -210,7 +212,7 @@ public class UserService {
                 .build();
     }
 
-    private User convertToUserEntity(UserRequest request) {
+    private User convertToUserEntity(UserUpdateRequest request) {
         Set<Role> savedRoles = convertToRoleEntitySet(request.getRoles());
 
         return User.builder()
@@ -227,7 +229,7 @@ public class UserService {
     public String generateUserPhotoPath(User user) {
         String photo = user.getPhoto();
         if (photo == null) return null;
-        return storageService.generateDownloadUrl("user-photos/" + user.getId() + "/" + photo, 3600);
+        return storageService.generateDownloadUrl(photo, 3600);
     }
 
     private Set<Role> convertToRoleEntitySet(Set<String> roles) {

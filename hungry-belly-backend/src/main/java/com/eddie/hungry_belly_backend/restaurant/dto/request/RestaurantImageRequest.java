@@ -7,9 +7,11 @@ import lombok.Setter;
 @Getter
 @Setter
 public class RestaurantImageRequest {
+    private Long id;
     private String path;
     private ImageType type;
     private Boolean isPrimary;
     private String status;
     private String uploadId;
+    private Integer displayOrder;
 }

@@ -9,8 +9,8 @@ import com.eddie.hungry_belly_backend.entity.User;
 import com.eddie.hungry_belly_backend.security.AppUserDetails;
 import com.eddie.hungry_belly_backend.token.service.TokenService;
 import com.eddie.hungry_belly_backend.user.dto.request.LoginRequest;
-import com.eddie.hungry_belly_backend.user.dto.request.UploadRequest;
-import com.eddie.hungry_belly_backend.user.dto.request.UserRequest;
+import com.eddie.hungry_belly_backend.common.util.storage.dto.request.UploadRequest;
+import com.eddie.hungry_belly_backend.user.dto.request.UserUpdateRequest;
 import com.eddie.hungry_belly_backend.user.dto.response.UserResponse;
 import com.eddie.hungry_belly_backend.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -97,7 +97,7 @@ public class AuthController {
     }
 
     @PutMapping("/update-account")
-    public ResponseEntity<ApiResponse<?>> updateAccount(@Valid @RequestBody UserRequest request) {
+    public ResponseEntity<ApiResponse<?>> updateAccount(@Valid @RequestBody UserUpdateRequest request) {
         AppUserDetails userDetails = authService.getCurrentLoginUser();
         UserResponse response = userService.updateUserInfo(userDetails.getId(), request);
         return ResponseEntity.ok(ApiResponse.success(response, "Account updated"));

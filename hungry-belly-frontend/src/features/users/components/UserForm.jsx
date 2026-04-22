@@ -4,35 +4,41 @@ import assets from "../../../shared/assets/assets";
 import { toast } from "react-toastify";
 import { useRoles } from "../../roles/hooks/useRole";
 
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useCreateUser, useUpdateUser } from "../hooks/useUser";
-import { useQueryClient } from "@tanstack/react-query";
-import {
-  useUploadPhoto,
-  useGetPresignedUrl,
-} from "../../../shared/hooks/useStorage";
+import { useSyncedFormState } from "../../../shared/hooks/useSyncedFormState";
+import { useEntityUploader } from "../../../shared/hooks/useEntityUploader";
+
+const buildUserFormData = (user) => ({
+  id: user?.id || null,
+  email: user?.email || "",
+  firstName: user?.firstName || "",
+  lastName: user?.lastName || "",
+  password: user?.password || "",
+  roles: user?.roles || [],
+  enabled: user?.enabled || false,
+  photo: user?.photo || null,
+});
 
 function UserForm({ selectedUser }) {
-  const [data, setData] = useState({
-    id: selectedUser?.id || null,
-    email: selectedUser?.email || "",
-    firstName: selectedUser?.firstName || "",
-    lastName: selectedUser?.lastName || "",
-    password: "",
-    roles: selectedUser?.roles || [],
-    enabled: selectedUser?.enabled || false,
-    photo: selectedUser?.photo || null,
-  });
+  const { data, setData, setIsDirty } = useSyncedFormState(
+    selectedUser,
+    buildUserFormData,
+  );
 
+  const [currentPhoto, setCurrentPhoto] = useState(data.photo || null);
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
   const { createUser } = useCreateUser();
   const { updateUser } = useUpdateUser();
-  const { uploadPhoto } = useUploadPhoto("users");
-  const { getPresignedUrl } = useGetPresignedUrl("users");
-  let { roles } = useRoles();
+  const { uploadFiles } = useEntityUploader({
+    queryKey: "users",
+    entityType: "USER",
+  });
 
-  const queryClient = useQueryClient();
+  const location = useLocation();
+
+  let { roles } = useRoles();
 
   roles = roles.map((role) => role.name);
 
@@ -43,49 +49,13 @@ function UserForm({ selectedUser }) {
 
     try {
       if (selectedUser) {
-        if (data.photo !== null && data.photo instanceof File) {
-          const transferData = { ...data, photo: data.photo.name };
-          result = await updateUser(transferData);
-        } else {
-          const transferData = {
-            id: data.id,
-            email: data.email,
-            firstName: data.firstName,
-            lastName: data.lastName,
-            password: data.password,
-            roles: data.roles,
-            enabled: data.enabled,
-          };
-          result = await updateUser(transferData);
-        }
+        result = await updateUser(data);
       } else {
-        if (data.photo !== null && data.photo instanceof File) {
-          const transferData = { ...data, photo: data.photo.name };
-          result = await createUser(transferData);
-        } else {
-          result = await createUser(data);
-        }
+        result = await createUser(data);
       }
-
-      if (data.photo !== null && data.photo instanceof File) {
-        const { id } = result.data;
-        const presignedResult = await getPresignedUrl({
-          userId: id,
-          fileName: data.photo.name,
-          contentType: data.photo.type,
-        });
-
-        await uploadPhoto({
-          uploadUrl: presignedResult.uploadUrl,
-          file: data.photo,
-          contentType: data.photo.type,
-        });
-      }
-
-      await queryClient.invalidateQueries({ queryKey: ["users"] });
 
       toast.success(result.message);
-      navigate("/users");
+      navigate(`/users${location.search}`);
     } catch (error) {
       const apiError = error.response?.data;
       const apiMessage = apiError?.message;
@@ -101,12 +71,14 @@ function UserForm({ selectedUser }) {
   };
 
   const handleInputChange = (e) => {
+    setIsDirty(true);
     const { name, value } = e.target;
     setData((prev) => ({ ...prev, [name]: value }));
     setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
   const handleRoleChange = (role) => {
+    setIsDirty(true);
     setData((prev) => ({
       ...prev,
       roles: prev.roles.includes(role)
@@ -116,19 +88,28 @@ function UserForm({ selectedUser }) {
     setErrors((prev) => ({ ...prev, roles: "" }));
   };
 
-  const handlePhotoChange = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        setErrors((prev) => ({
-          ...prev,
-          photo: "File size should be less than 2MB",
-        }));
-        return;
-      }
-      setData((prev) => ({ ...prev, photo: file }));
-      setErrors((prev) => ({ ...prev, photo: "" }));
+  const handlePhotoChange = async (e) => {
+    setIsDirty(true);
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    const file = files[0];
+    if (file.size > 2 * 1024 * 1024) {
+      setErrors((prev) => ({
+        ...prev,
+        photo: "File size should be less than 2MB",
+      }));
+      return;
     }
+
+    const uploads = await uploadFiles(files);
+
+    if (!uploads.length) return;
+
+    const uploadedPhoto = uploads[0];
+    setData((prev) => ({ ...prev, photo: uploadedPhoto.path }));
+    setCurrentPhoto(uploadedPhoto.publicUrl);
+    setErrors((prev) => ({ ...prev, photo: "" }));
   };
 
   return (
@@ -278,13 +259,7 @@ function UserForm({ selectedUser }) {
               <div className="form-check mt-1">
                 <label className="form-label" htmlFor="useDefault">
                   <img
-                    src={
-                      data.photo instanceof File
-                        ? URL.createObjectURL(data.photo)
-                        : data.photo
-                          ? data.photo
-                          : assets.upload
-                    }
+                    src={currentPhoto ? currentPhoto : assets.upload}
                     alt=""
                     width={98}
                   />

@@ -25,6 +25,9 @@ public class RestaurantImage {
 
     private String tempId;
 
+    @Column(name = "display_order")
+    private Integer displayOrder;
+
     @ManyToOne
     @JoinColumn(name = "restaurant_id")
     private Restaurant restaurant;
@@ -40,11 +43,11 @@ public class RestaurantImage {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         RestaurantImage that = (RestaurantImage) o;
-        return Objects.equals(path, that.path);
+        return Objects.equals(id, that.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(path);
+        return Objects.hashCode(id);
     }
 }

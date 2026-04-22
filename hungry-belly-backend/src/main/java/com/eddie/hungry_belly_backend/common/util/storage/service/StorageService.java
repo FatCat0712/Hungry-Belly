@@ -4,7 +4,7 @@ import com.eddie.hungry_belly_backend.common.util.storage.dto.StorageObject;
 import com.eddie.hungry_belly_backend.common.util.storage.dto.request.FileRequest;
 import com.eddie.hungry_belly_backend.common.util.storage.dto.response.PresignedUploadResponse;
 import com.eddie.hungry_belly_backend.exception.BadRequestException;
-import com.eddie.hungry_belly_backend.user.dto.request.UploadRequest;
+import com.eddie.hungry_belly_backend.common.util.storage.dto.request.UploadRequest;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

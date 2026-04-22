@@ -2,7 +2,7 @@ package com.eddie.hungry_belly_backend.common.util.storage.controller;
 
 import com.eddie.hungry_belly_backend.common.dto.response.ApiResponse;
 import com.eddie.hungry_belly_backend.common.util.storage.service.StorageService;
-import com.eddie.hungry_belly_backend.user.dto.request.UploadRequest;
+import com.eddie.hungry_belly_backend.common.util.storage.dto.request.UploadRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;

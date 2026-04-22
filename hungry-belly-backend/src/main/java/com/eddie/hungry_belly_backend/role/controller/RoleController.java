@@ -8,7 +8,6 @@ import com.eddie.hungry_belly_backend.role.dto.response.UpdateRoleResponse;
 import com.eddie.hungry_belly_backend.role.service.RoleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,39 +20,39 @@ public class RoleController {
     private final RoleService roleService;
 
     @GetMapping("/names")
-    public ResponseEntity<ApiResponse<?>> fetchAllRoles() {
+    public ApiResponse<?> fetchAllRoles() {
         Set<String> roles = roleService.fetchAllRoleNames();
-        return ResponseEntity.ok(ApiResponse.success(roles, "Roles fetched"));
+        return ApiResponse.success(roles, "Roles fetched");
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<?>> fetchRolesWithPermissions() {
+    public ApiResponse<?> fetchRolesWithPermissions() {
         List<RoleResponse> roles = roleService.fetchRolesWithPermissions();
-        return ResponseEntity.ok(ApiResponse.success(roles, "Roles with permissions fetched"));
+        return ApiResponse.success(roles, "Roles with permissions fetched");
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<?>> fetchRoleWithId(@PathVariable Long id) {
+    public ApiResponse<?> fetchRoleWithId(@PathVariable Long id) {
         UpdateRoleResponse role = roleService.fetchRoleById(id);
-        return ResponseEntity.ok(ApiResponse.success(role, "Role fetched"));
+        return ApiResponse.success(role, "Role fetched");
     }
 
     @PutMapping
-    public ResponseEntity<ApiResponse<?>> updateRole(@RequestBody @Valid RoleUpdateRequest request) {
+    public ApiResponse<?> updateRole(@RequestBody @Valid RoleUpdateRequest request) {
         roleService.updateRole(request);
-        return ResponseEntity.ok(ApiResponse.done(null, "Role updated"));
+        return ApiResponse.done(null, "Role updated");
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<?>> createRole(@RequestBody @Valid RoleCreateRequest request) {
+    public ApiResponse<?> createRole(@RequestBody @Valid RoleCreateRequest request) {
         roleService.createRole(request);
-        return ResponseEntity.ok(ApiResponse.create(null, "Role created"));
+        return ApiResponse.create(null, "Role created");
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<?>> deleteRole(@PathVariable Long id) {
+    public ApiResponse<?> deleteRole(@PathVariable Long id) {
         roleService.delete(id);
-        return ResponseEntity.ok(ApiResponse.done(null, "Role deleted"));
+        return ApiResponse.done(null, "Role deleted");
     }
 
 

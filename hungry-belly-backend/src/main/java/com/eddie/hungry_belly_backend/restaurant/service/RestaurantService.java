@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -84,49 +85,77 @@ public class RestaurantService {
         return convertToRestaurantDetailResponse(updatedRestaurant);
     }
 
-    private void deleteRemovedImages(Restaurant restaurant, RestaurantRequest request) {
-        List<RestaurantImage> removeImages = request.getImages().stream()
-                .filter(image -> image.getStatus().equals("removed"))
-                .map(image -> {
-                    RestaurantImage removedItem = new RestaurantImage();
-                    removedItem.setPath(image.getPath());
-                    return removedItem;
-                })
-                .toList();
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
+    public void deleteRestaurant(Long restaurantId) {
+        Restaurant dbRestaurant = retrieveRestaurantFromDbById(restaurantId);
+        if (dbRestaurant.getImages() != null) {
+            for (RestaurantImage image : dbRestaurant.getImages()) {
+                if (image.getPath() != null) {
+                    storageService.deleteFile(image.getPath());
+                }
+            }
+        }
+        restaurantRepository.delete(dbRestaurant);
+    }
 
-        for (RestaurantImage image : removeImages) {
-            restaurant.getImages().removeIf(item -> item.getPath().equals(image.getPath()));
-            storageService.deleteFile(image.getPath());
+    private void deleteRemovedImages(Restaurant restaurant, RestaurantRequest request) {
+        if (request.getImages() == null || restaurant.getImages() == null) return;
+
+        for (RestaurantImageRequest reqImg : request.getImages()) {
+            if (!"removed".equals(reqImg.getStatus())) continue;
+            boolean removed = restaurant.getImages().removeIf(dbImg -> {
+                if (reqImg.getId() != null) {
+                    return reqImg.getId().equals(dbImg.getId());
+                }
+                return reqImg.getPath() != null && reqImg.getPath().equals(dbImg.getPath());
+            });
+
+            if(removed && reqImg.getPath() != null) {
+                storageService.deleteFile(reqImg.getPath());
+            }
         }
     }
 
     private void saveNewImages(Restaurant restaurant, RestaurantRequest request) {
-        List<RestaurantImageRequest> images = request.getImages();
-        List<RestaurantImage> existingImages = restaurant.getImages();
+        List<RestaurantImageRequest> incoming = request.getImages();
+        if (incoming == null) return;
 
-        for (RestaurantImageRequest item : images) {
-            RestaurantImage image = new RestaurantImage(item.getPath());
-            image.setType(item.getType());
-            image.setTempId(item.getUploadId());
-            image.setPrimary(item.getIsPrimary());
-            image.setRestaurant(restaurant);
+        List<RestaurantImage> existing = restaurant.getImages();
+        if (existing == null) {
+            existing = new ArrayList<>();
+            restaurant.setImages(existing);
+        }
 
-            if (!"removed".equals(item.getStatus())) {
-                if ("new".equals(item.getStatus())) {
-                    if (existingImages == null) {
-                        existingImages = new ArrayList<>();
-                    }
-                    existingImages.add(image);
-                } else {
-//                    update existing image
-                    int index = existingImages.indexOf(image);
-                    if (index != -1) {
-                        existingImages.set(index, image);
-                    }
-                }
+        for (RestaurantImageRequest item : incoming) {
+            if ("removed".equals(item.getStatus())) {
+                continue;
+            }
+
+            if ("new".equals(item.getStatus()) || item.getId() == null) {
+                RestaurantImage newImage = new RestaurantImage();
+                newImage.setPath(item.getPath());
+                newImage.setType(item.getType());
+                newImage.setTempId(item.getUploadId());
+                newImage.setPrimary(item.getIsPrimary());
+                newImage.setRestaurant(restaurant);
+                newImage.setDisplayOrder(item.getDisplayOrder());
+                existing.add(newImage);
+                continue;
+            }
+
+            RestaurantImage managed = existing.stream()
+                    .filter(image -> image.getId().equals(item.getId())).findFirst().orElse(null);
+
+            if (managed != null) {
+                managed.setPath(item.getPath());
+                managed.setType(item.getType());
+                managed.setTempId(item.getUploadId());
+                managed.setPrimary(item.getIsPrimary());
+                managed.setDisplayOrder(item.getDisplayOrder());
             }
         }
-        restaurant.setImages(existingImages);
+
     }
 
     public RestaurantDetailResponse createRestaurant(RestaurantCreateRequest request) {
@@ -171,6 +200,8 @@ public class RestaurantService {
                         .isPrimary(image.isPrimary())
                         .status("in-use")
                         .type(image.getType().name())
+                        .displayOrder(image.getDisplayOrder())
+                        .id(image.getId())
                         .build())
                 .toList();
 

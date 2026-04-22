@@ -25,8 +25,17 @@ export const useCreateUser = () => {
 };
 
 export const useUpdateUser = () => {
+  const queryClient = useQueryClient();
   const { mutateAsync: updateUser, error } = useMutation({
     mutationFn: updateUserApi,
+    onSuccess: (data) => {
+      // Invalidate the users query to ensure fresh data after update
+      queryClient.invalidateQueries(["users"]);
+      queryClient.invalidateQueries(
+        { queryKey: ["restaurant", data.id] },
+        { exact: true },
+      );
+    },
   });
 
   return { updateUser, error };

@@ -36,24 +36,14 @@ export const fetchAllUsersApi = async () => {
 };
 
 export const createUserApi = async (userData) => {
-  const transferData = {
-    ...userData,
-    photo:
-      userData.photo instanceof File ? userData.photo?.name : userData.photo,
-  };
-  const data = await api.post(API_URL, transferData, {
+  const data = await api.post(API_URL, userData, {
     headers: { "Content-Type": "application/json" },
   });
   return data.data;
 };
 
 export const updateUserApi = async (userData) => {
-  const transferData = {
-    ...userData,
-    photo:
-      userData.photo instanceof File ? userData.photo?.name : userData.photo,
-  };
-  const data = await api.put(`${API_URL}/${userData.id}`, transferData, {
+  const data = await api.put(`${API_URL}/${userData.id}`, userData, {
     headers: { "Content-Type": "application/json" },
   });
   return data.data;
