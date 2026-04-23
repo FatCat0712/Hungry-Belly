@@ -90,7 +90,8 @@ public class AuthController {
                 .lastName(dbUser.getLastName())
                 .email(dbUser.getEmail())
                 .enabled(dbUser.isEnabled())
-                .photo(photoUrl)
+                .photoUrl(photoUrl)
+                .photoPath(dbUser.getPhoto())
                 .roles(roles)
                 .build();
         return ResponseEntity.ok(ApiResponse.success(response, "Authenticated info fetched"));

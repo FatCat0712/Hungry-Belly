@@ -1,6 +1,6 @@
 package com.eddie.hungry_belly_backend.scheduler;
 
-import com.eddie.hungry_belly_backend.restaurant.service.ImageCleanupService;
+import com.eddie.hungry_belly_backend.scheduler.service.ImageCleanupService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;

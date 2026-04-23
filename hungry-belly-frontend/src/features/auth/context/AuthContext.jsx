@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { loginApi, logoutApi } from "../api/authService";
 import { AuthContext } from "./auth-context";
 import { useFetchCurrentUser } from "../hooks/useAuth";
+import { useQueryClient } from "@tanstack/react-query";
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -12,6 +13,7 @@ export const AuthProvider = ({ children }) => {
     isLoading: isCurrentUserLoading,
     refetch,
   } = useFetchCurrentUser({ enabled: !isOnLoginPage() });
+  const queryClient = useQueryClient();
 
   const loginUser = async (email, password) => {
     await loginApi(email, password);
@@ -19,8 +21,14 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logoutUser = async () => {
-    await logoutApi();
-    setUser(null);
+    try {
+      await logoutApi();
+    } finally {
+      setUser(null);
+      setIsAuthLoading(false);
+    }
+    await queryClient.cancelQueries({ queryKey: ["currentUser"] });
+    queryClient.removeQueries({ queryKey: ["currentUser"] });
   };
 
   const fetchUser = async ({ force = false } = {}) => {

@@ -55,10 +55,22 @@ api.interceptors.response.use(
 
     const isUnauthorized = status === 401;
     const isForbidden = status === 403;
+    const isAuthFailure = isUnauthorized || isForbidden;
 
-    // Forbidden should go to access denied page, not login.
+    // Login request failures should stay on the login page and show the form error.
+    if (isLoginRequest && isAuthFailure) {
+      return Promise.reject(error);
+    }
+
+    // Refresh failure means session is no longer valid
+    if (isRefreshRequest && isAuthFailure) {
+      goToLogin();
+      return Promise.reject(error);
+    }
+
+    //Forbidden on normal requests means authenticated but not allowed.
     if (isForbidden) {
-      if (isOnAccessDeniedPage || isLoginRequest || isRefreshRequest) {
+      if (isOnAccessDeniedPage) {
         return Promise.reject(error);
       }
 
@@ -66,19 +78,7 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // Handle only auth-status errors here. Other errors should continue normally.
     if (!isUnauthorized) {
-      return Promise.reject(error);
-    }
-
-    // Let login request failures propagate so the form can show an error.
-    if (isLoginRequest) {
-      return Promise.reject(error);
-    }
-
-    // If refresh endpoint itself is unauthorized, send user to login.
-    if (isRefreshRequest) {
-      goToLogin();
       return Promise.reject(error);
     }
 

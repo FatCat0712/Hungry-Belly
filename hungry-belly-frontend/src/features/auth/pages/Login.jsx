@@ -11,6 +11,7 @@ const Login = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (event) => {
@@ -25,7 +26,7 @@ const Login = () => {
       const message =
         error?.response?.data?.message ||
         "Login failed. Please verify your credentials.";
-      toast.error(message);
+      setError(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -51,6 +52,11 @@ const Login = () => {
             Manage restaurants, orders, users, and roles in one place.
           </p>
         </div>
+        {error && (
+          <div className="alert alert-danger text-center" role="alert">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="login-form">
           <div className="mb-3">

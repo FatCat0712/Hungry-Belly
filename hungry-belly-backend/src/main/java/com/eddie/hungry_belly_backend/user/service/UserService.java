@@ -97,9 +97,10 @@ public class UserService {
         dbUser.setRoles(userEntity.getRoles());
         dbUser.setEnabled(userEntity.isEnabled());
 
-        if (userEntity.getPhoto() != null) {
+        if(request.getPhoto() != null && !request.getPhoto().isEmpty()) {
             dbUser.setPhoto(userEntity.getPhoto());
         }
+
 
         dbUser = userRepository.save(dbUser);
         return convertToAdminResponse(dbUser);
@@ -256,7 +257,8 @@ public class UserService {
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
                 .enabled(user.isEnabled())
-                .photo(generateUserPhotoPath(user))
+                .photoUrl(generateUserPhotoPath(user))
+                .photoPath(user.getPhoto())
                 .roles(roles)
                 .build();
     }

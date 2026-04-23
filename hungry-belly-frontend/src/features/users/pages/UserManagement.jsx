@@ -304,9 +304,9 @@ export default function UserManagement() {
                                 className="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center"
                                 style={{ width: 40, height: 40 }}
                               >
-                                {user.photo ? (
+                                {user.photoUrl ? (
                                   <img
-                                    src={user.photo}
+                                    src={user.photoUrl}
                                     alt="User"
                                     className="rounded-circle"
                                     style={{ width: 40, height: 40 }}

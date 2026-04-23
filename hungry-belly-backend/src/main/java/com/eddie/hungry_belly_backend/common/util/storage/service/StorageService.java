@@ -111,6 +111,7 @@ public class StorageService {
     }
 
     public String generateDownloadUrl(String key, int expiresInSeconds) {
+        if(key == null) return null;
         GetObjectRequest request = GetObjectRequest.builder()
                 .bucket(bucketName)
                 .key(key)
@@ -165,6 +166,7 @@ public class StorageService {
         return switch (uploadRequest.getEntityType()) {
             case USER -> "user-photos";
             case RESTAURANT -> "restaurant-photos";
+            case CATEGORY -> "category-photos";
         };
     }
 

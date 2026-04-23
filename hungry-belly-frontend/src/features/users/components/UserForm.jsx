@@ -17,7 +17,8 @@ const buildUserFormData = (user) => ({
   password: user?.password || "",
   roles: user?.roles || [],
   enabled: user?.enabled || false,
-  photo: user?.photo || null,
+  photoUrl: user?.photoUrl || null,
+  photoPath: user?.photoPath || null,
 });
 
 function UserForm({ selectedUser }) {
@@ -26,7 +27,7 @@ function UserForm({ selectedUser }) {
     buildUserFormData,
   );
 
-  const [currentPhoto, setCurrentPhoto] = useState(data.photo || null);
+  const [currentPhoto, setCurrentPhoto] = useState(data.photoUrl || null);
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
   const { createUser } = useCreateUser();
@@ -47,11 +48,16 @@ function UserForm({ selectedUser }) {
 
     let result = null;
 
+    const transferData = {
+      ...data,
+      photo: data.photoPath,
+    };
+
     try {
       if (selectedUser) {
-        result = await updateUser(data);
+        result = await updateUser(transferData);
       } else {
-        result = await createUser(data);
+        result = await createUser(transferData);
       }
 
       toast.success(result.message);
@@ -93,8 +99,8 @@ function UserForm({ selectedUser }) {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
 
-    const file = files[0];
-    if (file.size > 2 * 1024 * 1024) {
+    const file = files.find((file) => file.size > 2 * 1024 * 1024);
+    if (file) {
       setErrors((prev) => ({
         ...prev,
         photo: "File size should be less than 2MB",

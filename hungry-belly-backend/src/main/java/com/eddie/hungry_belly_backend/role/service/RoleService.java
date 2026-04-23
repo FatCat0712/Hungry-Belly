@@ -67,7 +67,7 @@ public class RoleService{
 
         Role dbRole = fetchById(request.getId());
 
-        dbRole.setName("ROLE_" + request.getName());
+        dbRole.setName(request.getName());
         dbRole.setDescription(request.getDescription());
 
         Set<Permission> dbPermissions = convertToPermission(request.getPermissions());

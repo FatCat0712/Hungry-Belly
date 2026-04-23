@@ -1,4 +1,4 @@
-package com.eddie.hungry_belly_backend.restaurant.service;
+package com.eddie.hungry_belly_backend.scheduler.service;
 
 import com.eddie.hungry_belly_backend.common.util.storage.dto.StorageObject;
 import com.eddie.hungry_belly_backend.common.util.storage.service.StorageService;
@@ -35,7 +35,7 @@ public class ImageCleanupService {
         Instant threshold = Instant.now().minus(Duration.ofHours(24));
 
         for(StorageObject file: files) {
-            String filePath = PREFIX + file.getName();
+            String filePath = file.getName();
             if(!dbPaths.contains(filePath) && file.getUpdatedAt().isBefore(threshold)) {
                 try {
                     storageService.deleteFile(file.getName());

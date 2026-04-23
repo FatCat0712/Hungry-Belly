@@ -19,12 +19,16 @@ public class Category {
     @Column(length = 128, nullable = false, unique = true)
     private String name;
 
+    @Column(length = 64, nullable = false, unique = true)
     private String alias;
 
     @Column(length = 128)
     private String image;
 
     private boolean enabled;
+
+    @Column(columnDefinition = "TEXT")
+    private String description;
 
     @Column(name = "all_parent_ids", length = 256)
     private String allParentIds;
