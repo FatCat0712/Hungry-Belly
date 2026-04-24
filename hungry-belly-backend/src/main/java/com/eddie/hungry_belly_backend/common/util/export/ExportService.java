@@ -17,10 +17,10 @@ import java.util.List;
 public class ExportService {
     private final StorageService storageService;
 
-    public <T>ExportResult export(List<T> data, ExportStrategy<T> strategy) throws Exception {
+    public <T>ExportResult export(String module, List<T> data, ExportStrategy<T> strategy) throws Exception {
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
         String timestamp = dateTimeFormatter.format(LocalDateTime.now());
-        String fileName = "users_" + timestamp;
+        String fileName = module +"_" + timestamp;
         String path = "exports/" + fileName + strategy.getFileExtension();
         Path tempFile = Files.createTempFile(fileName, strategy.getFileExtension());
 

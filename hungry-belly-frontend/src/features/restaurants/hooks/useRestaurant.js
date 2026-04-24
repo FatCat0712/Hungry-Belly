@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createRestaurantApi,
+  deleteRestaurantApi,
   getRestaurantByIdApi,
   getRestaurantsApi,
   updateRestaurantApi,
@@ -104,6 +105,18 @@ export const useCreateRestaurant = () => {
   });
 
   return { createRestaurant };
+};
+
+export const useDeleteRestaurant = () => {
+  const queryClient = useQueryClient();
+  const { mutateAsync: deleteRestaurant } = useMutation({
+    mutationFn: (id) => deleteRestaurantApi(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["restaurants"] });
+    },
+  });
+
+  return { deleteRestaurant };
 };
 
 const normalizeImages = (images) => {

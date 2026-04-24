@@ -2,7 +2,11 @@ import { useState } from "react";
 import { useSyncedFormState } from "../../../shared/hooks/useSyncedFormState";
 import assets from "../../../shared/assets/assets";
 import { useNavigate } from "react-router-dom";
-import { useGetCategoryTree, useUpdateCategory } from "../hooks/useCategory";
+import {
+  useCreateCategory,
+  useGetCategoryTree,
+  useUpdateCategory,
+} from "../hooks/useCategory";
 import { toast } from "react-toastify";
 import { useEntityUploader } from "../../../shared/hooks/useEntityUploader";
 
@@ -30,6 +34,8 @@ export const CategoryForm = ({ selectedCategory }) => {
     queryKey: "categories",
     entityType: "CATEGORY",
   });
+
+  const { createCategory } = useCreateCategory();
 
   const handleInputChange = (event) => {
     setIsDirty(true);
@@ -72,12 +78,21 @@ export const CategoryForm = ({ selectedCategory }) => {
       let response;
       if (data.id) {
         response = await updateCategory({ id: data.id, data });
+      } else {
+        const transferData = {
+          name: data.name,
+          alias: data.alias,
+          description: data.description,
+          parentId: data.parentId,
+          enabled: data.enabled,
+          image: data.image,
+        };
+        response = await createCategory(transferData);
       }
-      if (response.status === 200) {
+      if (response.status === 200 || response.status === 201) {
         toast.success(response.message);
         navigate("/categories");
       }
-      console.log(response);
     } catch (error) {
       const apiError = error.response?.data;
       const apiMessage = apiError?.message;

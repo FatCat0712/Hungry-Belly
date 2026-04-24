@@ -44,20 +44,20 @@ export const useUpdateUser = () => {
 export const useDeleteUser = () => {
   const queryClient = useQueryClient();
 
-  const { mutate: deleteUser, error } = useMutation({
-    mutationFn: ({ userId }) => deleteUserApi(userId),
+  const { mutate: deleteUser } = useMutation({
+    mutationFn: (userId) => deleteUserApi(userId),
     onSuccess: () => {
       queryClient.invalidateQueries(["users"]);
     },
   });
 
-  return { deleteUser, error };
+  return { deleteUser };
 };
 
 export const useResetPassword = () => {
   const queryClient = useQueryClient();
 
-  const { mutate: resetPassword, error } = useMutation({
+  const { mutate: resetPassword } = useMutation({
     mutationFn: ({ userId, newPassword }) =>
       resetPasswordApi(userId, { newPassword }),
     onSuccess: () => {
@@ -65,20 +65,20 @@ export const useResetPassword = () => {
     },
   });
 
-  return { resetPassword, error };
+  return { resetPassword };
 };
 
 export const useToggleStatus = () => {
   const queryClient = useQueryClient();
 
-  const { mutate: toggleStatus, error } = useMutation({
+  const { mutate: toggleStatus } = useMutation({
     mutationFn: ({ userId }) => toggleUserStatusApi(userId),
     onSuccess: () => {
       queryClient.invalidateQueries(["users"]);
     },
   });
 
-  return { toggleStatus, error };
+  return { toggleStatus };
 };
 
 export const useListUsersByPage = ({

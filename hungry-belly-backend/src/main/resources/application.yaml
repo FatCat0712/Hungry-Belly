@@ -32,3 +32,6 @@ auth:
     jwtSecret: ${JWT_SECRET}
 app:
   useSecureCookie: false
+logging:
+  level:
+    org.apache.http.client.protocol.ResponseProcessCookies: ERROR

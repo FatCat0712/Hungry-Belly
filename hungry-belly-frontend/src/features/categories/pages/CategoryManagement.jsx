@@ -1,28 +1,89 @@
 import { useState } from "react";
-import { useListCategories } from "../hooks/useCategory";
+import {
+  useExportCategories,
+  useListRootCategories,
+  useUpdateCategoryStatus,
+} from "../hooks/useCategory";
 import Spinner from "../../../shared/ui/Spinner";
-import CategoryForm from "../components/CategoryForm";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import DeleteCategoryConfirmDialog from "../components/DeleteCategoryConfirmDialog";
+import { useDebounce } from "../../../shared/hooks/useDebounce";
+import { useTableSearchParams } from "../../../shared/hooks/useTableSearchParams";
+import Pagination from "../../../shared/ui/Pagination";
 
 const CategoryManagement = () => {
-  const [keyword, setKeyword] = useState("");
-  const [showFormModal, setShowFormModal] = useState(false);
+  const pageSize = 10;
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
-
-  const { categories, isLoadingCategories } = useListCategories();
-
+  const { exportCategories } = useExportCategories();
   const navigate = useNavigate();
 
-  const totalActive = categories?.filter((c) => c.status).length;
-  const totalRestaurants = categories?.reduce(
+  const {
+    currentPage,
+    sortField,
+    sortDirection,
+    keyword,
+    setPage,
+    updateParams,
+  } = useTableSearchParams({
+    defaultSortField: "name",
+  });
+
+  const debouncedKeyword = useDebounce(keyword, 500);
+  const normalizedKeyword = debouncedKeyword.trim().toLowerCase();
+
+  const { data, isLoadingCategories } = useListRootCategories({
+    pageNum: currentPage,
+    pageSize,
+    sortField,
+    sortDirection,
+    keyword: normalizedKeyword,
+  });
+  const { updateCategoryStatus } = useUpdateCategoryStatus();
+
+  const rootCategories = data?.content || [];
+  const totalElements = data?.totalElements || 0;
+
+  const totalActive = rootCategories?.filter((c) => c.enabled).length;
+  const totalRestaurants = rootCategories?.reduce(
     (sum, c) => sum + c.restaurantCount,
     0,
   );
 
-  const filtered = categories?.filter((c) =>
-    c.name.toLowerCase().includes(keyword.toLowerCase()),
-  );
+  const handlePageChange = (page) => {
+    setPage(page, { totalItems: totalElements, pageSize });
+  };
+
+  const handleSortFieldChange = (field) => {
+    updateParams(
+      {
+        sortField: field,
+        sortDirection: sortDirection === "asc" ? "desc" : "asc",
+      },
+      { resetPage: true },
+    );
+  };
+
+  const handleSortDirectionChange = (direction) => {
+    updateParams({ sortDirection: direction }, { resetPage: true });
+  };
+
+  const handleKeywordChange = (nextKeyword) => {
+    updateParams({ keyword: nextKeyword }, { resetPage: true });
+  };
+
+  const handleToggleStatus = async (id) => {
+    const response = await updateCategoryStatus(id);
+    const message = response?.message || "Category status updated";
+    toast.success(message);
+  };
+
+  const handleExportCategories = async (format) => {
+    toast.info("Exporting categories... Please wait.");
+    const data = await exportCategories(format);
+    window.open(data.downloadUrl);
+  };
 
   if (isLoadingCategories) {
     return <Spinner message="Loading categories" />;
@@ -40,15 +101,28 @@ const CategoryManagement = () => {
               Manage food categories displayed to customers and restaurants.
             </p>
           </div>
-          <button
-            className="btn btn-primary d-flex align-items-center gap-2"
-            onClick={() => {
-              setSelectedCategory(null);
-              setShowFormModal(true);
-            }}
-          >
-            <i className="bi bi-plus-lg" /> Add Category
-          </button>
+          <div className="d-flex flex-wrap gap-2">
+            <button
+              className="btn btn-secondary d-flex align-items-center gap-2"
+              onClick={() => handleExportCategories("excel")}
+            >
+              <i className="bi bi-download"></i> Export Excel
+            </button>
+            <button
+              className="btn btn-info d-flex align-items-center gap-2"
+              onClick={() => handleExportCategories("csv")}
+            >
+              <i className="bi bi-download"></i> Export CSV
+            </button>
+            <button
+              className="btn btn-primary d-flex align-items-center gap-2"
+              onClick={() => {
+                navigate("/categories/new");
+              }}
+            >
+              <i className="bi bi-plus-lg" /> Add Category
+            </button>
+          </div>
         </div>
 
         {/* Stats */}
@@ -59,7 +133,7 @@ const CategoryManagement = () => {
                 <div className="d-flex align-items-start justify-content-between">
                   <div>
                     <small className="text-muted">Total Categories</small>
-                    <h5 className="mb-0">{categories?.length}</h5>
+                    <h5 className="mb-0">{totalElements}</h5>
                   </div>
                   <i className="bi bi-grid fs-4 text-primary" />
                 </div>
@@ -99,26 +173,70 @@ const CategoryManagement = () => {
           <div className="card-header bg-white border-bottom">
             <div className="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2">
               <h5 className="card-title mb-0">All Categories</h5>
-              <div className="input-group" style={{ maxWidth: 280 }}>
-                <span className="input-group-text bg-white">
-                  <i className="bi bi-search text-muted" />
-                </span>
-                <input
-                  type="text"
-                  className="form-control border-start-0"
-                  placeholder="Search categories..."
-                  value={keyword}
-                  onChange={(e) => setKeyword(e.target.value)}
-                />
-                {keyword && (
-                  <button
-                    className="btn btn-outline-secondary"
-                    type="button"
-                    onClick={() => setKeyword("")}
+              <div className="d-flex flex-wrap gap-2 align-items-center">
+                <div
+                  className="input-group"
+                  style={{ minWidth: 150, flex: "1 1 150px" }}
+                >
+                  <span className="input-group-text">
+                    <i className="bi bi-bar-chart-line-fill"></i>
+                  </span>
+                  <select
+                    className="form-select"
+                    aria-label="Sort by"
+                    onChange={(e) => {
+                      handleSortFieldChange(e.target.value);
+                    }}
+                    value={sortField}
                   >
-                    <i className="bi bi-x" />
-                  </button>
-                )}
+                    <option value="name">Name</option>
+                  </select>
+                </div>
+
+                <div
+                  className="input-group"
+                  style={{ minWidth: 150, flex: "1 1 150px" }}
+                >
+                  <span className="input-group-text">
+                    <i className="bi bi-sort-down"></i>
+                  </span>
+                  <select
+                    className="form-select"
+                    aria-label="Sort direction"
+                    onChange={(e) => {
+                      handleSortDirectionChange(e.target.value);
+                    }}
+                    value={sortDirection}
+                  >
+                    <option value="asc">Ascending</option>
+                    <option value="desc">Descending</option>
+                  </select>
+                </div>
+
+                <div
+                  className="input-group"
+                  style={{ minWidth: 200, flex: "2 1 200px" }}
+                >
+                  <span className="input-group-text bg-white">
+                    <i className="bi bi-search text-muted" />
+                  </span>
+                  <input
+                    type="text"
+                    className="form-control border-start-0"
+                    placeholder="Search categories..."
+                    value={keyword}
+                    onChange={(e) => handleKeywordChange(e.target.value)}
+                  />
+                  {keyword && (
+                    <button
+                      className="btn btn-outline-secondary"
+                      type="button"
+                      onClick={() => handleKeywordChange("")}
+                    >
+                      <i className="bi bi-x" />
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -142,7 +260,7 @@ const CategoryManagement = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.length === 0 ? (
+                  {rootCategories.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="text-center text-muted py-5">
                         <i className="bi bi-inbox fs-2 d-block mb-2" />
@@ -150,9 +268,11 @@ const CategoryManagement = () => {
                       </td>
                     </tr>
                   ) : (
-                    filtered.map((category, index) => (
+                    rootCategories.map((category, index) => (
                       <tr key={category.id}>
-                        <td className="ps-3 text-muted small">{index + 1}</td>
+                        <td className="ps-3 text-muted smaller">
+                          {(currentPage - 1) * pageSize + index + 1}
+                        </td>
                         <td>
                           <div className="d-flex align-items-center gap-2">
                             <div
@@ -173,28 +293,39 @@ const CategoryManagement = () => {
                             <span className="fw-semibold">{category.name}</span>
                           </div>
                         </td>
+
                         <td className="text-muted small">
                           {category.description || (
                             <span className="fst-italic">No description</span>
                           )}
                         </td>
                         <td className="text-center">
-                          <span className="badge bg-light text-dark border">
-                            <i className="bi bi-shop me-1" />
-                            {category.restaurantCount}
-                          </span>
+                          {category.restaurantCount}
                         </td>
                         <td className="text-center">
-                          <div className="form-check form-switch d-inline-block mb-0">
-                            <input
-                              className="form-check-input"
-                              type="checkbox"
-                              role="switch"
-                              checked={category.enabled}
-                              readOnly
-                              style={{ cursor: "pointer" }}
+                          <button
+                            type="button"
+                            className={`btn btn-sm rounded-pill d-inline-flex align-items-center gap-2 ${
+                              category.enabled
+                                ? "btn-success"
+                                : "btn-outline-secondary"
+                            }`}
+                            role="switch"
+                            aria-checked={category.enabled}
+                            aria-label={
+                              category.enabled ? "Set inactive" : "Set active"
+                            }
+                            onClick={() => handleToggleStatus(category.id)}
+                          >
+                            <i
+                              className={`bi ${
+                                category.enabled
+                                  ? "bi-toggle-on"
+                                  : "bi-toggle-off"
+                              }`}
                             />
-                          </div>
+                            {category.enabled ? "Active" : "Inactive"}
+                          </button>
                         </td>
                         <td className="text-end pe-3">
                           <div className="d-flex justify-content-end gap-1">
@@ -228,113 +359,22 @@ const CategoryManagement = () => {
           </div>
 
           <div className="card-footer bg-white border-top">
-            <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
-              <small className="text-muted">
-                Showing {filtered.length} of {categories?.length} categories
-              </small>
-              <nav>
-                <ul className="pagination pagination-sm mb-0">
-                  <li className="page-item disabled">
-                    <button className="page-link">Previous</button>
-                  </li>
-                  <li className="page-item active">
-                    <button className="page-link">1</button>
-                  </li>
-                  <li className="page-item disabled">
-                    <button className="page-link">Next</button>
-                  </li>
-                </ul>
-              </nav>
-            </div>
+            <Pagination
+              module="categories"
+              currentPage={currentPage}
+              pageSize={pageSize}
+              totalItems={totalElements}
+              onPageChange={handlePageChange}
+            />
           </div>
         </div>
       </div>
 
-      {showFormModal && (
-        <div
-          className="modal d-block"
-          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
-          tabIndex="-1"
-        >
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-header border-bottom">
-                <h5 className="modal-title">
-                  {selectedCategory ? "Edit Category" : "Create Category"}
-                </h5>
-                <button
-                  type="button"
-                  className="btn-close"
-                  onClick={() => setShowFormModal(false)}
-                  aria-label="Close"
-                />
-              </div>
-              <div className="modal-body">
-                <CategoryForm
-                  selectedCategory={selectedCategory}
-                  onCancel={() => setShowFormModal(false)}
-                  onSubmit={() => setShowFormModal(false)}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Confirm Modal */}
-      {showDeleteModal && selectedCategory && (
-        <div
-          className="modal d-block"
-          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
-          tabIndex="-1"
-        >
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-header border-bottom">
-                <h5 className="modal-title">Delete Category</h5>
-                <button
-                  type="button"
-                  className="btn-close"
-                  onClick={() => setShowDeleteModal(false)}
-                  aria-label="Close"
-                />
-              </div>
-              <div className="modal-body">
-                <p className="mb-0">
-                  Are you sure you want to delete{" "}
-                  <strong>"{selectedCategory.name}"</strong>? This action cannot
-                  be undone.
-                </p>
-                {selectedCategory.restaurantCount > 0 && (
-                  <div className="alert alert-warning mt-3 mb-0 py-2">
-                    <i className="bi bi-exclamation-triangle me-2" />
-                    This category is used by{" "}
-                    <strong>{selectedCategory.restaurantCount}</strong>{" "}
-                    {selectedCategory.restaurantCount === 1
-                      ? "restaurant"
-                      : "restaurants"}
-                    .
-                  </div>
-                )}
-              </div>
-              <div className="modal-footer border-top">
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => setShowDeleteModal(false)}
-                >
-                  Cancel
-                </button>
-                <button
-                  className="btn btn-danger"
-                  onClick={() => setShowDeleteModal(false)}
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <DeleteCategoryConfirmDialog
+        open={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        category={selectedCategory}
+      />
     </>
   );
 };

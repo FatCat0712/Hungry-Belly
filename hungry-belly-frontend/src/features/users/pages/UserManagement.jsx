@@ -83,11 +83,6 @@ export default function UserManagement() {
     setUserToDelete(null);
   };
 
-  const handleConfirmDelete = () => {
-    // Keep modal UX in place until delete API/hook is added.
-    handleCloseDeleteConfirmModal();
-  };
-
   const handlePageChange = (page) => {
     setPage(page, { totalItems: totalElements, pageSize });
   };
@@ -472,7 +467,6 @@ export default function UserManagement() {
         open={showDeleteConfirmModal}
         user={userToDelete}
         onClose={handleCloseDeleteConfirmModal}
-        onConfirm={handleConfirmDelete}
       />
     </>
   );

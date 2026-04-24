@@ -184,10 +184,10 @@ public class UserService {
         try {
             if ("csv".equals(format)) {
                 ExportStrategy<UserCsvDto> strategy = new CsvExporter<>(headers, new String[]{"id", "email", "firstName", "lastName", "roles", "status"});
-                return exportService.export(userCsvDtos, strategy);
+                return exportService.export("users", userCsvDtos, strategy);
             } else if ("excel".equals(format)) {
                 ExportStrategy<UserCsvDto> strategy = new ExcelExporter<>(headers, u -> new Object[]{u.getId(), u.getEmail(), u.getFirstName(), u.getLastName(), u.getRoles(), u.getStatus()});
-                return exportService.export(userCsvDtos, strategy);
+                return exportService.export("users", userCsvDtos, strategy);
             }
         } catch (Exception e) {
             throw new RuntimeException(e);

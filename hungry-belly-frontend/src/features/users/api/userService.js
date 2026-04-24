@@ -72,6 +72,6 @@ export const getUserApi = async (userId) => {
 };
 
 export const exportUsersApi = async (format) => {
-  const response = await api.post(`${API_URL}/export/${format}`, null, {});
+  const response = await api.post(`${API_URL}/export/${format}`);
   return response.data.data;
 };

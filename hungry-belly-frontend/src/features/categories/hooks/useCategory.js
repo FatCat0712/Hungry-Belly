@@ -1,18 +1,51 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  createCategoryApi,
+  deleteCategoryApi,
+  exportCategoriesApi,
   fetchCategoriesApi,
   fetchCategoryByIdApi,
+  fetchCategoryChildrenApi,
   fetchCategoryTreeApi,
   updateCategoryApi,
+  updateCategoryStatusApi,
 } from "../api/categoryService";
 
-export const useListCategories = () => {
-  const { data: categories, isLoading: isLoadingCategories } = useQuery({
-    queryKey: ["categories"],
-    queryFn: fetchCategoriesApi,
+export const useListRootCategories = ({
+  pageNum,
+  pageSize,
+  sortField,
+  sortDirection,
+  keyword,
+}) => {
+  const { data, isLoading: isLoadingCategories } = useQuery({
+    queryKey: [
+      "categories",
+      "roots",
+      { pageNum, pageSize, sortField, sortDirection, keyword },
+    ],
+    queryFn: () =>
+      fetchCategoriesApi({
+        pageNum,
+        pageSize,
+        sortField,
+        sortDirection,
+        keyword,
+      }),
   });
 
-  return { categories, isLoadingCategories };
+  return { data, isLoadingCategories };
+};
+
+export const useLazyLoadCategoryChildren = () => {
+  const queryClient = useQueryClient();
+  const loadChildren = async (parentId) => {
+    return queryClient.fetchQuery({
+      queryKey: ["categories", parentId, "children"],
+      queryFn: () => fetchCategoryChildrenApi(parentId),
+    });
+  };
+  return { loadChildren };
 };
 
 export const useGetCategoryById = (id) => {
@@ -47,4 +80,48 @@ export const useUpdateCategory = () => {
   });
 
   return { updateCategory };
+};
+
+export const useCreateCategory = () => {
+  const queryClient = useQueryClient();
+  const { mutateAsync: createCategory } = useMutation({
+    mutationFn: (data) => createCategoryApi(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+    },
+  });
+
+  return { createCategory };
+};
+
+export const useUpdateCategoryStatus = () => {
+  const queryClient = useQueryClient();
+  const { mutateAsync: updateCategoryStatus } = useMutation({
+    mutationFn: (id) => updateCategoryStatusApi(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+    },
+  });
+
+  return { updateCategoryStatus };
+};
+
+export const useDeleteCategory = () => {
+  const queryClient = useQueryClient();
+  const { mutateAsync: deleteCategory } = useMutation({
+    mutationFn: (id) => deleteCategoryApi(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+    },
+  });
+
+  return { deleteCategory };
+};
+
+export const useExportCategories = () => {
+  const { mutateAsync: exportCategories } = useMutation({
+    mutationFn: (format) => exportCategoriesApi(format),
+  });
+
+  return { exportCategories };
 };
