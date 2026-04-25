@@ -22,6 +22,7 @@ import CreateRestaurant from "../features/restaurants/pages/CreateRestaurant";
 import CategoryManagement from "../features/categories/pages/CategoryManagement";
 import EditCategory from "../features/categories/pages/EditCategory";
 import NewCategory from "../features/categories/pages/NewCategory";
+import FoodDetails from "../features/foods/pages/FoodDetails";
 
 function App() {
   return (
@@ -52,6 +53,7 @@ function App() {
               <Route path="categories" element={<CategoryManagement />} />
               <Route path="categories/:id/edit" element={<EditCategory />} />
               <Route path="categories/new" element={<NewCategory />} />
+              <Route path="foods/:id" element={<FoodDetails />} />
               <Route path="orders" element={<Orders />} />
               <Route path="access-denied" element={<AccessDenied />} />
             </Route>

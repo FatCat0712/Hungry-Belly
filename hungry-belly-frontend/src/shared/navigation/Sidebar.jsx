@@ -26,6 +26,7 @@ const Sidebar = ({ isOpen, setIsOpen, mobileOpen, setMobileOpen }) => {
     { path: "/users", label: "Users", icon: "people" },
     { path: "/roles", label: "Roles", icon: "shield-lock" },
     { path: "/categories", label: "Categories", icon: "grid" },
+    { path: "/foods/fd-204", label: "Foods", icon: "egg-fried" },
     { path: "/orders", label: "Orders", icon: "receipt" },
     { path: "/restaurants", label: "Restaurants", icon: "house" },
   ];
