@@ -30,8 +30,6 @@ public class AppUserDetails implements UserDetails {
                 .map(role -> new SimpleGrantedAuthority(role.getName()))
                 .toList();
 
-
-
         return new AppUserDetails(
                 user.getId(),
                 user.getEmail(),
@@ -39,8 +37,6 @@ public class AppUserDetails implements UserDetails {
                 user.getPassword(),
                 authorities
         );
-
-
     }
 
     @Override

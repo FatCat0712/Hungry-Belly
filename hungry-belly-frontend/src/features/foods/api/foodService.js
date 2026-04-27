@@ -33,15 +33,16 @@ export const updateFoodApi = async (id, data) => {
   const response = await api.put(`${API_URL}/${id}`, data, {
     headers: { "Content-Type": "application/json" },
   });
-  return response.data;
+  return response.data.data;
 };
 
 export const updateFoodStatusApi = async (id) => {
   const response = await api.patch(`${API_URL}/${id}/status`);
-  return response.data.data;
+  return response.data;
 };
 
 export const deleteFoodApi = async (id) => {
   const response = await api.delete(`${API_URL}/${id}`);
-  return response.data;
+
+  return response.data.data;
 };

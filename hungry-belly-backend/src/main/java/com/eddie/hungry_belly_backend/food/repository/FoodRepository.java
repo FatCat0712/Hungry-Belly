@@ -14,27 +14,29 @@ import java.util.List;
 public interface FoodRepository extends JpaRepository<Food, Long> {
     @Query(
             value = """
-                        SELECT f.id
-                        FROM food_items f
-                        LEFT JOIN restaurants r ON r.id = f.restaurant_id
-                        WHERE f.is_deleted = false
-                        AND (
-                            LOWER(f.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
-                            OR LOWER(f.description) LIKE LOWER(CONCAT('%', :keyword, '%'))
-                            OR LOWER(r.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
-                            OR EXISTS(
-                                SELECT 1
-                                FROM food_item_categories fc
-                                JOIN categories c ON c.id = fc.category_id
-                                WHERE fc.food_id = f.id
-                                AND LOWER(c.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                            SELECT f.id
+                            FROM food_items f
+                            LEFT JOIN restaurants r 
+                             ON r.id = f.restaurant_id
+                            WHERE f.is_deleted = false
+                            AND (
+                                LOWER(f.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                                OR LOWER(f.description) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                                OR LOWER(r.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                                OR EXISTS(
+                                    SELECT 1
+                                    FROM food_item_categories fc
+                                    JOIN categories c ON c.id = fc.category_id
+                                    WHERE fc.food_id = f.id
+                                    AND LOWER(c.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                                )
                             )
-                        )
-                """,
+                    """,
             countQuery = """
                         SELECT COUNT(*)
                         FROM food_items f
-                        LEFT JOIN restaurants r ON r.id = f.restaurant_id
+                        LEFT JOIN restaurants r 
+                        ON r.id = f.restaurant_id
                         WHERE f.is_deleted = false
                         AND (
                             LOWER(f.name) LIKE LOWER(CONCAT('%', :keyword, '%'))

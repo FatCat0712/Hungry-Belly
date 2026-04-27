@@ -62,7 +62,7 @@ public class UserService {
     public User findUserById(Long id) {
         Optional<User> dbUser = userRepository.findUserById(id);
         if (dbUser.isEmpty()) {
-            throw new UserNotFoundException("User with id " + id + " could not be found");
+            throw new UserNotFoundException("User could not be found");
         }
         return dbUser.get();
     }
@@ -144,8 +144,8 @@ public class UserService {
 
         // Step 1: Get paginated IDs (efficient DB pagination, no collection fetch)
         Page<Long> idPage;
-        String keyword = request.getKeyword();
-        if (keyword != null) {
+        if (request.getKeyword() != null && !request.getKeyword().isEmpty()) {
+            String keyword = request.getKeyword();
             idPage = userRepository.findAllUserIdsWithKeyword(keyword, pageable);
         } else {
             idPage = userRepository.findAllUserIds(pageable);

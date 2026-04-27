@@ -27,7 +27,7 @@ export default function UserManagement() {
     setPage,
     updateParams,
   } = useTableSearchParams({
-    defaultSortField: "firstName",
+    defaultSortField: "first_name",
   });
   const debouncedKeyword = useDebounce(keyword, 500);
   const normalizedKeyword = debouncedKeyword.trim();
@@ -213,8 +213,8 @@ export default function UserManagement() {
                     }}
                     value={sortField}
                   >
-                    <option value="firstName">First Name</option>
-                    <option value="lastName">Last Name</option>
+                    <option value="first_name">First Name</option>
+                    <option value="last_name">Last Name</option>
                     <option value="email">Email</option>
                     <option value="enabled">Status</option>
                   </select>

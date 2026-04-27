@@ -15,21 +15,58 @@ import java.util.Optional;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
-    boolean  existsByEmailAndDeletedFalse(String email);
+    boolean existsByEmailAndDeletedFalse(String email);
+
+    @Query("SELECT u FROM User u JOIN FETCH u.roles WHERE u.email = ?1 AND u.deleted = false")
     User findByEmail(String email);
 
     // Pagination query - returns IDs only (no collection fetch)
-    @Query("SELECT u.id FROM User u WHERE u.deleted = false")
+    @Query(
+            value = "SELECT u.id FROM users u WHERE u.deleted = false",
+            countQuery = "SELECT COUNT(*) FROM users u WHERE u.deleted = false",
+            nativeQuery = true
+    )
     Page<Long> findAllUserIds(Pageable pageable);
 
-    @Query("SELECT u.id FROM User u WHERE u.deleted = false AND (" +
-            "u.firstName LIKE %?1% OR " +
-            "u.lastName LIKE %?1% OR " +
-            "CONCAT(u.firstName,' ',u.lastName) LIKE %?1% OR " +
-            "u.email LIKE %?1% OR " +
-            "CONCAT(u.id,'') LIKE ?1)")
-    Page<Long> findAllUserIdsWithKeyword(String keyword, Pageable pageable);
-    
+    @Query(value = """
+            SELECT u.id            
+            FROM users u
+            WHERE u.deleted = false
+            AND (
+                LOWER(u.first_name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+                LOWER(u.last_name) LIKE LOWER(CONCAT('%', :keyword, '%'))  OR
+                LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+                CONCAT(LOWER(u.first_name), ' ', LOWER(u.last_name)) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+                EXISTS (
+                    SELECT 1
+                    FROM user_roles ur
+                    JOIN roles r ON r.id = ur.role_id
+                    WHERE ur.user_id = u.id
+                    AND LOWER(r.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                )
+            )
+            """,
+            countQuery = """
+                    SELECT COUNT(*)            
+                    FROM users u
+                    WHERE u.deleted = false
+                    AND (
+                        LOWER(u.first_name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+                        LOWER(u.last_name) LIKE LOWER(CONCAT('%', :keyword, '%'))  OR
+                        LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+                        CONCAT(LOWER(u.first_name), ' ', LOWER(u.last_name)) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+                        EXISTS (
+                            SELECT 1
+                            FROM user_roles ur
+                            JOIN roles r ON r.id = ur.role_id
+                            WHERE ur.user_id = u.id
+                            AND LOWER(r.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                        )
+                    )
+                    """,
+            nativeQuery = true)
+    Page<Long> findAllUserIdsWithKeyword(@Param("keyword") String keyword, Pageable pageable);
+
     // Bulk load users with roles by IDs - efficient fetch
     @Query("SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.roles WHERE u.id IN :ids")
     List<User> findAllWithRolesByIds(@Param("ids") List<Long> ids);
@@ -49,7 +86,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("UPDATE User u SET u.enabled = :enabled WHERE u.id = :id")
     @Modifying
-    void updateUserStatus(@Param("id") Long id,@Param("enabled") boolean isEnabled);
+    void updateUserStatus(@Param("id") Long id, @Param("enabled") boolean isEnabled);
 
     Long countById(Long id);
 

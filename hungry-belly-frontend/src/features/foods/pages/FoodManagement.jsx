@@ -71,11 +71,11 @@ export default function FoodManagement() {
   };
 
   const handleToggleStatus = async (food) => {
-    await updateFoodStatus(food.id);
-    const message = isFoodAvailable(food)
-      ? `${food.name} has been set to unavailable`
-      : `${food.name} has been set to available`;
-    toast.success(message);
+    const response = await updateFoodStatus(food.id);
+    if (response.status === 200) {
+      const message = response.message;
+      toast.success(message);
+    }
   };
 
   const handleDeleteClick = (food) => {
@@ -93,8 +93,6 @@ export default function FoodManagement() {
     toast.success("Food item deleted successfully");
     handleCloseDeleteModal();
   };
-
-  console.log("Foods data:", foods);
 
   if (isLoading) {
     return <Spinner message="Loading foods..." />;

@@ -1,5 +1,6 @@
 package com.eddie.hungry_belly_backend.category.service;
 
+import com.eddie.hungry_belly_backend.category.dto.CategoryFlatView;
 import com.eddie.hungry_belly_backend.category.dto.request.CategoryCreateRequest;
 import com.eddie.hungry_belly_backend.category.dto.request.CategoryUpdateRequest;
 import com.eddie.hungry_belly_backend.category.dto.response.CategoryCsvCto;
@@ -104,6 +105,10 @@ public class CategoryService {
         categoryRepository.deleteById(id);
     }
 
+    public Set<Category> findCategoriesInSet(Set<String> categories) {
+        return categoryRepository.finCategoriesInSet(categories);
+    }
+
     public ExportResult exportCategories(String format) {
         List<CategoryCsvCto> categoryCsvCtos = listAllCategories().stream().map(this::convertToCsvDto).toList();
 
@@ -149,15 +154,6 @@ public class CategoryService {
             category.setParent(parentCategory);
         }
 
-    }
-
-    private SortedSet<Category> sortSubCategories(Set<Category> children, String sortDir) {
-        SortedSet<Category> sortedChildren = new TreeSet<>(
-                (o1, o2) -> "asc".equals(sortDir) ? o1.getName().compareTo(o2.getName()) : o2.getName().compareTo(o1.getName())
-        );
-
-        sortedChildren.addAll(children);
-        return sortedChildren;
     }
 
     private String generateAlias(String providedAlias, String name) {
@@ -210,25 +206,39 @@ public class CategoryService {
     }
 
     public List<CategoryItemResponse> displayCategoryInHierarchy() {
-        List<Category> categories = categoryRepository.findRootCategories();
+        List<CategoryFlatView> flat = categoryRepository.findAllEnabledFlat();
+
+        Map<Long, List<CategoryFlatView>> childrenByParent = new HashMap<>();
+        List<CategoryFlatView> roots = new ArrayList<>();
+
+        for(CategoryFlatView c : flat) {
+            if(c.getParentId() == null) {
+                roots.add(c);
+            }
+            else {
+                childrenByParent.computeIfAbsent(c.getParentId(), k -> new ArrayList<>()).add(c);
+            }
+        }
+
+//        preserve alphabetical order
+        Comparator<CategoryFlatView> byName = Comparator.comparing(CategoryFlatView::getName, String.CASE_INSENSITIVE_ORDER);
+        roots.sort(byName);
+        childrenByParent.values().forEach(list -> list.sort(byName));
+
        List<CategoryItemResponse> categoryHierarchy = new ArrayList<>();
-       for(Category category : categories) {
-               categoryHierarchy.add(new CategoryItemResponse(category.getId(), category.getName()));
-               displaySubCategories(category, categoryHierarchy, 1);
+       for(CategoryFlatView root : roots) {
+               categoryHierarchy.add(new CategoryItemResponse(root.getId(), root.getName()));
+               appendChildren(root.getId(), 1,  childrenByParent, categoryHierarchy);
        }
        return categoryHierarchy;
     }
 
-    private void displaySubCategories(Category category, List<CategoryItemResponse> categoryHierarchy, int level) {
-        SortedSet<Category> children = sortSubCategories(category.getChildren(), "asc");
-        for(Category subCategory: children) {
-            StringBuilder categoryName = new StringBuilder();
-            for(int i = 1; i <= level; i++) {
-                categoryName.append("--");
-            }
-            categoryName.append(subCategory.getName());
-            categoryHierarchy.add(new CategoryItemResponse(subCategory.getId(), categoryName.toString()));
-            displaySubCategories(subCategory, categoryHierarchy, level + 1);
+    private void appendChildren(Long parentId, int level, Map<Long, List<CategoryFlatView>> childrenByParent, List<CategoryItemResponse> out) {
+        List<CategoryFlatView> children = childrenByParent.getOrDefault(parentId, List.of());
+        for(CategoryFlatView child: children) {
+          String prefix = "--".repeat(level);
+           out.add(new CategoryItemResponse(child.getId(), prefix + child.getName()));
+            appendChildren(child.getId(), level + 1, childrenByParent, out);
         }
     }
 

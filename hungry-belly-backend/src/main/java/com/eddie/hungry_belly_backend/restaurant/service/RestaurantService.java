@@ -58,12 +58,19 @@ public class RestaurantService {
 
     private Restaurant retrieveRestaurantFromDbById(Long id) {
         return restaurantRepository.findById(id)
-                .orElseThrow(() -> new RestaurantNotFoundException("Restaurant not found with id: " + id));
+                .orElseThrow(() -> new RestaurantNotFoundException("Restaurant not found" + id));
     }
 
     public RestaurantDetailResponse getRestaurantById(Long restaurantId) {
         Restaurant restaurant = retrieveRestaurantFromDbById(restaurantId);
         return convertToRestaurantDetailResponse(restaurant);
+    }
+
+    public Restaurant findRestaurantByName(String name) {
+        Restaurant restaurant = restaurantRepository.findByName(name);
+        if(restaurant == null) throw new BadRequestException("restaurant: Restaurant not found");
+        return restaurant;
+
     }
 
     @Transactional
