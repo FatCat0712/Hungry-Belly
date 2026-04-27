@@ -9,6 +9,6 @@ import java.util.List;
 
 @Repository
 public interface RestaurantImageRepository extends JpaRepository<RestaurantImage, Long> {
-    @Query("SELECT r.path FROM RestaurantImage r")
+    @Query("SELECT r.imageUrl FROM RestaurantImage r")
     List<String> findAllPaths();
 }

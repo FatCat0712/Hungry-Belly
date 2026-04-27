@@ -1,5 +1,6 @@
 package com.eddie.hungry_belly_backend.entity.restaurant;
 
+import com.eddie.hungry_belly_backend.entity.food.Food;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -28,6 +29,9 @@ public class Restaurant {
 
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RestaurantImage> images;
+
+    @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Food> foods;
 
     private Boolean enabled;
 

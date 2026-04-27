@@ -91,8 +91,8 @@ public class RestaurantService {
         Restaurant dbRestaurant = retrieveRestaurantFromDbById(restaurantId);
         if (dbRestaurant.getImages() != null) {
             for (RestaurantImage image : dbRestaurant.getImages()) {
-                if (image.getPath() != null) {
-                    storageService.deleteFile(image.getPath());
+                if (image.getImageUrl() != null) {
+                    storageService.deleteFile(image.getImageUrl());
                 }
             }
         }
@@ -108,7 +108,7 @@ public class RestaurantService {
                 if (reqImg.getId() != null) {
                     return reqImg.getId().equals(dbImg.getId());
                 }
-                return reqImg.getPath() != null && reqImg.getPath().equals(dbImg.getPath());
+                return reqImg.getPath() != null && reqImg.getPath().equals(dbImg.getImageUrl());
             });
 
             if(removed && reqImg.getPath() != null) {
@@ -134,7 +134,7 @@ public class RestaurantService {
 
             if ("new".equals(item.getStatus()) || item.getId() == null) {
                 RestaurantImage newImage = new RestaurantImage();
-                newImage.setPath(item.getPath());
+                newImage.setImageUrl(item.getPath());
                 newImage.setType(item.getType());
                 newImage.setTempId(item.getUploadId());
                 newImage.setPrimary(item.getIsPrimary());
@@ -148,7 +148,7 @@ public class RestaurantService {
                     .filter(image -> image.getId().equals(item.getId())).findFirst().orElse(null);
 
             if (managed != null) {
-                managed.setPath(item.getPath());
+                managed.setImageUrl(item.getPath());
                 managed.setType(item.getType());
                 managed.setTempId(item.getUploadId());
                 managed.setPrimary(item.getIsPrimary());
@@ -195,8 +195,8 @@ public class RestaurantService {
     private RestaurantDetailResponse convertToRestaurantDetailResponse(Restaurant restaurant) {
         List<RestaurantImageResponse> images = restaurant.getImages().stream()
                 .map(image -> RestaurantImageResponse.builder()
-                        .url(storageService.generateDownloadUrl(image.getPath(), 3600))
-                        .path(image.getPath())
+                        .url(storageService.generateDownloadUrl(image.getImageUrl(), 3600))
+                        .path(image.getImageUrl())
                         .isPrimary(image.isPrimary())
                         .status("in-use")
                         .type(image.getType().name())

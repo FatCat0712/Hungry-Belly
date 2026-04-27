@@ -10,6 +10,7 @@ import com.eddie.hungry_belly_backend.restaurant.dto.response.RestaurantSummaryR
 import com.eddie.hungry_belly_backend.restaurant.service.RestaurantService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @Slf4j
@@ -20,38 +21,44 @@ public class RestaurantController {
     private final RestaurantService restaurantService;
 
     @PostMapping("/page")
-    public ApiResponse<?> getAllRestaurants(@RequestBody PageRequestDto request) {
+    public ResponseEntity<ApiResponse<?>> getAllRestaurants(@RequestBody PageRequestDto request) {
         PageResponse<RestaurantSummaryResponse> restaurants = restaurantService.getRestaurants(request);
-        return ApiResponse.success(restaurants, "Get all restaurants");
+        ApiResponse<?> body = ApiResponse.success(restaurants, "Get all restaurants");
+        return ResponseEntity.status(body.getStatus()).body(body);
     }
 
     @PatchMapping("/{id}/status")
-    public ApiResponse<?> updateRestaurantStatus(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<?>> updateRestaurantStatus(@PathVariable Long id) {
         restaurantService.updateRestaurantStatus(id);
-        return ApiResponse.success(null, "Restaurant status updated");
+        ApiResponse<?> body = ApiResponse.success(null, "Restaurant status updated");
+        return ResponseEntity.status(body.getStatus()).body(body);
     }
 
     @GetMapping("/{id}")
-    public ApiResponse<?> getRestaurantById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<?>> getRestaurantById(@PathVariable Long id) {
         RestaurantDetailResponse restaurant = restaurantService.getRestaurantById(id);
-        return ApiResponse.success(restaurant, "Get restaurant by id");
+        ApiResponse<?> body = ApiResponse.success(restaurant, "Get restaurant by id");
+        return ResponseEntity.status(body.getStatus()).body(body);
     }
 
     @PutMapping("/{id}")
-    public ApiResponse<?> updateRestaurant(@PathVariable Long id, @RequestBody RestaurantRequest request) {
+    public ResponseEntity<ApiResponse<?>> updateRestaurant(@PathVariable Long id, @RequestBody RestaurantRequest request) {
         RestaurantDetailResponse response = restaurantService.updateRestaurant(id, request);
-        return ApiResponse.success(response, "Restaurant updated");
+        ApiResponse<?> body = ApiResponse.success(response, "Restaurant updated");
+        return ResponseEntity.status(body.getStatus()).body(body);
     }
 
     @PostMapping
-    public ApiResponse<?> createRestaurant(@RequestBody RestaurantCreateRequest request) {
+    public ResponseEntity<ApiResponse<?>> createRestaurant(@RequestBody RestaurantCreateRequest request) {
         RestaurantDetailResponse response = restaurantService.createRestaurant(request);
-        return ApiResponse.success(response, "Create restaurant");
+        ApiResponse<?> body = ApiResponse.success(response, "Create restaurant");
+        return ResponseEntity.status(body.getStatus()).body(body);
     }
 
     @DeleteMapping("/{id}")
-    public ApiResponse<?> deleteRestaurant(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<?>> deleteRestaurant(@PathVariable Long id) {
         restaurantService.deleteRestaurant(id);
-        return ApiResponse.done(null, "Restaurant deleted");
+        ApiResponse<?> body = ApiResponse.done(null, "Restaurant deleted");
+        return ResponseEntity.status(body.getStatus()).body(body);
     }
 }

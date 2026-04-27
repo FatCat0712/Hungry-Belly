@@ -20,14 +20,16 @@ public class StorageController {
     @PostMapping("/presigned-urls")
     public ResponseEntity<ApiResponse<?>> getUploadUrl(@RequestBody UploadRequest request) {
         var response = storageService.generateUploadUrl(request);
-        return ResponseEntity.ok(ApiResponse.success(response, "Generated upload URL"));
+        ApiResponse<?> body = ApiResponse.success(response, "Generated upload URL");
+        return ResponseEntity.status(body.getStatus()).body(body);
     }
 
     @PostMapping("/temp-session")
     public ResponseEntity<ApiResponse<?>> createTempSession() {
         Random random = new Random();
         String tempId = random.nextInt(1, 1001) + "";
-        return ResponseEntity.ok(ApiResponse.success(tempId, "Upload session created"));
+        ApiResponse<?> body = ApiResponse.success(tempId, "Upload session created");
+        return ResponseEntity.status(body.getStatus()).body(body);
     }
 
 

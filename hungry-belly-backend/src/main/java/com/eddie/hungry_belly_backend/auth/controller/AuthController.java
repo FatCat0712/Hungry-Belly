@@ -46,30 +46,32 @@ public class AuthController {
 
 
     @PostMapping("/login")
-    public ResponseEntity<?> authenticateUser(@RequestBody @Valid LoginRequest request, HttpServletResponse response) {
+    public ResponseEntity<ApiResponse<?>> authenticateUser(@RequestBody @Valid LoginRequest request, HttpServletResponse response) {
         Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
         String[] tokens = tokenService.issueTokens(request.getEmail(), authentication);
         cookieUtils.addTokenCookie(response, "accessToken", tokens[0], accessExpirationInMils);
         cookieUtils.addTokenCookie(response, "refreshToken", tokens[1], refreshExpirationInMils);
-
-        return ResponseEntity.ok(ApiResponse.success(null, "Login"));
+        ApiResponse<?> body = ApiResponse.success(null, "Login");
+        return ResponseEntity.status(body.getStatus()).body(body);
     }
 
     @PostMapping("/refresh-token")
-    public ResponseEntity<?> refreshAccessToken(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<ApiResponse<?>> refreshAccessToken(HttpServletRequest request, HttpServletResponse response) {
         String token = cookieUtils.extractTokenFromCookies(request, "refreshToken");
         String[] tokens = tokenService.refresh(token);
         cookieUtils.addTokenCookie(response, "accessToken", tokens[0], accessExpirationInMils);
         cookieUtils.addTokenCookie(response, "refreshToken", tokens[1], refreshExpirationInMils);
-        return ResponseEntity.ok(ApiResponse.success(null, "Access token refreshed"));
+        ApiResponse<?> body = ApiResponse.success(null, "Access token refreshed");
+        return ResponseEntity.status(body.getStatus()).body(body);
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(HttpServletResponse response) {
+    public ResponseEntity<ApiResponse<?>> logout(HttpServletResponse response) {
         cookieUtils.clearCookie(response, "accessToken");
         cookieUtils.clearCookie(response, "refreshToken");
         tokenService.logout();
-        return ResponseEntity.ok(ApiResponse.success(null, "Logout"));
+        ApiResponse<?> body = ApiResponse.success(null, "Logout");
+        return ResponseEntity.status(body.getStatus()).body(body);
     }
 
     @GetMapping("/me")
@@ -94,20 +96,23 @@ public class AuthController {
                 .photoPath(dbUser.getPhoto())
                 .roles(roles)
                 .build();
-        return ResponseEntity.ok(ApiResponse.success(response, "Authenticated info fetched"));
+        ApiResponse<?> body = ApiResponse.success(response, "Authenticated info fetched");
+        return ResponseEntity.status(body.getStatus()).body(body);
     }
 
     @PutMapping("/update-account")
     public ResponseEntity<ApiResponse<?>> updateAccount(@Valid @RequestBody UserUpdateRequest request) {
         AppUserDetails userDetails = authService.getCurrentLoginUser();
         UserResponse response = userService.updateUserInfo(userDetails.getId(), request);
-        return ResponseEntity.ok(ApiResponse.success(response, "Account updated"));
+        ApiResponse<?> body = ApiResponse.success(response, "Account updated");
+        return ResponseEntity.status(body.getStatus()).body(body);
     }
 
     @PostMapping("/presigned")
     public ResponseEntity<ApiResponse<?>> getUploadUrl(@RequestBody UploadRequest request) {
         var response = storageService.generateUploadUrl(request);
-        return ResponseEntity.ok(ApiResponse.success(response, "Account photo updated"));
+        ApiResponse<?> body = ApiResponse.success(response, "Account photo updated");
+        return ResponseEntity.status(body.getStatus()).body(body);
     }
 
 

@@ -1,5 +1,6 @@
 package com.eddie.hungry_belly_backend.entity.restaurant;
 
+import com.eddie.hungry_belly_backend.entity.ImageType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,7 +17,7 @@ public class RestaurantImage {
     private Long id;
 
     @Column(nullable = false)
-    private String path;
+    private String imageUrl;
 
     @Enumerated(EnumType.STRING)
     private ImageType type;
@@ -36,7 +37,7 @@ public class RestaurantImage {
     }
 
     public RestaurantImage(String path) {
-        this.path = path;
+        this.imageUrl = path;
     }
 
     @Override

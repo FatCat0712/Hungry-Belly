@@ -8,6 +8,7 @@ import com.eddie.hungry_belly_backend.common.util.paginate.PageRequestDto;
 import com.eddie.hungry_belly_backend.user.dto.response.ExportResult;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -17,47 +18,55 @@ public class CategoryController {
     private final CategoryService categoryService;
 
     @PostMapping("/roots")
-    public ApiResponse<?> listAllCategories(@RequestBody PageRequestDto request) {
-        return ApiResponse.success(categoryService.listCategoriesByPage(request), "Get all categories");
+    public ResponseEntity<ApiResponse<?>> listAllCategories(@RequestBody PageRequestDto request) {
+        ApiResponse<?> body = ApiResponse.success(categoryService.listCategoriesByPage(request), "Get all categories");
+        return ResponseEntity.status(body.getStatus()).body(body);
     }
 
 
     @GetMapping("/{id}")
-    public ApiResponse<?> findCategoryById(@PathVariable Long id) {
-        return ApiResponse.success(categoryService.fetchCategoryById(id), "Category has been fetched" );
+    public ResponseEntity<ApiResponse<?>> findCategoryById(@PathVariable Long id) {
+        ApiResponse<?> body = ApiResponse.success(categoryService.fetchCategoryById(id), "Category has been fetched");
+        return ResponseEntity.status(body.getStatus()).body(body);
     }
 
     @GetMapping("/in-form")
-    public ApiResponse<?> displayCategoryInHierarchy() {
-        return ApiResponse.success(categoryService.displayCategoryInHierarchy(), "Category tree has been fetched");
+    public ResponseEntity<ApiResponse<?>> displayCategoryInHierarchy() {
+        ApiResponse<?> body = ApiResponse.success(categoryService.displayCategoryInHierarchy(), "Category tree has been fetched");
+        return ResponseEntity.status(body.getStatus()).body(body);
     }
 
     @PutMapping("/{id}")
-    public ApiResponse<?> updateCategory(@PathVariable Long id, @RequestBody @Valid CategoryUpdateRequest request) {
-        return ApiResponse.success(categoryService.updateCategory(id, request), "Category was updated");
+    public ResponseEntity<ApiResponse<?>> updateCategory(@PathVariable Long id, @RequestBody @Valid CategoryUpdateRequest request) {
+        ApiResponse<?> body = ApiResponse.success(categoryService.updateCategory(id, request), "Category was updated");
+        return ResponseEntity.status(body.getStatus()).body(body);
     }
 
     @PatchMapping("/{id}/status")
-    public ApiResponse<?> updateCategoryStatus(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<?>> updateCategoryStatus(@PathVariable Long id) {
         categoryService.updateCategoryStatus(id);
-        return ApiResponse.done(null, "Category status was updated");
+        ApiResponse<?> body = ApiResponse.done(null, "Category status was updated");
+        return ResponseEntity.status(body.getStatus()).body(body);
     }
 
     @PostMapping
-    public ApiResponse<?> createCategory(@RequestBody @Valid CategoryCreateRequest request) {
-        return ApiResponse.create(categoryService.createCategory(request), "Category was created");
+    public ResponseEntity<ApiResponse<?>> createCategory(@RequestBody @Valid CategoryCreateRequest request) {
+        ApiResponse<?> body = ApiResponse.create(categoryService.createCategory(request), "Category was created");
+        return ResponseEntity.status(body.getStatus()).body(body);
     }
 
     @DeleteMapping("/{id}")
-    public ApiResponse<?> deleteCategory(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<?>> deleteCategory(@PathVariable Long id) {
         categoryService.deleteCategory(id);
-        return ApiResponse.done(null, "Category was deleted");
+        ApiResponse<?> body = ApiResponse.done(null, "Category was deleted");
+        return ResponseEntity.status(body.getStatus()).body(body);
     }
 
     @PostMapping("/export/{format}")
-    public ApiResponse<?> exportCategories(@PathVariable String format) {
-    ExportResult exportResult = categoryService.exportCategories(format);
-    return ApiResponse.done(exportResult, "All categories exported");
+    public ResponseEntity<ApiResponse<?>> exportCategories(@PathVariable String format) {
+        ExportResult exportResult = categoryService.exportCategories(format);
+        ApiResponse<?> body = ApiResponse.done(exportResult, "All categories exported");
+        return ResponseEntity.status(body.getStatus()).body(body);
     }
 
 }

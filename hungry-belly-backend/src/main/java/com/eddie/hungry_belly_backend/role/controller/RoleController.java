@@ -8,6 +8,7 @@ import com.eddie.hungry_belly_backend.role.dto.response.UpdateRoleResponse;
 import com.eddie.hungry_belly_backend.role.service.RoleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,39 +21,45 @@ public class RoleController {
     private final RoleService roleService;
 
     @GetMapping("/names")
-    public ApiResponse<?> fetchAllRoles() {
+    public ResponseEntity<ApiResponse<?>> fetchAllRoles() {
         Set<String> roles = roleService.fetchAllRoleNames();
-        return ApiResponse.success(roles, "Roles fetched");
+        ApiResponse<?> body = ApiResponse.success(roles, "Roles fetched");
+        return ResponseEntity.status(body.getStatus()).body(body);
     }
 
     @GetMapping
-    public ApiResponse<?> fetchRolesWithPermissions() {
+    public ResponseEntity<ApiResponse<?>> fetchRolesWithPermissions() {
         List<RoleResponse> roles = roleService.fetchRolesWithPermissions();
-        return ApiResponse.success(roles, "Roles with permissions fetched");
+        ApiResponse<?> body = ApiResponse.success(roles, "Roles with permissions fetched");
+        return ResponseEntity.status(body.getStatus()).body(body);
     }
 
     @GetMapping("/{id}")
-    public ApiResponse<?> fetchRoleWithId(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<?>> fetchRoleWithId(@PathVariable Long id) {
         UpdateRoleResponse role = roleService.fetchRoleById(id);
-        return ApiResponse.success(role, "Role fetched");
+        ApiResponse<?> body = ApiResponse.success(role, "Role fetched");
+        return ResponseEntity.status(body.getStatus()).body(body);
     }
 
     @PutMapping
-    public ApiResponse<?> updateRole(@RequestBody @Valid RoleUpdateRequest request) {
+    public ResponseEntity<ApiResponse<?>> updateRole(@RequestBody @Valid RoleUpdateRequest request) {
         roleService.updateRole(request);
-        return ApiResponse.done(null, "Role updated");
+        ApiResponse<?> body = ApiResponse.done(null, "Role updated");
+        return ResponseEntity.status(body.getStatus()).body(body);
     }
 
     @PostMapping
-    public ApiResponse<?> createRole(@RequestBody @Valid RoleCreateRequest request) {
+    public ResponseEntity<ApiResponse<?>> createRole(@RequestBody @Valid RoleCreateRequest request) {
         roleService.createRole(request);
-        return ApiResponse.create(null, "Role created");
+        ApiResponse<?> body = ApiResponse.create(null, "Role created");
+        return ResponseEntity.status(body.getStatus()).body(body);
     }
 
     @DeleteMapping("/{id}")
-    public ApiResponse<?> deleteRole(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<?>> deleteRole(@PathVariable Long id) {
         roleService.delete(id);
-        return ApiResponse.done(null, "Role deleted");
+        ApiResponse<?> body = ApiResponse.done(null, "Role deleted");
+        return ResponseEntity.status(body.getStatus()).body(body);
     }
 
 

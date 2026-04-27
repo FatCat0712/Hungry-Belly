@@ -1,6 +1,6 @@
 package com.eddie.hungry_belly_backend.restaurant.dto.request;
 
-import com.eddie.hungry_belly_backend.entity.restaurant.ImageType;
+import com.eddie.hungry_belly_backend.entity.ImageType;
 import lombok.Getter;
 import lombok.Setter;
 
