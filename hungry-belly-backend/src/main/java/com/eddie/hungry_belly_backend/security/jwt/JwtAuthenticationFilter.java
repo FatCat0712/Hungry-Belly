@@ -2,23 +2,25 @@ package com.eddie.hungry_belly_backend.security.jwt;
 
 import com.eddie.hungry_belly_backend.common.util.CookieUtils;
 import com.eddie.hungry_belly_backend.security.AppUserDetailsService;
+import io.jsonwebtoken.JwtException;
 import jakarta.annotation.Nonnull;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import io.jsonwebtoken.JwtException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -49,10 +51,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (StringUtils.hasText(token)) {
             try {
                 jwtUtils.validateToken(token);
-                String username  = jwtUtils.getUsernameFromToken(token);
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-                var auth = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                SecurityContextHolder.getContext().setAuthentication(auth);
+
+                Authentication existing = SecurityContextHolder.getContext().getAuthentication();
+                if(existing == null) {
+                    String username  = jwtUtils.getUsernameFromToken(token);
+                    List<SimpleGrantedAuthority> authorities = jwtUtils.getRolesFromToken(token).stream()
+                            .map(SimpleGrantedAuthority::new)
+                            .toList();
+                    var auth = new UsernamePasswordAuthenticationToken(username, null, authorities);
+                    SecurityContextHolder.getContext().setAuthentication(auth);
+                }
+
 
             } catch (JwtException | IllegalArgumentException | UsernameNotFoundException ex) {
                 SecurityContextHolder.clearContext();

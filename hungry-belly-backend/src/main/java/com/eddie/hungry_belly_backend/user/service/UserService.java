@@ -1,6 +1,5 @@
 package com.eddie.hungry_belly_backend.user.service;
 
-import com.eddie.hungry_belly_backend.auth.service.AuthService;
 import com.eddie.hungry_belly_backend.common.dto.response.PageResponse;
 import com.eddie.hungry_belly_backend.common.mapper.PageMapper;
 import com.eddie.hungry_belly_backend.common.util.export.CsvExporter;
@@ -16,9 +15,8 @@ import com.eddie.hungry_belly_backend.exception.BadRequestException;
 import com.eddie.hungry_belly_backend.exception.InvalidOperationException;
 import com.eddie.hungry_belly_backend.exception.UserNotFoundException;
 import com.eddie.hungry_belly_backend.role.service.RoleService;
-import com.eddie.hungry_belly_backend.user.dto.request.UserCreateRequest;
 import com.eddie.hungry_belly_backend.user.dto.request.ResetPasswordRequest;
-
+import com.eddie.hungry_belly_backend.user.dto.request.UserCreateRequest;
 import com.eddie.hungry_belly_backend.user.dto.request.UserUpdateRequest;
 import com.eddie.hungry_belly_backend.user.dto.response.ExportResult;
 import com.eddie.hungry_belly_backend.user.dto.response.UserCsvDto;
@@ -30,6 +28,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,7 +47,6 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final ExportService exportService;
     private final StorageService storageService;
-    private final AuthService authService;
 
     public UserResponse createUser(UserCreateRequest request) {
         boolean isEmailUnique = userRepository.existsByEmailAndDeletedFalse(request.getEmail());
@@ -125,7 +124,11 @@ public class UserService {
             }
         }
 
-        if(authService.getCurrentLoginUser().getId().equals(id)) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String currentEmail = auth.getName();
+        User loggedInUser =  userRepository.findByEmail(currentEmail);
+
+        if(loggedInUser != null  && loggedInUser.getId().equals(id)) {
             throw new InvalidOperationException("You cannot delete your own account");
         }
 
@@ -199,6 +202,7 @@ public class UserService {
         return userRepository.findByEmail(email);
     }
 
+
     private User convertToUserEntity(UserCreateRequest request) {
         Set<Role> savedRoles = convertToRoleEntitySet(request.getRoles());
 
@@ -247,7 +251,7 @@ public class UserService {
         return passwordEncoder.encode(rawPassword);
     }
 
-    private UserResponse convertToAdminResponse(User user) {
+    public UserResponse convertToAdminResponse(User user) {
         Set<String> roles = user.getRoles().stream()
                 .map(Role::toString).collect(Collectors.toSet());
 

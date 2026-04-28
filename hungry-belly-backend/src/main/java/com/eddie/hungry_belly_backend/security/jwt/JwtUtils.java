@@ -1,9 +1,7 @@
 package com.eddie.hungry_belly_backend.security.jwt;
 
 import com.eddie.hungry_belly_backend.security.AppUserDetails;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.Data;
@@ -51,6 +49,27 @@ public class JwtUtils {
                 .compact();
     }
 
+    public List<String> getRolesFromToken(String token) {
+        Claims claims = getClaimsFromToken(token);
+        Object raw = claims.get("roles");
+        if(raw instanceof List<?> list) {
+            return list.stream().map(String::valueOf).toList();
+        }
+        return List.of();
+    }
+
+    public String getUsernameFromToken(String token) {
+        return getClaimsFromToken(token).getSubject();
+    }
+
+    public Claims getClaimsFromToken(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(key())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+    }
+
     private Key key() {
         return Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
     }
@@ -60,19 +79,11 @@ public class JwtUtils {
         return new Date(System.currentTimeMillis() + expirationTime);
     }
 
-    public String getUsernameFromToken(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(key())
-                .build()
-                .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
-    }
+
 
     public boolean validateToken(String token) {
         try {
-            Jwts.parserBuilder().setSigningKey(key())
-                    .build().parseClaimsJws(token);
+          getClaimsFromToken(token);
             return true;
         }catch (JwtException e) {
             throw new JwtException(e.getMessage());

@@ -3,16 +3,12 @@ package com.eddie.hungry_belly_backend.auth.controller;
 import com.eddie.hungry_belly_backend.auth.service.AuthService;
 import com.eddie.hungry_belly_backend.common.dto.response.ApiResponse;
 import com.eddie.hungry_belly_backend.common.util.CookieUtils;
+import com.eddie.hungry_belly_backend.common.util.storage.dto.request.UploadRequest;
 import com.eddie.hungry_belly_backend.common.util.storage.service.StorageService;
-import com.eddie.hungry_belly_backend.entity.Role;
-import com.eddie.hungry_belly_backend.entity.User;
-import com.eddie.hungry_belly_backend.security.AppUserDetails;
 import com.eddie.hungry_belly_backend.token.service.TokenService;
 import com.eddie.hungry_belly_backend.user.dto.request.LoginRequest;
-import com.eddie.hungry_belly_backend.common.util.storage.dto.request.UploadRequest;
 import com.eddie.hungry_belly_backend.user.dto.request.UserUpdateRequest;
 import com.eddie.hungry_belly_backend.user.dto.response.UserResponse;
-import com.eddie.hungry_belly_backend.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -24,15 +20,11 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Set;
-import java.util.stream.Collectors;
-
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("${api.prefix}/auth")
 public class AuthController {
     private final AuthenticationManager authenticationManager;
-    private final UserService userService;
     private final AuthService authService;
     private final StorageService storageService;
     private final TokenService tokenService;
@@ -76,34 +68,14 @@ public class AuthController {
 
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<?>> getLoggedInUser() {
-        AppUserDetails userDetails = authService.getCurrentLoginUser();
-
-        User dbUser = userService.findUserById(userDetails.getId());
-
-        Set<String> roles = dbUser.getRoles().stream()
-                .map(Role::getName)
-                .collect(Collectors.toSet());
-
-        String photoUrl = userService.generateUserPhotoPath(dbUser);
-
-        UserResponse response = UserResponse.builder()
-                .id(dbUser.getId())
-                .firstName(dbUser.getFirstName())
-                .lastName(dbUser.getLastName())
-                .email(dbUser.getEmail())
-                .enabled(dbUser.isEnabled())
-                .photoUrl(photoUrl)
-                .photoPath(dbUser.getPhoto())
-                .roles(roles)
-                .build();
-        ApiResponse<?> body = ApiResponse.success(response, "Authenticated info fetched");
+        UserResponse response = authService.getCurrentLoginUserInfo();
+        ApiResponse<?> body = ApiResponse.success(response, "Authenticated user fetched");
         return ResponseEntity.status(body.getStatus()).body(body);
     }
 
     @PutMapping("/update-account")
     public ResponseEntity<ApiResponse<?>> updateAccount(@Valid @RequestBody UserUpdateRequest request) {
-        AppUserDetails userDetails = authService.getCurrentLoginUser();
-        UserResponse response = userService.updateUserInfo(userDetails.getId(), request);
+        UserResponse response = authService.updateCurrentLoginUser(request);
         ApiResponse<?> body = ApiResponse.success(response, "Account updated");
         return ResponseEntity.status(body.getStatus()).body(body);
     }
