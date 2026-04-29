@@ -3,8 +3,6 @@ package com.eddie.hungry_belly_backend.auth.controller;
 import com.eddie.hungry_belly_backend.auth.service.AuthService;
 import com.eddie.hungry_belly_backend.common.dto.response.ApiResponse;
 import com.eddie.hungry_belly_backend.common.util.CookieUtils;
-import com.eddie.hungry_belly_backend.common.util.storage.dto.request.UploadRequest;
-import com.eddie.hungry_belly_backend.common.util.storage.service.StorageService;
 import com.eddie.hungry_belly_backend.token.service.TokenService;
 import com.eddie.hungry_belly_backend.user.dto.request.LoginRequest;
 import com.eddie.hungry_belly_backend.user.dto.request.UserUpdateRequest;
@@ -26,7 +24,6 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final AuthService authService;
-    private final StorageService storageService;
     private final TokenService tokenService;
     private final CookieUtils cookieUtils;
 
@@ -79,16 +76,5 @@ public class AuthController {
         ApiResponse<?> body = ApiResponse.success(response, "Account updated");
         return ResponseEntity.status(body.getStatus()).body(body);
     }
-
-    @PostMapping("/presigned")
-    public ResponseEntity<ApiResponse<?>> getUploadUrl(@RequestBody UploadRequest request) {
-        var response = storageService.generateUploadUrl(request);
-        ApiResponse<?> body = ApiResponse.success(response, "Account photo updated");
-        return ResponseEntity.status(body.getStatus()).body(body);
-    }
-
-
-
-
 
 }

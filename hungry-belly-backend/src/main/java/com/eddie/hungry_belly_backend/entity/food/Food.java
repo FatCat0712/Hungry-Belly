@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -42,6 +43,9 @@ public class Food {
     )
     @Builder.Default
     Set<Category> categories = new HashSet<>();
+
+    @OneToMany(mappedBy = "food",cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<FoodImage> images;
 
     @Column(nullable = false)
     private boolean isDeleted;

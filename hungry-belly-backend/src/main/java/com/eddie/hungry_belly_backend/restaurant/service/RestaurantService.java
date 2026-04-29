@@ -68,9 +68,21 @@ public class RestaurantService {
 
     public Restaurant findRestaurantByName(String name) {
         Restaurant restaurant = restaurantRepository.findByName(name);
-        if(restaurant == null) throw new BadRequestException("restaurant: Restaurant not found");
+        if (restaurant == null) throw new BadRequestException("restaurant: Restaurant not found");
         return restaurant;
 
+    }
+
+    public RestaurantDetailResponse createRestaurant(RestaurantCreateRequest request) {
+        validateRestaurantRequest(null, request);
+
+        Restaurant newRestaurant = new Restaurant();
+        assignData(newRestaurant, request);
+        newRestaurant.setOwner(request.getOwner());
+        persistImages(newRestaurant, request);
+
+        newRestaurant = restaurantRepository.save(newRestaurant);
+        return convertToRestaurantDetailResponse(newRestaurant);
     }
 
     @Transactional
@@ -86,7 +98,7 @@ public class RestaurantService {
         validateRestaurantRequest(id, request);
         assignData(dbRestaurant, request);
         deleteRemovedImages(dbRestaurant, request);
-        saveNewImages(dbRestaurant, request);
+        persistImages(dbRestaurant, request);
 
         Restaurant updatedRestaurant = restaurantRepository.save(dbRestaurant);
         return convertToRestaurantDetailResponse(updatedRestaurant);
@@ -110,7 +122,10 @@ public class RestaurantService {
         if (request.getImages() == null || restaurant.getImages() == null) return;
 
         for (RestaurantImageRequest reqImg : request.getImages()) {
+            //            skip not removed images
             if (!"removed".equals(reqImg.getStatus())) continue;
+
+            //            remove from dbFood images collection and delete file from storage if path is available
             boolean removed = restaurant.getImages().removeIf(dbImg -> {
                 if (reqImg.getId() != null) {
                     return reqImg.getId().equals(dbImg.getId());
@@ -118,13 +133,13 @@ public class RestaurantService {
                 return reqImg.getPath() != null && reqImg.getPath().equals(dbImg.getImageUrl());
             });
 
-            if(removed && reqImg.getPath() != null) {
+            if (removed && reqImg.getPath() != null) {
                 storageService.deleteFile(reqImg.getPath());
             }
         }
     }
 
-    private void saveNewImages(Restaurant restaurant, RestaurantRequest request) {
+    private void persistImages(Restaurant restaurant, RestaurantRequest request) {
         List<RestaurantImageRequest> incoming = request.getImages();
         if (incoming == null) return;
 
@@ -135,10 +150,12 @@ public class RestaurantService {
         }
 
         for (RestaurantImageRequest item : incoming) {
+//            skip removed items here, they will be handled in deleteRemovedImages method
             if ("removed".equals(item.getStatus())) {
                 continue;
             }
 
+            // add new image to existingImages
             if ("new".equals(item.getStatus()) || item.getId() == null) {
                 RestaurantImage newImage = new RestaurantImage();
                 newImage.setImageUrl(item.getPath());
@@ -151,6 +168,7 @@ public class RestaurantService {
                 continue;
             }
 
+//            update existing image
             RestaurantImage managed = existing.stream()
                     .filter(image -> image.getId().equals(item.getId())).findFirst().orElse(null);
 
@@ -165,17 +183,6 @@ public class RestaurantService {
 
     }
 
-    public RestaurantDetailResponse createRestaurant(RestaurantCreateRequest request) {
-        validateRestaurantRequest(null, request);
-
-        Restaurant newRestaurant = new Restaurant();
-        assignData(newRestaurant, request);
-        newRestaurant.setOwner(request.getOwner());
-        saveNewImages(newRestaurant, request);
-
-        newRestaurant = restaurantRepository.save(newRestaurant);
-        return convertToRestaurantDetailResponse(newRestaurant);
-    }
 
     private void validateRestaurantRequest(Long id, RestaurantRequest request) {
         Restaurant restaurantWithSamePhone = restaurantRepository.findByPhone(request.getPhone());

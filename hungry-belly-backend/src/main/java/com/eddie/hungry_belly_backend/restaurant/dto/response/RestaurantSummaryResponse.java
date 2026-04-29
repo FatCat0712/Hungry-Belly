@@ -1,7 +1,6 @@
 package com.eddie.hungry_belly_backend.restaurant.dto.response;
 
 
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.*;
 
 @Builder
@@ -9,7 +8,6 @@ import lombok.*;
 @NoArgsConstructor
 @Getter
 @Setter
-@JsonPropertyOrder({"id", "name", "cuisine", "photo", "owner", "orders", "rating"})
 public class RestaurantSummaryResponse {
     private Long id;
     private String name;

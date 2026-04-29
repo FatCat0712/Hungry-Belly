@@ -167,6 +167,7 @@ public class StorageService {
             case USER -> "user-photos";
             case RESTAURANT -> "restaurant-photos";
             case CATEGORY -> "category-photos";
+            case FOOD -> "food-photos";
         };
     }
 

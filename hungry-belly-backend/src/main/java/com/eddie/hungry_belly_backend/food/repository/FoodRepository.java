@@ -1,6 +1,8 @@
 package com.eddie.hungry_belly_backend.food.repository;
 
 import com.eddie.hungry_belly_backend.entity.food.Food;
+import com.eddie.hungry_belly_backend.food.dto.projection.FoodCategoryProjection;
+import com.eddie.hungry_belly_backend.food.dto.projection.FoodSummaryProjection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -58,6 +60,28 @@ public interface FoodRepository extends JpaRepository<Food, Long> {
     @Query("SELECT f.id FROM Food f WHERE f.isDeleted = false")
     Page<Long> findAllFoodIds(Pageable pageable);
 
-    @Query("SELECT DISTINCT f FROM Food f LEFT JOIN FETCH f.categories c WHERE f.id IN (:ids)")
-    List<Food> findByIdsIn(List<Long> ids);
+    @Query("""
+            SELECT 
+                f.id AS id,
+                f.name AS name,
+                 f.price AS price,
+                f.isAvailable AS available,
+                r.name AS restaurantName,
+                fi.imageUrl AS imagePath
+            FROM Food f
+            JOIN f.restaurant r
+            LEFT JOIN f.images fi ON fi.isPrimary = true 
+            WHERE f.id IN :ids
+            """)
+    List<FoodSummaryProjection> findFoodSummariesByIds(@Param("ids") List<Long> ids);
+
+    @Query("""
+            SELECT 
+                f.id AS foodId,
+                c.name AS categoryName
+            FROM Food f
+            JOIN f.categories c
+            WHERE f.id IN :ids
+            """)
+    List<FoodCategoryProjection> findCategoryNamesByFoodIds(@Param("ids") List<Long> ids);
 }

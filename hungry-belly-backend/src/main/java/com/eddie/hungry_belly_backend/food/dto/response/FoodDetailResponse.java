@@ -2,6 +2,7 @@ package com.eddie.hungry_belly_backend.food.dto.response;
 
 import lombok.*;
 
+import java.util.List;
 import java.util.Set;
 
 @Getter
@@ -9,7 +10,7 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class FoodItemResponse {
+public class FoodDetailResponse {
     private Long id;
     private String name;
     private String description;
@@ -17,5 +18,5 @@ public class FoodItemResponse {
     private Boolean available;
     private String restaurant;
     private Set<String> categories;
-    private String imageUrl;
+    private List<FoodImageResponse> images;
 }
