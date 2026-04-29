@@ -26,10 +26,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -45,6 +42,7 @@ public class FoodService {
 
         Page<Long> page;
 
+//        get page of food IDs
         if (request.getKeyword() != null && !request.getKeyword().isEmpty()) {
             String keyword = request.getKeyword();
             page = foodRepository.findIdFoodsWithKeyword(keyword, pageable);
@@ -54,27 +52,33 @@ public class FoodService {
 
         List<Long> idList = page.getContent();
 
+//        If no IDs, return empty page
         if (idList.isEmpty()) {
             Page<FoodSummaryResponse> emptyPage = new PageImpl<>(List.of(), pageable, page.getTotalElements());
             return PageMapper.toPageResponse(emptyPage);
         }
 
+//        Fetch categories in bulk
         List<FoodSummaryProjection> summaries = foodRepository.findFoodSummariesByIds(idList);
         List<FoodCategoryProjection> categoryRows = foodRepository.findCategoryNamesByFoodIds(idList);
 
+//        Map summaries by foodId using Map
+        Map<Long, FoodSummaryProjection> summaryById = summaries.stream()
+                .collect(Collectors.toMap(FoodSummaryProjection::getId, item -> item));
+
+//        Group category names by food ID using Map
         Map<Long, Set<String>> categoriesByFoodId = categoryRows.stream()
                 .collect(Collectors.groupingBy(
                         FoodCategoryProjection::getFoodId,
                         Collectors.mapping(FoodCategoryProjection::getCategoryName, Collectors.toSet())
                 ));
 
-        Map<Long, FoodSummaryProjection> summaryById = summaries.stream()
-                .collect(Collectors.toMap(FoodSummaryProjection::getId, item -> item));
 
+//        Build final response in page order
         List<FoodSummaryResponse> content = idList.stream()
                 .map(id -> {
                     FoodSummaryProjection item = summaryById.get(id);
-                    if(item == null) return  null;
+                    if (item == null) return null;
                     return FoodSummaryResponse.builder()
                             .id(item.getId())
                             .name(item.getName())
@@ -86,14 +90,17 @@ public class FoodService {
                             .build();
 
                 })
-                .filter(response -> response != null)
+                .filter(Objects::nonNull)
                 .toList();
 
+//        Map into a page
         Page<FoodSummaryResponse> foodPage = new PageImpl<>(
                 content,
                 pageable,
                 page.getTotalElements()
         );
+
+//        return page response
         return PageMapper.toPageResponse(foodPage);
     }
 
@@ -116,7 +123,7 @@ public class FoodService {
         dbFood.setPrice(request.getPrice());
         dbFood.setIsAvailable(request.getAvailable());
 
-        request.setCategories(request.getCategories().stream().map(c -> c.replaceAll("--", "")).collect(Collectors.toSet()));
+        request.setCategories(request.getCategories().stream().map(c -> c.replace("--", "")).collect(Collectors.toSet()));
 
         Set<Category> latestCategories = categoryService.findCategoriesInSet(request.getCategories());
         dbFood.setCategories(latestCategories);
@@ -183,7 +190,12 @@ public class FoodService {
             }
 
 //            update existing image
-            FoodImage managed = existingImages.stream().filter(img -> img.getId().equals(item.getId())).findFirst().orElse(null);
+            FoodImage managed = existingImages.stream()
+                    .filter(img -> img.getId().equals(item.getId()))
+                    .findFirst()
+                    .orElse(null);
+
+
             if (managed != null) {
                 managed.setImageUrl(item.getPath());
                 managed.setType(item.getType());
@@ -204,17 +216,19 @@ public class FoodService {
 
     private FoodImageResponse convertToFoodImageResponse(FoodImage foodImage) {
         return FoodImageResponse.builder()
+                .id(foodImage.getId())
                 .url(storageService.generateDownloadUrl(foodImage.getImageUrl(), 3600))
                 .path(foodImage.getImageUrl())
                 .type(foodImage.getType().name())
                 .isPrimary(foodImage.isPrimary())
+                .status("in-use")
                 .displayOrder(foodImage.getDisplayOrder())
                 .build();
     }
 
     private FoodDetailResponse covertToFoodItemResponse(Food food) {
         Set<String> categoryNames = food.getCategories().stream()
-                .map(category -> category.getName())
+                .map(Category::getName)
                 .collect(Collectors.toSet());
 
         return FoodDetailResponse.builder()

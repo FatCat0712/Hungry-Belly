@@ -35,7 +35,7 @@ export default function RestaurantManagement() {
   const debouncedKeyword = useDebounce(keyword, 500);
   const normalizedKeyword = debouncedKeyword.trim().toLowerCase();
 
-  const { data, isLoading: isLoadingRestaurants } = useListRestaurantsByPage({
+  const { page, isLoading: isLoadingRestaurants } = useListRestaurantsByPage({
     pageNum: currentPage,
     pageSize,
     sortField: sortField,
@@ -43,8 +43,8 @@ export default function RestaurantManagement() {
     keyword: normalizedKeyword,
   });
 
-  const restaurants = data?.content || [];
-  const totalElements = data?.totalElements || 0;
+  const restaurants = page?.content || [];
+  const totalElements = page?.totalElements || 0;
 
   const { updateRestaurantStatus } = useUpdateRestaurantStatus();
 
@@ -103,7 +103,7 @@ export default function RestaurantManagement() {
     return <AccessDenied />;
   }
 
-  if (!data && isLoadingRestaurants) {
+  if (!page && isLoadingRestaurants) {
     return <Spinner message="Loading restaurants..." />;
   }
 
@@ -458,10 +458,8 @@ export default function RestaurantManagement() {
 
       <Pagination
         module="restaurants"
-        currentPage={currentPage}
+        pageData={page}
         onPageChange={handlePageChange}
-        pageSize={pageSize}
-        totalItems={totalElements}
       />
     </>
   );

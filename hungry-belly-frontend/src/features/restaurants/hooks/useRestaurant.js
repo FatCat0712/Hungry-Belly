@@ -24,7 +24,7 @@ export const useListRestaurantsByPage = ({
   sortDirection,
   keyword,
 }) => {
-  const { data, isLoading } = useQuery({
+  const { data: page, isLoading } = useQuery({
     queryKey: [
       "restaurants",
       pageNum,
@@ -43,7 +43,7 @@ export const useListRestaurantsByPage = ({
       }),
   });
 
-  return { data, isLoading };
+  return { page, isLoading };
 };
 
 export const useUpdateRestaurantStatus = () => {

@@ -33,7 +33,7 @@ const CategoryManagement = () => {
   const debouncedKeyword = useDebounce(keyword, 500);
   const normalizedKeyword = debouncedKeyword.trim().toLowerCase();
 
-  const { data, isLoadingCategories } = useListRootCategories({
+  const { page, isLoadingCategories } = useListRootCategories({
     pageNum: currentPage,
     pageSize,
     sortField,
@@ -42,8 +42,8 @@ const CategoryManagement = () => {
   });
   const { updateCategoryStatus } = useUpdateCategoryStatus();
 
-  const rootCategories = data?.content || [];
-  const totalElements = data?.totalElements || 0;
+  const rootCategories = page?.content || [];
+  const totalElements = page?.totalElements || 0;
 
   const totalActive = rootCategories?.filter((c) => c.enabled).length;
   const totalRestaurants = rootCategories?.reduce(
@@ -254,7 +254,6 @@ const CategoryManagement = () => {
                       <i className="bi bi-arrow-down-up text-muted small" />
                     </th>
                     <th>Description</th>
-                    <th className="text-center">Restaurants</th>
                     <th className="text-center">Status</th>
                     <th className="text-end pe-3">Actions</th>
                   </tr>
@@ -299,9 +298,7 @@ const CategoryManagement = () => {
                             <span className="fst-italic">No description</span>
                           )}
                         </td>
-                        <td className="text-center">
-                          {category.restaurantCount}
-                        </td>
+
                         <td className="text-center">
                           <button
                             type="button"
@@ -361,9 +358,7 @@ const CategoryManagement = () => {
           <div className="card-footer bg-white border-top">
             <Pagination
               module="categories"
-              currentPage={currentPage}
-              pageSize={pageSize}
-              totalItems={totalElements}
+              pageData={page}
               onPageChange={handlePageChange}
             />
           </div>

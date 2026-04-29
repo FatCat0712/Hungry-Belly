@@ -23,7 +23,6 @@ public interface FoodRepository extends JpaRepository<Food, Long> {
                             WHERE f.is_deleted = false
                             AND (
                                 LOWER(f.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
-                                OR LOWER(f.description) LIKE LOWER(CONCAT('%', :keyword, '%'))
                                 OR LOWER(r.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
                                 OR EXISTS(
                                     SELECT 1
@@ -42,7 +41,6 @@ public interface FoodRepository extends JpaRepository<Food, Long> {
                         WHERE f.is_deleted = false
                         AND (
                             LOWER(f.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
-                            OR LOWER(f.description) LIKE LOWER(CONCAT('%', :keyword, '%'))
                             OR LOWER(r.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
                             OR EXISTS(
                                 SELECT 1

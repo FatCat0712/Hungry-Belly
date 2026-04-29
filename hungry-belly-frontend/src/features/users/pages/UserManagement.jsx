@@ -17,7 +17,6 @@ import Pagination from "../../../shared/ui/Pagination";
 import Spinner from "../../../shared/ui/Spinner";
 
 export default function UserManagement() {
-  const pageSize = 10;
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const {
     currentPage,
@@ -26,6 +25,7 @@ export default function UserManagement() {
     keyword,
     setPage,
     updateParams,
+    pageSize,
   } = useTableSearchParams({
     defaultSortField: "first_name",
   });
@@ -38,7 +38,7 @@ export default function UserManagement() {
     isLoading: isStatsLoading,
   } = useUserStats();
 
-  const { data, isLoading } = useListUsersByPage({
+  const { page, isLoading } = useListUsersByPage({
     pageNum: currentPage,
     pageSize,
     sortField,
@@ -47,8 +47,8 @@ export default function UserManagement() {
   });
   const [userToDelete, setUserToDelete] = useState(null);
 
-  const users = data?.content || [];
-  const totalElements = data?.totalElements || 0;
+  const users = page?.content || [];
+  const totalElements = page?.totalElements || 0;
 
   const navigate = useNavigate();
   const { toggleStatus } = useToggleStatus();
@@ -94,7 +94,7 @@ export default function UserManagement() {
     window.open(data.downloadUrl);
   };
 
-  if ((!data && isLoading) || (!hasLoadedStats && isStatsLoading)) {
+  if ((!page && isLoading) || (!hasLoadedStats && isStatsLoading)) {
     return <Spinner message="Loading users..." minHeight="50vh" />;
   }
 
@@ -454,9 +454,7 @@ export default function UserManagement() {
 
             <Pagination
               module="users"
-              currentPage={currentPage}
-              pageSize={pageSize}
-              totalItems={totalElements}
+              pageData={page}
               onPageChange={handlePageChange}
             />
           </div>

@@ -18,7 +18,7 @@ export const useListRootCategories = ({
   sortDirection,
   keyword,
 }) => {
-  const { data, isLoading: isLoadingCategories } = useQuery({
+  const { data: page, isLoading: isLoadingCategories } = useQuery({
     queryKey: [
       "categories",
       "roots",
@@ -34,7 +34,7 @@ export const useListRootCategories = ({
       }),
   });
 
-  return { data, isLoadingCategories };
+  return { page, isLoadingCategories };
 };
 
 export const useLazyLoadCategoryChildren = () => {

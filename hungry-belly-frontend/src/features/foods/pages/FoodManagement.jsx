@@ -13,7 +13,6 @@ import Spinner from "../../../shared/ui/Spinner";
 import { useDebounce } from "../../../shared/hooks/useDebounce";
 
 export default function FoodManagement() {
-  const pageSize = 10;
   const [foodToDelete, setFoodToDelete] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
@@ -27,12 +26,13 @@ export default function FoodManagement() {
     keyword,
     setPage,
     updateParams,
+    pageSize,
   } = useTableSearchParams({ defaultSortField: "name" });
 
   const debouncedKeyword = useDebounce(keyword, 500);
   const normalizedKeyword = debouncedKeyword.trim().toLowerCase();
 
-  const { data, isLoading } = useListFoodsByPage({
+  const { page, isLoading } = useListFoodsByPage({
     pageNum: currentPage,
     pageSize,
     sortField,
@@ -42,11 +42,11 @@ export default function FoodManagement() {
   const { updateFoodStatus } = useUpdateFoodStatus();
   const { deleteFood } = useDeleteFood();
 
-  const foods = data?.content || [];
+  const foods = page?.content || [];
 
-  const totalElements = data?.totalElements ?? 0;
-  const totalAvailable = data?.totalAvailable ?? 0;
-  const totalUnavailable = data?.totalUnavailable ?? 0;
+  const totalElements = page?.totalElements ?? 0;
+  const totalAvailable = page?.totalAvailable ?? 0;
+  const totalUnavailable = page?.totalUnavailable ?? 0;
 
   const handlePageChange = (page) => {
     setPage(page, { totalItems: totalElements, pageSize });
@@ -244,9 +244,6 @@ export default function FoodManagement() {
               <table className="table table-hover align-middle mb-0">
                 <thead className="table-light">
                   <tr>
-                    <th className="ps-3" style={{ width: 40 }}>
-                      #
-                    </th>
                     <th>Food Item</th>
                     <th className="d-none d-md-table-cell">Category</th>
                     <th className="d-none d-lg-table-cell">Restaurant</th>
@@ -266,19 +263,16 @@ export default function FoodManagement() {
                       </td>
                     </tr>
                   ) : (
-                    foods?.map((food, index) => (
+                    foods?.map((food) => (
                       <tr key={food.id}>
-                        <td className="ps-3 text-muted small">
-                          {(currentPage - 1) * pageSize + index + 1}
-                        </td>
                         <td>
                           <div className="d-flex align-items-center gap-2">
                             <div
                               style={{ width: 50, height: 40, flexShrink: 0 }}
                             >
-                              {food.image_url ? (
+                              {food.imageUrl ? (
                                 <img
-                                  src={food.image_url}
+                                  src={food.imageUrl}
                                   alt={food.name}
                                   className="rounded"
                                   style={{
@@ -298,9 +292,6 @@ export default function FoodManagement() {
                             </div>
                             <div>
                               <div className="fw-semibold">{food.name}</div>
-                              <small className="text-muted d-lg-none">
-                                {food.cuisine}
-                              </small>
                             </div>
                           </div>
                         </td>
@@ -312,7 +303,7 @@ export default function FoodManagement() {
                           ))}
                         </td>
                         <td className="d-none d-lg-table-cell text-muted small">
-                          {food.restaurant || food.restaurant_id}
+                          {food.restaurant}
                         </td>
                         <td className="d-none d-lg-table-cell fw-semibold">
                           {food.price != null
@@ -385,10 +376,8 @@ export default function FoodManagement() {
           <div className="card-footer bg-white border-top">
             <Pagination
               module="foods"
-              currentPage={currentPage}
-              pageSize={pageSize}
-              totalItems={totalElements}
               onPageChange={handlePageChange}
+              pageData={page}
             />
           </div>
         </div>

@@ -9,6 +9,7 @@ import com.eddie.hungry_belly_backend.category.dto.response.DetailCategoryRespon
 import com.eddie.hungry_belly_backend.category.dto.response.SummaryCategoryResponse;
 import com.eddie.hungry_belly_backend.category.repository.CategoryRepository;
 import com.eddie.hungry_belly_backend.common.dto.response.PageResponse;
+import com.eddie.hungry_belly_backend.common.mapper.PageMapper;
 import com.eddie.hungry_belly_backend.common.util.export.CsvExporter;
 import com.eddie.hungry_belly_backend.common.util.export.ExcelExporter;
 import com.eddie.hungry_belly_backend.common.util.export.ExportService;
@@ -21,6 +22,7 @@ import com.eddie.hungry_belly_backend.exception.BadRequestException;
 import com.eddie.hungry_belly_backend.user.dto.response.ExportResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -36,25 +38,26 @@ public class CategoryService {
     public PageResponse<SummaryCategoryResponse> listCategoriesByPage(PageRequestDto request) {
         Pageable pageable = PaginationUtils.buildPageable(request);
 
-        Page<Category> pageCategories;
+        Page<Long> pageCategoryIds;
 
-        if(request.getKeyword() != null) {
-            pageCategories = categoryRepository.findCategoriesWithKeyword(request.getKeyword(),pageable);
+        if(request.getKeyword() != null && !request.getKeyword().isBlank()) {
+            pageCategoryIds = categoryRepository.findCategoriesWithKeyword(request.getKeyword(),pageable);
         } else {
-            pageCategories = categoryRepository.findAll(pageable);
+            pageCategoryIds = categoryRepository.findAllCategoryIds(pageable);
         }
 
-        List<Category> rootCategories = pageCategories.getContent();
-        List<SummaryCategoryResponse> summaryCategoryResponses = rootCategories.stream().map(this::convertToSummaryCategoryResponse).toList();
+        List<Long> idList = pageCategoryIds.getContent();
 
-        return PageResponse.<SummaryCategoryResponse>builder()
-                .content(summaryCategoryResponses)
-                .page(pageCategories.getNumber() + 1)
-                .size(pageCategories.getSize())
-                .totalElements(pageCategories.getTotalElements())
-                .totalPages(pageCategories.getTotalPages())
-                .build();
+        List<Category> categories = categoryRepository.findCategoryInIds(idList);
 
+        List<SummaryCategoryResponse> summaryCategoryResponses = categories.stream().map(this::convertToSummaryCategoryResponse).toList();
+
+        PageImpl<SummaryCategoryResponse> page = new PageImpl<>(summaryCategoryResponses,
+                pageable,
+                pageCategoryIds.getTotalElements()
+        );
+
+        return PageMapper.toPageResponse(page);
     }
 
     public DetailCategoryResponse fetchCategoryById(Long id) {

@@ -23,7 +23,7 @@ import CategoryManagement from "../features/categories/pages/CategoryManagement"
 import EditCategory from "../features/categories/pages/EditCategory";
 import NewCategory from "../features/categories/pages/NewCategory";
 import CreateFood from "../features/foods/pages/CreateFood";
-import FoodDetails from "../features/foods/pages/FoodDetails";
+import FoodDetail from "../features/foods/pages/FoodDetail";
 import EditFood from "../features/foods/pages/EditFood";
 import FoodManagement from "../features/foods/pages/FoodManagement";
 
@@ -58,7 +58,7 @@ function App() {
               <Route path="categories/new" element={<NewCategory />} />
               <Route path="foods" element={<FoodManagement />} />
               <Route path="foods/new" element={<CreateFood />} />
-              <Route path="foods/:id" element={<FoodDetails />} />
+              <Route path="foods/:id" element={<FoodDetail />} />
               <Route path="foods/:id/edit" element={<EditFood />} />
               <Route path="orders" element={<Orders />} />
               <Route path="access-denied" element={<AccessDenied />} />

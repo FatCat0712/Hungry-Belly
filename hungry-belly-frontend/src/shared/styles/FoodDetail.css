@@ -1,0 +1,156 @@
+.food-detail-page {
+  --food-ink: #1f2937;
+  --food-muted: #5b6473;
+  --food-sand: #f5efe6;
+  --food-cream: #fffaf3;
+  --food-accent: #bf5b34;
+  --food-accent-dark: #8a3517;
+  --food-success: #2f7d4a;
+  --food-border: rgba(111, 87, 53, 0.12);
+  color: var(--food-ink);
+}
+
+/* ── Hero ─────────────────────────────────────────────── */
+.food-hero {
+  position: relative;
+  min-height: 320px;
+  background: linear-gradient(135deg, #1f2937, #402218 58%, #8a3517);
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.food-hero__image,
+.food-hero__overlay {
+  position: absolute;
+  inset: 0;
+}
+
+.food-hero__image {
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  mix-blend-mode: soft-light;
+  opacity: 0.65;
+}
+
+.food-hero__overlay {
+  background: linear-gradient(
+    110deg,
+    rgba(18, 23, 32, 0.88),
+    rgba(18, 23, 32, 0.3) 48%,
+    rgba(18, 23, 32, 0.72)
+  );
+}
+
+.food-hero__content {
+  position: relative;
+  z-index: 1;
+  padding: 2rem;
+  color: #fff;
+}
+
+.food-hero__copy h1 {
+  font-family: Georgia, "Times New Roman", serif;
+  letter-spacing: -0.03em;
+}
+
+.food-hero__lead {
+  max-width: 58ch;
+  font-size: 1.05rem;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.food-hero__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-bottom: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  backdrop-filter: blur(10px);
+}
+
+.food-hero__back:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+/* ── Price badge ──────────────────────────────────────── */
+.food-price-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 1.1rem;
+  border-radius: 2rem;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #fff;
+  backdrop-filter: blur(10px);
+}
+
+/* ── Info cards ───────────────────────────────────────── */
+.food-info-card {
+  background: var(--food-cream);
+  border: 1px solid var(--food-border);
+  border-radius: 0.75rem;
+}
+
+.food-info-card .info-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--food-muted);
+  margin-bottom: 0.2rem;
+}
+
+.food-info-card .info-value {
+  font-weight: 600;
+  color: var(--food-ink);
+}
+
+/* ── Gallery ──────────────────────────────────────────── */
+.food-gallery-img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+.food-gallery-img:hover {
+  opacity: 0.88;
+  transform: scale(1.02);
+}
+
+.food-gallery-img.cover-img {
+  aspect-ratio: 16 / 9;
+  border: 2.5px solid var(--food-accent);
+}
+
+/* ── Status pill ──────────────────────────────────────── */
+.food-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.9rem;
+  border-radius: 2rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.food-status-pill.available {
+  background: rgba(47, 125, 74, 0.12);
+  color: var(--food-success);
+}
+
+.food-status-pill.unavailable {
+  background: rgba(220, 53, 69, 0.1);
+  color: #b02a37;
+}

@@ -1,10 +1,17 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import assets from "../../../shared/assets/assets";
 import { useEntityUploader } from "../../../shared/hooks/useEntityUploader";
 import { useSyncedFormState } from "../../../shared/hooks/useSyncedFormState";
-import { useCreateFood, useUpdateFood } from "../hooks/useFood";
+import {
+  appendUploadedFoodImages,
+  buildFoodImagePayload,
+  removeFoodImagePath,
+  setFoodCoverImageByPath,
+  useCreateFood,
+  useUpdateFood,
+} from "../hooks/useFood";
 import { useGetCategoryTree } from "../../categories/hooks/useCategory";
 import { useListRestaurantsByPage } from "../../restaurants/hooks/useRestaurant";
 import { useDebounce } from "../../../shared/hooks/useDebounce";
@@ -15,15 +22,9 @@ const buildFoodFormData = (food) => ({
   description: food?.description || "",
   price: food?.price ?? "",
   restaurant: food?.restaurant || "",
-  categories: Array.isArray(food?.categories)
-    ? food.categories
-    : String(food?.categories || "")
-        .split(",")
-        .map((value) => value.trim())
-        .filter(Boolean),
+  categories: Array.from(food?.categories) || [],
   available: food?.available ?? true,
-  imagePath: food?.image || food?.imagePath || null,
-  imageUrl: food?.image_url || food?.imageUrl || null,
+  images: food?.images || [],
 });
 
 export default function FoodForm({ selectedFood }) {
@@ -34,6 +35,7 @@ export default function FoodForm({ selectedFood }) {
   const [errors, setErrors] = useState({});
   const [isSaving, setIsSaving] = useState(false);
   const [showRestaurantHints, setShowRestaurantHints] = useState(false);
+  const fileInputRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
   const { categoryTree, isLoadingCategoryTree } = useGetCategoryTree();
@@ -49,7 +51,7 @@ export default function FoodForm({ selectedFood }) {
 
   const { createFood } = useCreateFood();
   const { updateFood } = useUpdateFood();
-  const { uploadFiles } = useEntityUploader({
+  const { uploadId, uploadFiles } = useEntityUploader({
     queryKey: "foods",
     entityType: "FOOD",
   });
@@ -62,6 +64,10 @@ export default function FoodForm({ selectedFood }) {
       [name]: type === "checkbox" ? checked : value,
     }));
     setErrors((prev) => ({ ...prev, [name]: "" }));
+  };
+
+  const handleAddImage = () => {
+    fileInputRef.current?.click();
   };
 
   const handleImageChange = async (event) => {
@@ -83,14 +89,29 @@ export default function FoodForm({ selectedFood }) {
 
     setData((prev) => ({
       ...prev,
-      imagePath: uploads[0].path,
-      imageUrl: uploads[0].publicUrl,
+      images: appendUploadedFoodImages(prev.images, uploads),
     }));
     setErrors((prev) => ({ ...prev, image: "" }));
   };
 
+  const handleRemoveImage = (path) => {
+    setIsDirty(true);
+    setData((prev) => ({
+      ...prev,
+      images: removeFoodImagePath(prev.images, path),
+    }));
+  };
+
+  const handleSetCoverImage = (path) => {
+    setIsDirty(true);
+    setData((prev) => ({
+      ...prev,
+      images: setFoodCoverImageByPath(prev.images, path),
+    }));
+  };
+
   const addCategoryTag = (rawValue) => {
-    const nextTag = rawValue.trim();
+    const nextTag = rawValue.trim().replace(/-/g, ""); // Remove hyphens to prevent confusion
     if (!nextTag) return;
 
     const isDuplicate = data.categories.some(
@@ -135,35 +156,45 @@ export default function FoodForm({ selectedFood }) {
       restaurant: data.restaurant.trim(),
       categories: categoryList,
       available: data.available,
+      images: buildFoodImagePayload(data.images, uploadId),
     };
 
-    console.log("Submitting food with payload:", payload);
+    try {
+      setIsSaving(true);
 
-    // try {
-    //   setIsSaving(true);
+      let response;
 
-    //   let response;
-    //   if (data.id) {
-    //     response = await updateFood({ id: data.id, data: payload });
-    //   } else {
-    //     response = await createFood(payload);
-    //   }
+      if (data.id) {
+        response = await updateFood({ id: data.id, data: payload });
+      } else {
+        response = await createFood(payload);
+      }
 
-    //   toast.success(response?.message || "Food saved successfully");
-    //   navigate(`/foods${location.search}`);
-    // } catch (error) {
-    //   const apiMessage = error.response?.data?.message;
+      console.log(response);
 
-    //   if (apiMessage && typeof apiMessage === "object") {
-    //     setErrors((prev) => ({ ...prev, ...apiMessage }));
-    //     return;
-    //   }
+      toast.success(response?.message || "Food saved successfully");
+      navigate(`/foods${location.search}`);
+    } catch (error) {
+      const apiMessage = error.response?.data?.message;
 
-    //   toast.error(apiMessage || error.message || "Failed to save food");
-    // } finally {
-    //   setIsSaving(false);
-    // }
+      if (apiMessage && typeof apiMessage === "object") {
+        setErrors((prev) => ({ ...prev, ...apiMessage }));
+        return;
+      }
+
+      toast.error(apiMessage || error.message || "Failed to save food");
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  const coverImage = data.images.find(
+    (img) => img.status !== "removed" && img.isPrimary,
+  );
+  const galleryImages = data.images
+    .filter((image) => image.status !== "removed")
+    .slice()
+    .sort((a, b) => a.displayOrder - b.displayOrder);
 
   return (
     <div>
@@ -373,28 +404,115 @@ export default function FoodForm({ selectedFood }) {
           </div>
 
           <div className="mb-3">
-            <label className="form-label">Image</label>
-            <div className="d-flex gap-3">
-              <div className="flex-grow-1">
-                <input
-                  type="file"
-                  className="form-control"
-                  id="image"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                />
+            <div className="row g-3">
+              <div className="col-12 col-lg-4">
+                <div className="border rounded p-3 h-100 bg-white">
+                  <div className="text-uppercase small fw-bold text-secondary mb-2">
+                    Cover preview
+                  </div>
+                  <div
+                    className="rounded overflow-hidden border"
+                    style={{ minHeight: 220 }}
+                  >
+                    <img
+                      src={coverImage?.url || assets.upload}
+                      alt={
+                        data.name ? `${data.name} cover` : "Upload placeholder"
+                      }
+                      style={{ width: "100%", height: 220, objectFit: "cover" }}
+                    />
+                  </div>
+                </div>
               </div>
-              <div className="form-check mt-1">
-                <label className="form-label" htmlFor="image">
-                  <img
-                    src={data.imageUrl || assets.upload}
-                    alt="Food preview"
-                    width={98}
-                  />
-                </label>
+
+              <div className="col-12 col-lg-8">
+                <div className="border rounded p-3 h-100 bg-white">
+                  <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
+                    <div>
+                      <label className="form-label mb-1">Image gallery</label>
+                      <div className="text-muted small">
+                        Upload multiple images and choose one as cover.
+                      </div>
+                    </div>
+                    <div className="d-flex gap-2">
+                      <button
+                        type="button"
+                        className="btn btn-outline-primary"
+                        onClick={handleAddImage}
+                      >
+                        <i className="bi bi-plus-lg me-2"></i>
+                        Add image
+                      </button>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        id="image"
+                        accept="image/*"
+                        onChange={handleImageChange}
+                        multiple
+                        hidden
+                      />
+                    </div>
+                  </div>
+
+                  <div className="row g-3">
+                    {galleryImages.map((image, index) => (
+                      <div
+                        className="col-12 col-md-6"
+                        key={image.path || `image-${index}`}
+                      >
+                        <div className="border rounded p-2 h-100">
+                          <img
+                            src={image.url || image.imageUrl || assets.upload}
+                            alt={`Food image ${index + 1}`}
+                            style={{
+                              width: "100%",
+                              height: 120,
+                              objectFit: "cover",
+                            }}
+                            className="rounded"
+                          />
+                          <div className="small fw-semibold mt-2">
+                            {index === 0 || image.isPrimary
+                              ? "Cover image"
+                              : `Image ${index + 1}`}
+                          </div>
+                          <div className="d-flex gap-2 mt-2">
+                            {index > 0 ? (
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-outline-secondary"
+                                onClick={() => handleSetCoverImage(image.path)}
+                              >
+                                Set as cover
+                              </button>
+                            ) : null}
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-outline-danger"
+                              onClick={() => handleRemoveImage(image.path)}
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+
+                    {data.images.length === 0 ? (
+                      <div className="col-12">
+                        <div className="border rounded p-3 text-muted">
+                          No images uploaded yet.
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
               </div>
             </div>
+
             {errors.image && <p style={{ color: "red" }}>{errors.image}</p>}
+            {errors.images && <p style={{ color: "red" }}>{errors.images}</p>}
           </div>
         </form>
       </div>

@@ -27,6 +27,7 @@ export function useTableSearchParams({
   sortFieldKey = "sortField",
   sortDirectionKey = "sortDirection",
   keywordKey = "keyword",
+  pageSize = 10,
 }) {
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -77,5 +78,6 @@ export function useTableSearchParams({
     searchParams,
     updateParams,
     setPage,
+    pageSize,
   };
 }

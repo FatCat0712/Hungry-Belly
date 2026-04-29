@@ -1,21 +1,19 @@
-export default function Pagination({
-  module,
-  currentPage,
-  pageSize,
-  totalItems,
-  onPageChange,
-}) {
-  const totalPages = Math.max(1, Math.ceil((totalItems || 0) / pageSize));
-  const startItem = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
-  const endItem = Math.min(currentPage * pageSize, totalItems);
+export default function Pagination({ module, onPageChange, pageData }) {
+  const totalPages = pageData?.totalPages || 1;
+  const currentPage = pageData?.page || 1;
+  const totalItems = pageData?.totalItems || 0;
 
-  if (totalItems <= pageSize) {
+  const startItem =
+    totalItems === 0 ? 0 : (currentPage - 1) * pageData?.pageSize + 1;
+  const endItem = Math.min(currentPage * pageData?.pageSize, totalItems);
+
+  if (pageData?.totalItems <= pageData?.pageSize) {
     return null;
   }
 
   const pageNumbers = [];
-  const startPage = Math.max(1, currentPage - 2);
-  const endPage = Math.min(totalPages, currentPage + 2);
+  const startPage = 1;
+  const endPage = totalPages;
 
   for (let page = startPage; page <= endPage; page += 1) {
     pageNumbers.push(page);
@@ -24,7 +22,7 @@ export default function Pagination({
   return (
     <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mt-4">
       <small className="text-muted">
-        Showing {startItem} to {endItem} of {totalItems} {module}
+        Showing {startItem} to {endItem} of {pageData?.totalItems} {module}
       </small>
 
       <nav aria-label={`${module} table pagination`}>

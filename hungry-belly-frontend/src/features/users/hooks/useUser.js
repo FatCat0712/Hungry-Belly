@@ -88,7 +88,7 @@ export const useListUsersByPage = ({
   sortDirection = "asc",
   keyword,
 } = {}) => {
-  const { data, isLoading } = useQuery({
+  const { data: page, isLoading } = useQuery({
     queryKey: ["users", pageNum, pageSize, sortField, sortDirection, keyword],
     queryFn: async () => {
       const response = await fetchUsersByPageApi({
@@ -102,7 +102,7 @@ export const useListUsersByPage = ({
     },
   });
 
-  return { data, isLoading };
+  return { page, isLoading };
 };
 
 export const useUserStats = () => {
