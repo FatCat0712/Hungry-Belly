@@ -69,7 +69,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     // Bulk load users with roles by IDs - efficient fetch
     @Query("SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.roles WHERE u.id IN :ids")
-    List<User> findAllWithRolesByIds(@Param("ids") List<Long> ids);
+    List<User> findUserWithRolesByIds(@Param("ids") List<Long> ids);
 
     @Query("SELECT r.id AS roleId, COUNT(u) AS userCount FROM User u JOIN u.roles r GROUP BY r.id ORDER BY r.id")
     List<RoleUserCount> countUsersByRole();

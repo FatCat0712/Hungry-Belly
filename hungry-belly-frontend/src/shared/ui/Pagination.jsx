@@ -1,13 +1,19 @@
 export default function Pagination({ module, onPageChange, pageData }) {
   const totalPages = pageData?.totalPages || 1;
   const currentPage = pageData?.page || 1;
-  const totalItems = pageData?.totalItems || 0;
+  const totalItems = pageData?.totalElements || 0;
+
+  console.log(pageData);
 
   const startItem =
-    totalItems === 0 ? 0 : (currentPage - 1) * pageData?.pageSize + 1;
-  const endItem = Math.min(currentPage * pageData?.pageSize, totalItems);
+    totalItems === 0 ? 0 : (currentPage - 1) * pageData?.size + 1;
 
-  if (pageData?.totalItems <= pageData?.pageSize) {
+  console.log((currentPage - 1) * pageData?.size + 1);
+
+  const endItem = Math.min(currentPage * pageData?.size, totalItems);
+  console.log(endItem);
+
+  if (pageData?.totalElements <= pageData?.size) {
     return null;
   }
 

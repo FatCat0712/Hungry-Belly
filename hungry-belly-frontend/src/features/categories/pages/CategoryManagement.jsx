@@ -123,7 +123,7 @@ const CategoryManagement = () => {
 
         {/* Stats */}
         <div className="row g-3 mb-3">
-          <div className="col-sm-6">
+          <div className="col-sm-4">
             <div className="card border-0 shadow-sm">
               <div className="card-body">
                 <div className="d-flex align-items-start justify-content-between">
@@ -136,7 +136,7 @@ const CategoryManagement = () => {
               </div>
             </div>
           </div>
-          <div className="col-sm-6">
+          <div className="col-sm-4">
             <div className="card border-0 shadow-sm">
               <div className="card-body">
                 <div className="d-flex align-items-start justify-content-between">
@@ -144,7 +144,22 @@ const CategoryManagement = () => {
                     <small className="text-muted">Active</small>
                     <h5 className="mb-0">{totalActive}</h5>
                   </div>
-                  <i className="bi bi-check-circle fs-4 text-success" />
+                  <i className="bi bi-check-circle-fill fs-4 text-success" />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="col-sm-4">
+            <div className="card border-0 shadow-sm">
+              <div className="card-body">
+                <div className="d-flex align-items-start justify-content-between">
+                  <div>
+                    <small className="text-muted">Inactive</small>
+                    <h5 className="mb-0">
+                      {rootCategories.filter((c) => !c.enabled).length}
+                    </h5>
+                  </div>
+                  <i className="bi bi-slash-circle fs-4 text-secondary" />
                 </div>
               </div>
             </div>

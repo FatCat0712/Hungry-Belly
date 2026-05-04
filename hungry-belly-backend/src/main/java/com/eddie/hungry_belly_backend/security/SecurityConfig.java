@@ -4,6 +4,7 @@ import com.eddie.hungry_belly_backend.security.jwt.CustomAccessDeniedHandler;
 import com.eddie.hungry_belly_backend.security.jwt.JwtAuthenticationEntryPoint;
 import com.eddie.hungry_belly_backend.security.jwt.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpMethod;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -47,7 +48,14 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(request -> request
                         .requestMatchers(whiteList).permitAll()
-                        .requestMatchers(API + "/users/**", API + "/roles/**", API + "/restaurants/**").hasAnyRole("ADMIN", "MANAGER")
+                        .requestMatchers(API + "/users/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, API + "/roles/**").hasAnyRole("ADMIN", "MANAGER")
+                        .requestMatchers(HttpMethod.POST, API + "/roles/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, API + "/roles/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, API + "/roles/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, API + "/roles/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, API + "/restaurants/**").hasRole("ADMIN")
+                        .requestMatchers(API + "/restaurants/**").hasAnyRole("ADMIN", "MANAGER")
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception

@@ -14,6 +14,7 @@ import com.eddie.hungry_belly_backend.role.repository.RoleRepository;
 import com.eddie.hungry_belly_backend.user.projection.RoleUserCount;
 import com.eddie.hungry_belly_backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -31,11 +32,13 @@ public class RoleService{
         return roleRepository.findByNameIn(names);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public Set<String> fetchAllRoleNames() {
         return roleRepository.fetchRolesWithPermissions().stream()
                 .map(Role::getName).collect(Collectors.toSet());
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public List<RoleResponse> fetchRolesWithPermissions() {
         List<Role> roles = roleRepository.fetchRolesWithPermissions();
         List<RoleUserCount> roleUserCounts = userRepository.countUsersByRole();
@@ -53,11 +56,13 @@ public class RoleService{
     }
 
 
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public UpdateRoleResponse fetchRoleById(Long id) {
         return convertToEditRoleResponse(fetchById(id));
     }
 
 
+    @PreAuthorize("hasRole('ADMIN')")
     public void updateRole(RoleUpdateRequest request) {
         Role existRole = getExistRoleWithSameName(request.getName());
 
@@ -79,6 +84,7 @@ public class RoleService{
 
 
 
+    @PreAuthorize("hasRole('ADMIN')")
     public void createRole(RoleCreateRequest request) {
        Role existRole = getExistRoleWithSameName(request.getName());
 
@@ -97,6 +103,7 @@ public class RoleService{
     }
 
 
+    @PreAuthorize("hasRole('ADMIN')")
     public void delete(Long id) {
         roleRepository.deleteById(id);
     }
@@ -104,7 +111,7 @@ public class RoleService{
     private Role fetchById(Long id) {
         Optional<Role> dbRole = roleRepository.fetchRoleById(id);
         if(dbRole.isEmpty()) {
-            throw new RoleNotFoundException("Role with id " + id + " could not be found");
+            throw new RoleNotFoundException("Role could not be found");
         }
         return dbRole.get();
     }

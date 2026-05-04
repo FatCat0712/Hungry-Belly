@@ -37,44 +37,45 @@ public class CategoryService {
     private final ExportService exportService;
 
     public PageResponse<SummaryCategoryResponse> listCategoriesByPage(PageRequestDto request) {
-//        Build pageable from request
+        //  Step 1: Build pageable from request
         Pageable pageable = PaginationUtils.buildPageable(request);
 
-        Page<Long> pageCategoryIds;
+        Page<Long> idPage;
 
-//        Fetch only entity IDs first
-//        As the query applied pagination so the returned idList already has the correct
-//        page order
+        //  Step 2: Get paginated IDs (efficient DB pagination, no collection fetch)
         if (request.getKeyword() != null && !request.getKeyword().isBlank()) {
-            pageCategoryIds = categoryRepository.findCategoriesWithKeyword(request.getKeyword(), pageable);
+            idPage = categoryRepository.findCategoriesWithKeyword(request.getKeyword(), pageable);
         } else {
-            pageCategoryIds = categoryRepository.findAllCategoryIds(pageable);
+            idPage = categoryRepository.findAllCategoryIds(pageable);
         }
 
-//        extract IDs from the current page
-        List<Long> idList = pageCategoryIds.getContent();
+        List<Long> idList = idPage.getContent();
 
-//        fetch full entities in bulk using the paged IDs.
+        //  If no IDs, return empty page
+        if (idList.isEmpty()) {
+            Page<SummaryCategoryResponse> emptyPage = new PageImpl<>(List.of(), pageable, idPage.getTotalElements());
+            return PageMapper.toPageResponse(emptyPage);
+        }
+
+        // Step 3: Bulk load users with roles by IDs (single efficient query)
         List<Category> categories = categoryRepository.findCategoryInIds(idList);
 
-//        convert fetched categories into a map for fast lookup by ID
+        // Step 4: Convert fetched users into a map for fast lookup
         Map<Long, Category> categoryMap = categories.stream().collect(Collectors.toMap(Category::getId, c -> c));
 
-//        The bulk fetch query uses WHERE id IN (:ids) which does not guarantee the same
-//        order as idList
-//        So we rebuild the entity list using idList to preserve original sort order
-//        from the first query
+//        Step 5: Rebuild the user list using idList to preserve pageable sort order from first query
+//        Note: the bulk fetch query may return users in any order, so we must reorder them according to the original ID list
         List<Category> orderedCategories = idList.stream().map(categoryMap::get).filter(Objects::nonNull).toList();
 
-//        convert to DTOs
+//        Step 6: Convert to response DTOs and build PageResponse
         List<SummaryCategoryResponse> summaryCategoryResponses = orderedCategories.stream().map(this::convertToSummaryCategoryResponse).toList();
 
-        PageImpl<SummaryCategoryResponse> page = new PageImpl<>(summaryCategoryResponses,
+        PageImpl<SummaryCategoryResponse> categoryPage = new PageImpl<>(summaryCategoryResponses,
                 pageable,
-                pageCategoryIds.getTotalElements()
+                idPage.getTotalElements()
         );
 
-        return PageMapper.toPageResponse(page);
+        return PageMapper.toPageResponse(categoryPage);
     }
 
     public DetailCategoryResponse fetchCategoryById(Long id) {

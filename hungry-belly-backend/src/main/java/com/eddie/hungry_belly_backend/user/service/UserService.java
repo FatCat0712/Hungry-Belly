@@ -34,9 +34,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -48,6 +46,7 @@ public class UserService {
     private final ExportService exportService;
     private final StorageService storageService;
 
+    @PreAuthorize("hasRole('ADMIN')")
     public UserResponse createUser(UserCreateRequest request) {
         boolean isEmailUnique = userRepository.existsByEmailAndDeletedFalse(request.getEmail());
         if (isEmailUnique) {
@@ -66,10 +65,12 @@ public class UserService {
         return dbUser.get();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     public UserResponse findById(Long id) {
         return convertToAdminResponse(findUserById(id));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     public UserResponse updateUserInfo(Long userId, UserUpdateRequest request) {
 
         User existUser = findByEmail(request.getEmail());
@@ -82,10 +83,13 @@ public class UserService {
 
         User dbUser = findUserById(userId);
 
-        if (userEntity.getPassword() == null || userEntity.getPassword().isEmpty() || userEntity.getPassword().isBlank()) {
+        if (
+                userEntity.getPassword() == null
+                        || userEntity.getPassword().isEmpty()
+                        || userEntity.getPassword().isBlank()
+        ) {
             dbUser.setPassword(dbUser.getPassword());
-        }
-        else {
+        } else {
             String encodedPassword = encodePassword(userEntity.getPassword());
             dbUser.setPassword(encodedPassword);
         }
@@ -96,7 +100,7 @@ public class UserService {
         dbUser.setRoles(userEntity.getRoles());
         dbUser.setEnabled(userEntity.isEnabled());
 
-        if(request.getPhoto() != null && !request.getPhoto().isEmpty()) {
+        if (request.getPhoto() != null && !request.getPhoto().isEmpty()) {
             dbUser.setPhoto(userEntity.getPhoto());
         }
 
@@ -105,6 +109,7 @@ public class UserService {
         return convertToAdminResponse(dbUser);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     public void resetPassword(Long id, ResetPasswordRequest request) {
         User dbUser = findUserById(id);
         dbUser.setPassword(encodePassword(request.getNewPassword()));
@@ -115,9 +120,9 @@ public class UserService {
     @Transactional
     public void delete(Long id) {
         User currentUser = findUserById(id);
-        Role roleAdmin = roleService.getExistRoleWithSameName("Admin");
+        Role roleAdmin = roleService.getExistRoleWithSameName("ROLE_ADMIN");
 
-        if(currentUser.getRoles().contains(roleAdmin)) {
+        if (currentUser.getRoles().contains(roleAdmin)) {
             long activeAdminCount = userRepository.countActiveAdmins();
             if (activeAdminCount <= 1) {
                 throw new InvalidOperationException("At least one active admin is required");
@@ -126,15 +131,16 @@ public class UserService {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String currentEmail = auth.getName();
-        User loggedInUser =  userRepository.findByEmail(currentEmail);
+        User loggedInUser = userRepository.findByEmail(currentEmail);
 
-        if(loggedInUser != null  && loggedInUser.getId().equals(id)) {
+        if (loggedInUser != null && loggedInUser.getId().equals(id)) {
             throw new InvalidOperationException("You cannot delete your own account");
         }
 
         userRepository.deleteUserById(id);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public void updateUserStatus(Long id) {
         User dbUser = findUserById(id);
@@ -142,10 +148,12 @@ public class UserService {
     }
 
 
+    @PreAuthorize("hasRole('ADMIN')")
     public PageResponse<UserResponse> listByPage(PageRequestDto request) {
+//        Step 1: Build pageable from request
         Pageable pageable = PaginationUtils.buildPageable(request);
 
-        // Step 1: Get paginated IDs (efficient DB pagination, no collection fetch)
+        // Step 2: Get paginated IDs (efficient DB pagination, no collection fetch)
         Page<Long> idPage;
         if (request.getKeyword() != null && !request.getKeyword().isEmpty()) {
             String keyword = request.getKeyword();
@@ -154,11 +162,30 @@ public class UserService {
             idPage = userRepository.findAllUserIds(pageable);
         }
 
-        // Step 2: Bulk load users with roles by IDs (single efficient query)
-        List<User> users = userRepository.findAllWithRolesByIds(idPage.getContent());
+        List<Long> idList = idPage.getContent();
 
+        //  If no IDs, return empty page
+        if (idList.isEmpty()) {
+            Page<UserResponse> emptyPage = new PageImpl<>(List.of(), pageable, idPage.getTotalElements());
+            return PageMapper.toPageResponse(emptyPage);
+        }
+
+        // Step 3: Bulk load users with roles by IDs (single efficient query)
+        List<User> users = userRepository.findUserWithRolesByIds(idList);
+
+//       Step 4: Convert fetched users into a map for fast lookup
+        Map<Long, User> userMap = users.stream().collect(Collectors.toMap(User::getId, u -> u));
+
+//        Step 5: Rebuild the user list using idList to preserve pageable sort order from first query
+//        Note: the bulk fetch query may return users in any order, so we must reorder them according to the original ID list
+        List<User> orderedUsers = idList.stream()
+                .map(userMap::get)
+                .filter(Objects::nonNull) // In case of any missing IDs, though unlikely
+                .toList();
+
+//        Step 6: Convert to response DTOs and build PageResponse
         PageImpl<UserResponse> responsePage = new PageImpl<>(
-                users.stream().map(this::convertToAdminResponse).toList(),
+                orderedUsers.stream().map(this::convertToAdminResponse).toList(),
                 pageable,
                 idPage.getTotalElements()
         );
@@ -170,6 +197,7 @@ public class UserService {
         return userRepository.findAll();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     public UserStatsResponse getUserStats() {
         Long usersCount = userRepository.countAllUsers();
         Long userActiveCount = userRepository.countActiveUser();
@@ -179,6 +207,7 @@ public class UserService {
                 .build();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     public ExportResult exportUser(String format) {
         List<UserCsvDto> userCsvDtos = findAllUsers().stream().map(this::convertToCsvDto).toList();
 

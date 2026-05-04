@@ -26,6 +26,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -33,26 +36,59 @@ public class RestaurantService {
     private final RestaurantRepository restaurantRepository;
     private final StorageService storageService;
 
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public PageResponse<RestaurantSummaryResponse> getRestaurants(PageRequestDto request) {
+//      Step 1: Build pageable (page number, size, sort) from request
         Pageable pageable = PaginationUtils.buildPageable(request);
-        String keyword = request.getKeyword();
         Page<Long> idPage;
-        if (keyword != null) {
+
+//      Step 2: Fetch only paged restaurant IDs first.
+//      This keeps pagination efficient and preserves requested sort order in idList.
+        String keyword = request.getKeyword();
+        if (keyword != null && !keyword.isEmpty()) {
             idPage = restaurantRepository.findRestaurantIdsByKeyword(keyword, pageable);
         } else {
             idPage = restaurantRepository.findAllRestaurantIds(pageable);
         }
 
-        List<RestaurantSummaryResponse> restaurants = restaurantRepository.findAllWithCoverImageByIds(idPage.getContent());
+//      Step 3: Extract IDs for the current page (already in page/sort order)
+        List<Long> idList = idPage.getContent();
 
+//      Step 4: Fast return when no IDs exist for the requested page
+        if (idList.isEmpty()) {
+            Page<RestaurantSummaryResponse> emptyPage = new PageImpl<>(List.of(), pageable, idPage.getTotalElements());
+            return PageMapper.toPageResponse(emptyPage);
+        }
+
+//      Step 5: Bulk-load restaurant summary rows for the paged IDs
+        List<RestaurantSummaryResponse> restaurants = restaurantRepository.findAllWithCoverImageByIds(idList);
+
+//      Step 6: Enrich image paths into temporary download URLs for response
         restaurants = restaurants.stream().peek(item -> {
-            if (item.getPath() != null) {
-                item.setPath(storageService.generateDownloadUrl(item.getPath(), 3600));
+            if (item.getImageUrl() != null) {
+                item.setImageUrl(storageService.generateDownloadUrl(item.getImageUrl(), 3600));
             }
         }).toList();
 
-        PageImpl<RestaurantSummaryResponse> restaurantPage = new PageImpl<>(restaurants, pageable, idPage.getTotalElements());
+//      Step 7: Restore pageable sort order.
+//      findAllWithCoverImageByIds uses WHERE id IN (:ids) which does not guarantee idList order.
+//      Rebuild the result list from idList to preserve the original sort order.
+        Map<Long, RestaurantSummaryResponse> restaurantMap = restaurants.stream()
+                .collect(Collectors.toMap(RestaurantSummaryResponse::getId, r -> r));
 
+        List<RestaurantSummaryResponse> sortedRestaurants = idList.stream()
+                .map(restaurantMap::get)
+                .filter(Objects::nonNull)
+                .toList();
+
+//      Step 8: Wrap result list with pageable metadata and total count from ID query
+        PageImpl<RestaurantSummaryResponse> restaurantPage = new PageImpl<>(
+                sortedRestaurants,
+                pageable,
+                idPage.getTotalElements()
+        );
+
+//      Step 9: Convert Spring Page to the project's PageResponse DTO
         return PageMapper.toPageResponse(restaurantPage);
     }
 
@@ -61,6 +97,7 @@ public class RestaurantService {
                 .orElseThrow(() -> new RestaurantNotFoundException("Restaurant not found" + id));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public RestaurantDetailResponse getRestaurantById(Long restaurantId) {
         Restaurant restaurant = retrieveRestaurantFromDbById(restaurantId);
         return convertToRestaurantDetailResponse(restaurant);
@@ -73,6 +110,7 @@ public class RestaurantService {
 
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public RestaurantDetailResponse createRestaurant(RestaurantCreateRequest request) {
         validateRestaurantRequest(null, request);
 
@@ -85,12 +123,14 @@ public class RestaurantService {
         return convertToRestaurantDetailResponse(newRestaurant);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     @Transactional
     public void updateRestaurantStatus(Long restaurantId) {
         Restaurant dbRestaurant = retrieveRestaurantFromDbById(restaurantId);
         restaurantRepository.updateRestaurantStatus(restaurantId, !dbRestaurant.getEnabled());
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     @Transactional
     public RestaurantDetailResponse updateRestaurant(Long id, RestaurantRequest request) {
         Restaurant dbRestaurant = retrieveRestaurantFromDbById(id);
@@ -232,6 +272,7 @@ public class RestaurantService {
                 .build();
     }
 
-}
 
+
+}
 

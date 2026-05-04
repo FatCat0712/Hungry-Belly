@@ -25,8 +25,16 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
     Page<Long> findAllRestaurantIds(Pageable pageable);
 
     @Query(value = """
-    SELECT DISTINCT new com.eddie.hungry_belly_backend.restaurant.dto.response.RestaurantSummaryResponse(
-        r.id, r.name, r.cuisine,ri.imageUrl,r.rating, r.owner, r.orders, r.enabled)
+    SELECT DISTINCT NEW com.eddie.hungry_belly_backend.restaurant.dto.response.RestaurantSummaryResponse(
+            r.id, 
+            r.name, 
+            r.cuisine,
+            ri.imageUrl,
+            r.rating, 
+            r.owner, 
+            r.orders, 
+            r.enabled
+        )
     FROM Restaurant r
     LEFT JOIN r.images ri ON ri.isPrimary = true
     WHERE r.id IN :ids

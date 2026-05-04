@@ -13,8 +13,6 @@ import java.util.Optional;
 
 @Repository
 public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long> {
-    RefreshToken findByToken(String token);
-
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select rt from RefreshToken rt where rt.token = :token")
     Optional<RefreshToken> findByTokenForUpdate(@Param("token") String token);
@@ -24,10 +22,6 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
     Optional<RefreshToken> findByUserIdForUpdate(@Param("userId") Long userId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("delete from RefreshToken rt where rt.user.id = :userId")
-    int deleteByUserId(@Param("userId") Long userId);
-
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("delete from RefreshToken rt where rt.token = :token")
-    int deleteByToken(@Param("token") String token);
+    @Query(value = "delete rt from refresh_token rt INNER JOIN users u ON rt.user_id = u.id WHERE u.email = :email", nativeQuery = true)
+    int deleteByUserId(@Param("email") String email);
 }

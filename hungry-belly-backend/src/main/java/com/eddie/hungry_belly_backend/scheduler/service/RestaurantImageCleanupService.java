@@ -16,19 +16,14 @@ import java.util.Set;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ImageCleanupService {
+public class RestaurantImageCleanupService extends AbstractCleanupService {
     private final RestaurantImageRepository imageRepository;
     private final StorageService storageService;
 
     private static final String PREFIX = "restaurant-photos/";
 
-    public void cleanup() {
-        log.info("Starting image cleanup....");
-        cleanupOrphanFiles();
-        log.info("Image clean up finished");
-    }
-
-    private void cleanupOrphanFiles() {
+    @Override
+    public void cleanupOrphanFiles() {
         List<StorageObject> files = storageService.listFiles(PREFIX);
         Set<String> dbPaths = new HashSet<>(imageRepository.findAllPaths());
 

@@ -38,35 +38,39 @@ public class FoodService {
     private final RestaurantService restaurantService;
 
     public PageResponse<FoodSummaryResponse> listAllFoodItems(PageRequestDto request) {
+//      Step 1: Build pageable (page number, size, sort) from request
         Pageable pageable = PaginationUtils.buildPageable(request);
 
-        Page<Long> page;
+        Page<Long> idPage;
 
-//        get page of food IDs
+//      Step 2: Fetch only paged food IDs first.
+//      This keeps pagination efficient and preserves the requested sort order in idList.
         if (request.getKeyword() != null && !request.getKeyword().isEmpty()) {
             String keyword = request.getKeyword();
-            page = foodRepository.findIdFoodsWithKeyword(keyword, pageable);
+            idPage = foodRepository.findIdFoodsWithKeyword(keyword, pageable);
         } else {
-            page = foodRepository.findAllFoodIds(pageable);
+            idPage = foodRepository.findAllFoodIds(pageable);
         }
 
-        List<Long> idList = page.getContent();
+//      Step 3: Extract IDs for the current page (already in page/sort order)
+        List<Long> idList = idPage.getContent();
 
-//        If no IDs, return empty page
+//      Step 4: Fast return when no IDs exist for the requested page
         if (idList.isEmpty()) {
-            Page<FoodSummaryResponse> emptyPage = new PageImpl<>(List.of(), pageable, page.getTotalElements());
+            Page<FoodSummaryResponse> emptyPage = new PageImpl<>(List.of(), pageable, idPage.getTotalElements());
             return PageMapper.toPageResponse(emptyPage);
         }
 
-//        Fetch categories in bulk
+//      Step 5: Bulk-load projections needed for the response (avoid N+1)
         List<FoodSummaryProjection> summaries = foodRepository.findFoodSummariesByIds(idList);
         List<FoodCategoryProjection> categoryRows = foodRepository.findCategoryNamesByFoodIds(idList);
 
-//        Map summaries by foodId using Map
+//      Step 6: Build lookup maps for O(1) access during response assembly
+//      - summaryById: foodId -> summary projection
         Map<Long, FoodSummaryProjection> summaryById = summaries.stream()
                 .collect(Collectors.toMap(FoodSummaryProjection::getId, item -> item));
 
-//        Group category names by food ID using Map
+//      - categoriesByFoodId: foodId -> set of category names
         Map<Long, Set<String>> categoriesByFoodId = categoryRows.stream()
                 .collect(Collectors.groupingBy(
                         FoodCategoryProjection::getFoodId,
@@ -74,11 +78,12 @@ public class FoodService {
                 ));
 
 
-//        Build final response in page order
+//      Step 7: Build final DTO content in idList order to keep stable pagination order
         List<FoodSummaryResponse> content = idList.stream()
                 .map(id -> {
                     FoodSummaryProjection item = summaryById.get(id);
                     if (item == null) return null;
+                    String imageUrl = item.getImagePath() != null ? storageService.generateDownloadUrl(item.getImagePath(), 3600) : null;
                     return FoodSummaryResponse.builder()
                             .id(item.getId())
                             .name(item.getName())
@@ -86,21 +91,21 @@ public class FoodService {
                             .available(item.getAvailable())
                             .restaurant(item.getRestaurantName())
                             .categories(categoriesByFoodId.getOrDefault(id, Set.of()))
-                            .imageUrl(item.getImagePath() != null ? storageService.generateDownloadUrl(item.getImagePath(), 3600) : null)
+                            .imageUrl(imageUrl)
                             .build();
 
                 })
                 .filter(Objects::nonNull)
                 .toList();
 
-//        Map into a page
+//      Step 8: Wrap content with pageable metadata and total count from ID query
         Page<FoodSummaryResponse> foodPage = new PageImpl<>(
                 content,
                 pageable,
-                page.getTotalElements()
+                idPage.getTotalElements()
         );
 
-//        return page response
+//      Step 9: Convert Spring Page to the project's PageResponse DTO
         return PageMapper.toPageResponse(foodPage);
     }
 

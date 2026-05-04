@@ -28,25 +28,6 @@ public class TokenService {
     private final AuthTokenProperties authTokenProperties;
 
     @Transactional
-    public String generateRefreshToken(String email) {
-        String token = jwtUtils.generateRefreshToken(email);
-        User dbUser = userService.findByEmail(email);
-
-        RefreshToken refreshToken = refreshTokenRepository.findByUserIdForUpdate(dbUser.getId())
-                .orElseGet(RefreshToken::new);
-
-        refreshToken.setToken(token);
-        refreshToken.setUser(dbUser);
-        refreshToken.setExpiryDate(Instant.now().plusMillis(authTokenProperties.getRefreshExpirationInMils()));
-
-        return refreshTokenRepository.save(refreshToken).getToken();
-    }
-
-    public RefreshToken findRefreshToken(String token) {
-        return refreshTokenRepository.findByToken(token);
-    }
-
-    @Transactional
     public String[] issueTokens(String email, Authentication authentication) {
         User dbUser = userService.findByEmail(email);
         return buildAndSaveTokens(authentication, dbUser);
@@ -68,22 +49,17 @@ public class TokenService {
     }
 
     @Transactional
-    public void deleteRefreshTokenByUserId(Long userId) {
-        refreshTokenRepository.deleteByUserId(userId);
-    }
-
-    @Transactional
     public String[] refresh(String token) {
         if (!jwtUtils.validateToken(token)) {
-            throw new BadRequestException("token : Invalid or expired refresh token");
+            throw new BadRequestException("Invalid or expired refresh token");
         }
 
         RefreshToken storedRefreshToken = refreshTokenRepository.findByTokenForUpdate(token)
-                .orElseThrow(() -> new BadRequestException("token : Invalid or already used refresh token"));
+                .orElseThrow(() -> new BadRequestException("Invalid or already used refresh token"));
 
         String usernameFromToken = jwtUtils.getUsernameFromToken(token);
         if (!storedRefreshToken.getUser().getEmail().equals(usernameFromToken)) {
-            throw new BadRequestException("token : Invalid or already used refresh token");
+            throw new BadRequestException("Invalid or already used refresh token");
         }
 
         AppUserDetails userDetails = (AppUserDetails) userDetailsService.loadUserByUsername(usernameFromToken);
@@ -97,8 +73,8 @@ public class TokenService {
     @Transactional
     public void logout() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        AppUserDetails userDetails = (AppUserDetails)authentication.getPrincipal();
-        refreshTokenRepository.deleteByUserId(userDetails.getId());
+        String email = authentication.getPrincipal().toString();
+        refreshTokenRepository.deleteByUserId(email);
     }
 
 }

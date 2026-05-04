@@ -22,7 +22,7 @@ const buildFoodFormData = (food) => ({
   description: food?.description || "",
   price: food?.price ?? "",
   restaurant: food?.restaurant || "",
-  categories: Array.from(food?.categories) || [],
+  categories: food?.categories || [],
   available: food?.available ?? true,
   images: food?.images || [],
 });
@@ -170,8 +170,6 @@ export default function FoodForm({ selectedFood }) {
         response = await createFood(payload);
       }
 
-      console.log(response);
-
       toast.success(response?.message || "Food saved successfully");
       navigate(`/foods${location.search}`);
     } catch (error) {
@@ -236,7 +234,7 @@ export default function FoodForm({ selectedFood }) {
             </div>
           </div>
 
-          <div className="row mb-3">
+          <div className="mb-3">
             <label htmlFor="categories" className="form-label">
               Categories <span className="text-danger">*</span>
             </label>

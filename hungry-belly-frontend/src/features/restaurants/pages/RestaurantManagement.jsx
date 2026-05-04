@@ -99,7 +99,11 @@ export default function RestaurantManagement() {
     toast.success(message);
   };
 
-  if (loggedInUser?.roles.includes("ROLE_ADMIN") === false) {
+  const isGranted =
+    loggedInUser?.roles.includes("ROLE_ADMIN") ||
+    loggedInUser?.roles.includes("ROLE_MANAGER");
+
+  if (!isGranted) {
     return <AccessDenied />;
   }
 
@@ -270,7 +274,7 @@ export default function RestaurantManagement() {
                           <div className="d-flex align-items-center gap-2">
                             <div style={{ width: 50, height: 40 }}>
                               <img
-                                src={restaurant.path}
+                                src={restaurant.imageUrl}
                                 alt={restaurant.name}
                                 className="rounded"
                                 style={{ width: "100%", height: "100%" }}
@@ -409,7 +413,6 @@ export default function RestaurantManagement() {
           </div>
         </div>
       </div>
-
       {/* Delete Confirmation Modal */}
       {showDeleteConfirmModal && restaurantToDelete && (
         <div
@@ -455,7 +458,6 @@ export default function RestaurantManagement() {
           </div>
         </div>
       )}
-
       <Pagination
         module="restaurants"
         pageData={page}

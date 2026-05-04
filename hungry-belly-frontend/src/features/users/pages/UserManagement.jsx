@@ -141,8 +141,9 @@ export default function UserManagement() {
           </div>
         </div>
 
+        {/* Statistics Cards */}
         <div className="row g-3 mb-3">
-          <div className="col-md-4">
+          <div className="col-sm-4">
             <div className="card border-0 shadow-sm">
               <div className="card-body">
                 <div className="d-flex align-items-start justify-content-between">
@@ -155,7 +156,7 @@ export default function UserManagement() {
               </div>
             </div>
           </div>
-          <div className="col-md-4">
+          <div className="col-sm-4">
             <div className="card border-0 shadow-sm">
               <div className="card-body">
                 <div className="d-flex align-items-start justify-content-between">
@@ -168,15 +169,15 @@ export default function UserManagement() {
               </div>
             </div>
           </div>
-          <div className="col-md-4">
+          <div className="col-sm-4">
             <div className="card border-0 shadow-sm">
               <div className="card-body">
                 <div className="d-flex align-items-start justify-content-between">
                   <div>
-                    <small className="text-muted">Pending Approvals</small>
-                    <h5 className="mb-0">1</h5>
+                    <small className="text-muted">Inactive Users</small>
+                    <h5 className="mb-0">{totalUsers - activeUsers}</h5>
                   </div>
-                  <i className="bi bi-clock-fill fs-4 text-warning"></i>
+                  <i className="bi bi-person-slash fs-4 text-secondary"></i>
                 </div>
               </div>
             </div>

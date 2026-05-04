@@ -62,7 +62,7 @@ public interface FoodRepository extends JpaRepository<Food, Long> {
             SELECT 
                 f.id AS id,
                 f.name AS name,
-                 f.price AS price,
+                f.price AS price,
                 f.isAvailable AS available,
                 r.name AS restaurantName,
                 fi.imageUrl AS imagePath
