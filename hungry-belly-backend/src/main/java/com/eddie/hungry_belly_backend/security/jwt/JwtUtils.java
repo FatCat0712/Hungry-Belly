@@ -1,11 +1,11 @@
 package com.eddie.hungry_belly_backend.security.jwt;
 
+import com.eddie.hungry_belly_backend.config.properties.AuthTokenProperties;
 import com.eddie.hungry_belly_backend.security.AppUserDetails;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import lombok.Data;
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
@@ -15,13 +15,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
-@Data
 @Component
-@ConfigurationProperties(prefix = "auth.token")
+@RequiredArgsConstructor
 public class JwtUtils {
-    private String accessExpirationInMils;
-    private String refreshExpirationInMils;
-    private String jwtSecret;
+    private final AuthTokenProperties authTokenProperties;
 
     public String generateAccessToken(Authentication authentication) {
         AppUserDetails userPrincipal = (AppUserDetails) authentication.getPrincipal();
@@ -33,7 +30,7 @@ public class JwtUtils {
                 .claim("id", userPrincipal.getId())
                 .claim("roles", roles)
                 .setIssuedAt(new Date())
-                .setExpiration(calculateExpirationDate(accessExpirationInMils))
+                .setExpiration(calculateExpirationDate(authTokenProperties.getAccessExpirationInMils()))
                 .signWith(key(), SignatureAlgorithm.HS256)
                 .compact();
 
@@ -43,7 +40,7 @@ public class JwtUtils {
         return Jwts.builder()
                 .setSubject(email)
                 .setIssuedAt(new Date())
-                .setExpiration(calculateExpirationDate(refreshExpirationInMils))
+                .setExpiration(calculateExpirationDate(authTokenProperties.getRefreshExpirationInMils()))
                 .claim("jti", UUID.randomUUID().toString())
                 .signWith(key(), SignatureAlgorithm.HS256)
                 .compact();
@@ -71,12 +68,11 @@ public class JwtUtils {
     }
 
     private Key key() {
-        return Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
+        return Keys.hmacShaKeyFor(Decoders.BASE64.decode(authTokenProperties.getJwtSecret()));
     }
 
-    private Date calculateExpirationDate(String expirationTimeString) {
-        long expirationTime = Long.parseLong(expirationTimeString); // Convert String to long
-        return new Date(System.currentTimeMillis() + expirationTime);
+    private Date calculateExpirationDate(long expirationTimeInMillis) {
+        return new Date(System.currentTimeMillis() + expirationTimeInMillis);
     }
 
 

@@ -24,8 +24,7 @@ public class CookieUtils {
         tokenCookie.setPath("/");
         tokenCookie.setMaxAge((int)(maxAge/1000));
         tokenCookie.setSecure(useSecureCookies);
-        String sameSite = "None";
-        setResponseHeader(response, tokenCookie, sameSite);
+        setResponseHeader(response, tokenCookie, resolveSameSite());
     }
 
     private void setResponseHeader(HttpServletResponse response, Cookie tokenCookie, String sameSite) {
@@ -33,8 +32,13 @@ public class CookieUtils {
                 "=" +
                 tokenCookie.getValue() +
                 "; HttpOnly; Path=" + tokenCookie.getPath() +
-                "; Max-Age=" + tokenCookie.getMaxAge() +
-                "; Secure" +
+                "; Max-Age=" + tokenCookie.getMaxAge();
+
+        if (tokenCookie.getSecure()) {
+            cookieHeader += "; Secure";
+        }
+
+        cookieHeader +=
                 "; SameSite=" + sameSite;
 
         response.addHeader("Set-Cookie", cookieHeader);
@@ -51,12 +55,20 @@ public class CookieUtils {
     }
 
     public void clearCookie(HttpServletResponse response, String name) {
+        if(response == null) {
+            throw new IllegalArgumentException("HttpServletResponse cannot be null");
+        }
+
         Cookie cookie = new Cookie(name, null);
         cookie.setHttpOnly(true);
-        cookie.setSecure(true);
+        cookie.setSecure(useSecureCookies);
         cookie.setPath("/");
         cookie.setMaxAge(0);
-        response.addCookie(cookie);
+        setResponseHeader(response, cookie, resolveSameSite());
+    }
+
+    private String resolveSameSite() {
+        return useSecureCookies ? "None" : "Lax";
     }
 
     public void logCookies(HttpServletRequest request) {

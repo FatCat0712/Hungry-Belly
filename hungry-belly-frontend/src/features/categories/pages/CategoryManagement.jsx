@@ -46,10 +46,6 @@ const CategoryManagement = () => {
   const totalElements = page?.totalElements || 0;
 
   const totalActive = rootCategories?.filter((c) => c.enabled).length;
-  const totalRestaurants = rootCategories?.reduce(
-    (sum, c) => sum + c.restaurantCount,
-    0,
-  );
 
   const handlePageChange = (page) => {
     setPage(page, { totalItems: totalElements, pageSize });
@@ -127,7 +123,7 @@ const CategoryManagement = () => {
 
         {/* Stats */}
         <div className="row g-3 mb-3">
-          <div className="col-sm-4">
+          <div className="col-sm-6">
             <div className="card border-0 shadow-sm">
               <div className="card-body">
                 <div className="d-flex align-items-start justify-content-between">
@@ -140,7 +136,7 @@ const CategoryManagement = () => {
               </div>
             </div>
           </div>
-          <div className="col-sm-4">
+          <div className="col-sm-6">
             <div className="card border-0 shadow-sm">
               <div className="card-body">
                 <div className="d-flex align-items-start justify-content-between">
@@ -149,19 +145,6 @@ const CategoryManagement = () => {
                     <h5 className="mb-0">{totalActive}</h5>
                   </div>
                   <i className="bi bi-check-circle fs-4 text-success" />
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="col-sm-4">
-            <div className="card border-0 shadow-sm">
-              <div className="card-body">
-                <div className="d-flex align-items-start justify-content-between">
-                  <div>
-                    <small className="text-muted">Restaurants Using</small>
-                    <h5 className="mb-0">{totalRestaurants}</h5>
-                  </div>
-                  <i className="bi bi-shop fs-4 text-warning" />
                 </div>
               </div>
             </div>

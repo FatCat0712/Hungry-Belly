@@ -1,6 +1,6 @@
 package com.eddie.hungry_belly_backend.token.service;
 
-import com.eddie.hungry_belly_backend.common.util.CookieUtils;
+import com.eddie.hungry_belly_backend.config.properties.AuthTokenProperties;
 import com.eddie.hungry_belly_backend.entity.RefreshToken;
 import com.eddie.hungry_belly_backend.entity.User;
 import com.eddie.hungry_belly_backend.exception.BadRequestException;
@@ -10,7 +10,6 @@ import com.eddie.hungry_belly_backend.security.jwt.JwtUtils;
 import com.eddie.hungry_belly_backend.token.repository.RefreshTokenRepository;
 import com.eddie.hungry_belly_backend.user.service.UserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -26,13 +25,7 @@ public class TokenService {
     private final UserService userService;
     private final JwtUtils jwtUtils;
     private final AppUserDetailsService userDetailsService;
-    private final CookieUtils cookieUtils;
-
-    @Value("${auth.token.accessExpirationInMils}")
-    private Long accessExpirationInMils;
-
-    @Value("${auth.token.refreshExpirationInMils}")
-    private Long refreshExpirationInMils;
+    private final AuthTokenProperties authTokenProperties;
 
     @Transactional
     public String generateRefreshToken(String email) {
@@ -44,7 +37,7 @@ public class TokenService {
 
         refreshToken.setToken(token);
         refreshToken.setUser(dbUser);
-        refreshToken.setExpiryDate(Instant.now().plusMillis(refreshExpirationInMils));
+        refreshToken.setExpiryDate(Instant.now().plusMillis(authTokenProperties.getRefreshExpirationInMils()));
 
         return refreshTokenRepository.save(refreshToken).getToken();
     }
@@ -68,7 +61,7 @@ public class TokenService {
                 .orElseGet(RefreshToken::new);
         savedRefreshToken.setToken(refreshToken);
         savedRefreshToken.setUser(dbUser);
-        savedRefreshToken.setExpiryDate(Instant.now().plusMillis(refreshExpirationInMils));
+        savedRefreshToken.setExpiryDate(Instant.now().plusMillis(authTokenProperties.getRefreshExpirationInMils()));
 
         refreshTokenRepository.save(savedRefreshToken);
         return new String[]{accessToken, refreshToken};

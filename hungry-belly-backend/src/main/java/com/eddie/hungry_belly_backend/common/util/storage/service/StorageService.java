@@ -1,14 +1,13 @@
 package com.eddie.hungry_belly_backend.common.util.storage.service;
 
+import com.eddie.hungry_belly_backend.config.properties.SupabaseProperties;
 import com.eddie.hungry_belly_backend.common.util.storage.dto.StorageObject;
 import com.eddie.hungry_belly_backend.common.util.storage.dto.request.FileRequest;
 import com.eddie.hungry_belly_backend.common.util.storage.dto.response.PresignedUploadResponse;
 import com.eddie.hungry_belly_backend.exception.BadRequestException;
 import com.eddie.hungry_belly_backend.common.util.storage.dto.request.UploadRequest;
-import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -24,28 +23,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-@Data
 @Component
-@ConfigurationProperties(prefix = "supabase")
 @Slf4j
+@RequiredArgsConstructor
 public class StorageService {
-    private String bucketName;
-    private String regionName;
-    private String accessKey;
-    private String secretKey;
-    private String endpointUrl;
-    private String endpointSignUrl;
-    private String serviceKey;
-
-    @Autowired
-    private S3Client s3Client;
-
-    @Autowired
-    private S3Presigner S3presigner;
+    private final SupabaseProperties supabaseProperties;
+    private final S3Client s3Client;
+    private final S3Presigner s3Presigner;
 
     public List<StorageObject> listFiles(String folder) {
        ListObjectsRequest listRequest =  ListObjectsRequest.builder()
-                .bucket(bucketName)
+                .bucket(supabaseProperties.getBucketName())
                 .prefix(folder)
                 .build();
 
@@ -66,7 +54,7 @@ public class StorageService {
 
     public void deleteFile(String fileName) {
         DeleteObjectRequest request = DeleteObjectRequest.builder()
-                .bucket(bucketName)
+                .bucket(supabaseProperties.getBucketName())
                 .key(fileName)
                 .build();
 
@@ -75,7 +63,7 @@ public class StorageService {
 
     public void uploadFile(String key, InputStream inputStream, String contentType) {
         PutObjectRequest request = PutObjectRequest.builder()
-                .bucket(bucketName)
+                .bucket(supabaseProperties.getBucketName())
                 .key(key)
                 .contentType(contentType)
                 .acl("public-read")
@@ -93,7 +81,7 @@ public class StorageService {
     public void removeFolder(String folderName) {
 
         ListObjectsRequest listRequest = ListObjectsRequest.builder()
-                .bucket(bucketName)
+                .bucket(supabaseProperties.getBucketName())
                 .prefix(folderName)
                 .build();
 
@@ -103,7 +91,7 @@ public class StorageService {
 
         for (S3Object object : contents) {
             DeleteObjectRequest request = DeleteObjectRequest.builder()
-                    .bucket(bucketName)
+                    .bucket(supabaseProperties.getBucketName())
                     .key(object.key())
                     .build();
             s3Client.deleteObject(request);
@@ -113,11 +101,11 @@ public class StorageService {
     public String generateDownloadUrl(String key, int expiresInSeconds) {
         if(key == null) return null;
         GetObjectRequest request = GetObjectRequest.builder()
-                .bucket(bucketName)
+                .bucket(supabaseProperties.getBucketName())
                 .key(key)
                 .build();
 
-        PresignedGetObjectRequest presigned = S3presigner.presignGetObject(b -> b
+        PresignedGetObjectRequest presigned = s3Presigner.presignGetObject(b -> b
                 .getObjectRequest(request)
                 .signatureDuration(Duration.ofSeconds(expiresInSeconds))
         );
@@ -142,13 +130,13 @@ public class StorageService {
             String key = folderName + "/temp-" +  uploadRequest.getUploadId() + "-" + UUID.randomUUID() + fileName.substring(fileName.indexOf("."));
 
             PutObjectRequest request = PutObjectRequest.builder()
-                    .bucket(bucketName)
+                    .bucket(supabaseProperties.getBucketName())
                     .key(key)
                     .contentType(contentType)
                     .build();
 
             PresignedPutObjectRequest presignedRequest =
-                    S3presigner.presignPutObject(builder -> builder
+                    s3Presigner.presignPutObject(builder -> builder
                             .signatureDuration(Duration.ofMinutes(10))
                             .putObjectRequest(request)
                     );

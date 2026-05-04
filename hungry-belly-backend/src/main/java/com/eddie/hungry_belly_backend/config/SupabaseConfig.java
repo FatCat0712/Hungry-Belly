@@ -1,6 +1,7 @@
 package com.eddie.hungry_belly_backend.config;
 
-import org.springframework.beans.factory.annotation.Value;
+import com.eddie.hungry_belly_backend.config.properties.SupabaseProperties;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
@@ -13,26 +14,17 @@ import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import java.net.URI;
 
 @Configuration
+@RequiredArgsConstructor
 public class SupabaseConfig {
-    @Value("${supabase.endpointUrl}")
-    private String endpointUrl;
-
-    @Value("${supabase.regionName}")
-    private String regionName;
-
-    @Value("${supabase.accessKey}")
-    private String accessKey;
-
-    @Value("${supabase.secretKey}")
-    private String secretKey;
+    private final SupabaseProperties supabaseProperties;
 
     @Bean
     public S3Presigner s3Presigner() {
         return S3Presigner.builder()
-                .endpointOverride(URI.create(endpointUrl))
-                .region(Region.of(regionName))
+                .endpointOverride(URI.create(supabaseProperties.getEndpointUrl()))
+                .region(Region.of(supabaseProperties.getRegionName()))
                 .credentialsProvider(StaticCredentialsProvider.create(
-                        AwsBasicCredentials.create(accessKey, secretKey)
+                        AwsBasicCredentials.create(supabaseProperties.getAccessKey(), supabaseProperties.getSecretKey())
                 ))
                 .serviceConfiguration(S3Configuration.builder()
                         .pathStyleAccessEnabled(true)
@@ -42,11 +34,11 @@ public class SupabaseConfig {
 
     @Bean
     public S3Client createClient() {
-        AwsBasicCredentials credentials = AwsBasicCredentials.create(accessKey, secretKey);
+        AwsBasicCredentials credentials = AwsBasicCredentials.create(supabaseProperties.getAccessKey(), supabaseProperties.getSecretKey());
         return S3Client.builder()
-                .endpointOverride(URI.create(endpointUrl))
+                .endpointOverride(URI.create(supabaseProperties.getEndpointUrl()))
                 .credentialsProvider(StaticCredentialsProvider.create(credentials))
-                .region(Region.of(regionName))
+                .region(Region.of(supabaseProperties.getRegionName()))
                 .forcePathStyle(true)
                 .build();
     }

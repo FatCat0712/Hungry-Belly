@@ -50,9 +50,11 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     Set<Category> finCategoriesInSet(@Param("categories") Set<String> categories);
 
     @Query("""
-                SELECT c.id AS id, c.name AS name, c.parent.id AS parentId
+                SELECT 
+                    c.id AS id, 
+                    c.name AS name, 
+                    c.parent.id AS parentId
                 FROM Category c
-                WHERE c.enabled = true
                 ORDER BY c.name ASC
             """)
     List<CategoryFlatView> findAllEnabledFlat();

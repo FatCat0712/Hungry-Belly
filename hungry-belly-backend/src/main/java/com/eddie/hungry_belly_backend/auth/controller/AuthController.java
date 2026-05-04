@@ -3,6 +3,7 @@ package com.eddie.hungry_belly_backend.auth.controller;
 import com.eddie.hungry_belly_backend.auth.service.AuthService;
 import com.eddie.hungry_belly_backend.common.dto.response.ApiResponse;
 import com.eddie.hungry_belly_backend.common.util.CookieUtils;
+import com.eddie.hungry_belly_backend.config.properties.AuthTokenProperties;
 import com.eddie.hungry_belly_backend.token.service.TokenService;
 import com.eddie.hungry_belly_backend.user.dto.request.LoginRequest;
 import com.eddie.hungry_belly_backend.user.dto.request.UserUpdateRequest;
@@ -11,7 +12,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -26,20 +26,15 @@ public class AuthController {
     private final AuthService authService;
     private final TokenService tokenService;
     private final CookieUtils cookieUtils;
-
-    @Value("${auth.token.accessExpirationInMils}")
-    private Long accessExpirationInMils;
-
-    @Value("${auth.token.refreshExpirationInMils}")
-    private Long refreshExpirationInMils;
+    private final AuthTokenProperties authTokenProperties;
 
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<?>> authenticateUser(@RequestBody @Valid LoginRequest request, HttpServletResponse response) {
         Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
         String[] tokens = tokenService.issueTokens(request.getEmail(), authentication);
-        cookieUtils.addTokenCookie(response, "accessToken", tokens[0], accessExpirationInMils);
-        cookieUtils.addTokenCookie(response, "refreshToken", tokens[1], refreshExpirationInMils);
+        cookieUtils.addTokenCookie(response, "accessToken", tokens[0], authTokenProperties.getAccessExpirationInMils());
+        cookieUtils.addTokenCookie(response, "refreshToken", tokens[1], authTokenProperties.getRefreshExpirationInMils());
         ApiResponse<?> body = ApiResponse.success(null, "Login");
         return ResponseEntity.status(body.getStatus()).body(body);
     }
@@ -48,8 +43,8 @@ public class AuthController {
     public ResponseEntity<ApiResponse<?>> refreshAccessToken(HttpServletRequest request, HttpServletResponse response) {
         String token = cookieUtils.extractTokenFromCookies(request, "refreshToken");
         String[] tokens = tokenService.refresh(token);
-        cookieUtils.addTokenCookie(response, "accessToken", tokens[0], accessExpirationInMils);
-        cookieUtils.addTokenCookie(response, "refreshToken", tokens[1], refreshExpirationInMils);
+        cookieUtils.addTokenCookie(response, "accessToken", tokens[0], authTokenProperties.getAccessExpirationInMils());
+        cookieUtils.addTokenCookie(response, "refreshToken", tokens[1], authTokenProperties.getRefreshExpirationInMils());
         ApiResponse<?> body = ApiResponse.success(null, "Access token refreshed");
         return ResponseEntity.status(body.getStatus()).body(body);
     }

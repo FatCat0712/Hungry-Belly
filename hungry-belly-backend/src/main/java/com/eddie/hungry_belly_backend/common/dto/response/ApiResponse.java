@@ -38,7 +38,6 @@ public class ApiResponse<T> {
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.NO_CONTENT.value())
                 .message(message)
-                .data(data)
                 .build();
     }
 

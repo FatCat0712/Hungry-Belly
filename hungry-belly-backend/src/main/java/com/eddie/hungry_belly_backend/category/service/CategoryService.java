@@ -27,6 +27,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -36,21 +37,37 @@ public class CategoryService {
     private final ExportService exportService;
 
     public PageResponse<SummaryCategoryResponse> listCategoriesByPage(PageRequestDto request) {
+//        Build pageable from request
         Pageable pageable = PaginationUtils.buildPageable(request);
 
         Page<Long> pageCategoryIds;
 
-        if(request.getKeyword() != null && !request.getKeyword().isBlank()) {
-            pageCategoryIds = categoryRepository.findCategoriesWithKeyword(request.getKeyword(),pageable);
+//        Fetch only entity IDs first
+//        As the query applied pagination so the returned idList already has the correct
+//        page order
+        if (request.getKeyword() != null && !request.getKeyword().isBlank()) {
+            pageCategoryIds = categoryRepository.findCategoriesWithKeyword(request.getKeyword(), pageable);
         } else {
             pageCategoryIds = categoryRepository.findAllCategoryIds(pageable);
         }
 
+//        extract IDs from the current page
         List<Long> idList = pageCategoryIds.getContent();
 
+//        fetch full entities in bulk using the paged IDs.
         List<Category> categories = categoryRepository.findCategoryInIds(idList);
 
-        List<SummaryCategoryResponse> summaryCategoryResponses = categories.stream().map(this::convertToSummaryCategoryResponse).toList();
+//        convert fetched categories into a map for fast lookup by ID
+        Map<Long, Category> categoryMap = categories.stream().collect(Collectors.toMap(Category::getId, c -> c));
+
+//        The bulk fetch query uses WHERE id IN (:ids) which does not guarantee the same
+//        order as idList
+//        So we rebuild the entity list using idList to preserve original sort order
+//        from the first query
+        List<Category> orderedCategories = idList.stream().map(categoryMap::get).filter(Objects::nonNull).toList();
+
+//        convert to DTOs
+        List<SummaryCategoryResponse> summaryCategoryResponses = orderedCategories.stream().map(this::convertToSummaryCategoryResponse).toList();
 
         PageImpl<SummaryCategoryResponse> page = new PageImpl<>(summaryCategoryResponses,
                 pageable,
@@ -61,7 +78,7 @@ public class CategoryService {
     }
 
     public DetailCategoryResponse fetchCategoryById(Long id) {
-     Category savedCategory = findCategoryById(id);
+        Category savedCategory = findCategoryById(id);
         return convertToDetailCategoryResponse(savedCategory);
     }
 
@@ -90,11 +107,11 @@ public class CategoryService {
 
         validateCategoryName(request.getName(), id);
 
-            applyCommonCategoryFields(
-                    savedCategory, request.getName(), request.getAlias(),
-                    request.getImage(), request.getEnabled(), request.getDescription(),
-                    request.getParentId()
-            );
+        applyCommonCategoryFields(
+                savedCategory, request.getName(), request.getAlias(),
+                request.getImage(), request.getEnabled(), request.getDescription(),
+                request.getParentId()
+        );
 
         savedCategory = categoryRepository.save(savedCategory);
         return convertToDetailCategoryResponse(savedCategory);
@@ -102,7 +119,7 @@ public class CategoryService {
 
     public void deleteCategory(Long id) {
         Category savedCategory = findCategoryById(id);
-        if(savedCategory.getImage() != null) {
+        if (savedCategory.getImage() != null) {
             storageService.deleteFile(savedCategory.getImage());
         }
         categoryRepository.deleteById(id);
@@ -120,10 +137,10 @@ public class CategoryService {
         try {
             if ("csv".equals(format)) {
                 ExportStrategy<CategoryCsvCto> strategy = new CsvExporter<>(headers, new String[]{"ID", "name", "alias", "description", "status"});
-                return exportService.export("categories" , categoryCsvCtos, strategy);
+                return exportService.export("categories", categoryCsvCtos, strategy);
             } else if ("excel".equals(format)) {
                 ExportStrategy<CategoryCsvCto> strategy = new ExcelExporter<>(headers, c -> new Object[]{c.getId(), c.getName(), c.getAlias(), c.getDescription(), c.getStatus()});
-                return exportService.export("categories" ,categoryCsvCtos, strategy);
+                return exportService.export("categories", categoryCsvCtos, strategy);
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -145,14 +162,14 @@ public class CategoryService {
         category.setName(name);
         category.setAlias(generateAlias(alias, name));
 
-        if(image != null && !image.isEmpty()) {
+        if (image != null && !image.isEmpty()) {
             category.setImage(image);
         }
 
         category.setEnabled(enabled);
         category.setDescription(description);
 
-        if(parentId != null) {
+        if (parentId != null) {
             Category parentCategory = findCategoryById(parentId);
             category.setParent(parentCategory);
         }
@@ -166,7 +183,7 @@ public class CategoryService {
     private void validateCategoryName(String name, Long id) {
         Category categoryWithSameName = findCategoryByName(name);
 
-        if(categoryWithSameName != null && !categoryWithSameName.getId().equals(id)) {
+        if (categoryWithSameName != null && !categoryWithSameName.getId().equals(id)) {
             throw new BadRequestException("name: The name was used by another category");
         }
     }
@@ -209,38 +226,46 @@ public class CategoryService {
     }
 
     public List<CategoryItemResponse> displayCategoryInHierarchy() {
+        // Retrieve all enabled categories in flat format
         List<CategoryFlatView> flat = categoryRepository.findAllEnabledFlat();
 
-        Map<Long, List<CategoryFlatView>> childrenByParent = new HashMap<>();
-        List<CategoryFlatView> roots = new ArrayList<>();
+        // Initialize data structures for building the hierarchy
+        Map<Long, List<CategoryFlatView>> childrenByParent = new HashMap<>();  // Maps parent IDs to their children
+        List<CategoryFlatView> roots = new ArrayList<>();  // Stores top-level categories
 
-        for(CategoryFlatView c : flat) {
-            if(c.getParentId() == null) {
+        // Partition categories into roots and children based on parent ID
+        for (CategoryFlatView c : flat) {
+            if (c.getParentId() == null) {
+                // Category has no parent, so it's a root
                 roots.add(c);
-            }
-            else {
+            } else {
+                // Category has a parent, so group it with siblings
                 childrenByParent.computeIfAbsent(c.getParentId(), k -> new ArrayList<>()).add(c);
             }
         }
 
-//        preserve alphabetical order
+        // Sort all categories alphabetically (case-insensitive) to preserve consistent order
         Comparator<CategoryFlatView> byName = Comparator.comparing(CategoryFlatView::getName, String.CASE_INSENSITIVE_ORDER);
         roots.sort(byName);
         childrenByParent.values().forEach(list -> list.sort(byName));
 
-       List<CategoryItemResponse> categoryHierarchy = new ArrayList<>();
-       for(CategoryFlatView root : roots) {
-               categoryHierarchy.add(new CategoryItemResponse(root.getId(), root.getName()));
-               appendChildren(root.getId(), 1,  childrenByParent, categoryHierarchy);
-       }
-       return categoryHierarchy;
+        // Build the hierarchical response structure
+        List<CategoryItemResponse> categoryHierarchy = new ArrayList<>();
+        for (CategoryFlatView root : roots) {
+            // Add root category to hierarchy
+            categoryHierarchy.add(new CategoryItemResponse(root.getId(), root.getName()));
+            // Recursively add all children with appropriate indentation
+            appendChildren(root.getId(), 1, childrenByParent, categoryHierarchy);
+        }
+
+        return categoryHierarchy;
     }
 
     private void appendChildren(Long parentId, int level, Map<Long, List<CategoryFlatView>> childrenByParent, List<CategoryItemResponse> out) {
         List<CategoryFlatView> children = childrenByParent.getOrDefault(parentId, List.of());
-        for(CategoryFlatView child: children) {
-          String prefix = "--".repeat(level);
-           out.add(new CategoryItemResponse(child.getId(), prefix + child.getName()));
+        for (CategoryFlatView child : children) {
+            String prefix = "--".repeat(level);
+            out.add(new CategoryItemResponse(child.getId(), prefix + child.getName()));
             appendChildren(child.getId(), level + 1, childrenByParent, out);
         }
     }
