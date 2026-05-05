@@ -47,7 +47,5 @@ public class Food {
     @OneToMany(mappedBy = "food",cascade = CascadeType.ALL, orphanRemoval = true)
     private List<FoodImage> images;
 
-    @Column(nullable = false)
-    private boolean isDeleted;
 
 }

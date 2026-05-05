@@ -10,9 +10,11 @@ import com.eddie.hungry_belly_backend.entity.Category;
 import com.eddie.hungry_belly_backend.entity.food.Food;
 import com.eddie.hungry_belly_backend.entity.food.FoodImage;
 import com.eddie.hungry_belly_backend.entity.restaurant.Restaurant;
+import com.eddie.hungry_belly_backend.exception.BadRequestException;
 import com.eddie.hungry_belly_backend.exception.FoodNotFoundException;
 import com.eddie.hungry_belly_backend.food.dto.projection.FoodCategoryProjection;
 import com.eddie.hungry_belly_backend.food.dto.projection.FoodSummaryProjection;
+import com.eddie.hungry_belly_backend.food.dto.request.FoodCreateRequest;
 import com.eddie.hungry_belly_backend.food.dto.request.FoodImageRequest;
 import com.eddie.hungry_belly_backend.food.dto.request.FoodUpdateRequest;
 import com.eddie.hungry_belly_backend.food.dto.response.FoodDetailResponse;
@@ -24,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -37,6 +40,7 @@ public class FoodService {
     private final CategoryService categoryService;
     private final RestaurantService restaurantService;
 
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public PageResponse<FoodSummaryResponse> listAllFoodItems(PageRequestDto request) {
 //      Step 1: Build pageable (page number, size, sort) from request
         Pageable pageable = PaginationUtils.buildPageable(request);
@@ -109,45 +113,115 @@ public class FoodService {
         return PageMapper.toPageResponse(foodPage);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    public FoodDetailResponse createFoodItem(FoodCreateRequest request) {
+        Restaurant restaurant = restaurantService.findRestaurantByName(request.getRestaurant());
+        validateUniqueFoodName(request.getName(), restaurant.getId(), null);
+
+        Food newFood = new Food();
+        assignCreateData(newFood, request, restaurant);
+        persistImages(newFood, request.getImages());
+
+        newFood = foodRepository.save(newFood);
+        return covertToFoodItemResponse(newFood);
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public void updateFoodStatus(Long id) {
         Food dbFood = fetchFoodById(id);
         dbFood.setIsAvailable(!dbFood.getIsAvailable());
         foodRepository.save(dbFood);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public FoodDetailResponse getFoodDetails(Long foodId) {
         Food food = fetchFoodById(foodId);
         return covertToFoodItemResponse(food);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public FoodDetailResponse updateFoodItem(Long foodId, FoodUpdateRequest request) {
         Food dbFood = fetchFoodById(foodId);
-
-        dbFood.setDescription(request.getDescription());
-        dbFood.setName(request.getName());
-        dbFood.setPrice(request.getPrice());
-        dbFood.setIsAvailable(request.getAvailable());
-
-        request.setCategories(request.getCategories().stream().map(c -> c.replace("--", "")).collect(Collectors.toSet()));
-
-        Set<Category> latestCategories = categoryService.findCategoriesInSet(request.getCategories());
-        dbFood.setCategories(latestCategories);
-
         Restaurant restaurant = restaurantService.findRestaurantByName(request.getRestaurant());
-        dbFood.setRestaurant(restaurant);
 
-        deleteImages(dbFood, request);
-        persistImages(dbFood, request);
+        validateUniqueFoodName(request.getName(), restaurant.getId(), foodId);
+        assignUpdateData(dbFood, request, restaurant);
+
+        deleteImages(dbFood, request.getImages());
+        persistImages(dbFood, request.getImages());
 
 
         dbFood = foodRepository.save(dbFood);
         return covertToFoodItemResponse(dbFood);
     }
 
-    private void deleteImages(Food dbFood, FoodUpdateRequest request) {
-        if (request.getImages() == null || dbFood.getImages() == null) return;
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    public void deleteFood(Long foodId) {
+        Food dbFood = fetchFoodById(foodId);
+        if (dbFood.getImages() != null) {
+            for (FoodImage image : dbFood.getImages()) {
+                if (image.getImageUrl() != null) {
+                    storageService.deleteFile(image.getImageUrl());
+                }
+            }
+        }
+        foodRepository.deleteById(foodId);
+    }
 
-        for (FoodImageRequest reqImg : request.getImages()) {
+    private void assignCreateData(Food food, FoodCreateRequest request, Restaurant restaurant) {
+        assignCommonData(food, request.getName(), request.getDescription(), request.getPrice(), request.getCategories(), restaurant);
+        food.setIsAvailable(request.getAvailable() != null ? request.getAvailable() : true);
+    }
+
+    private void assignUpdateData(Food food, FoodUpdateRequest request, Restaurant restaurant) {
+        assignCommonData(food, request.getName(), request.getDescription(), request.getPrice(), request.getCategories(), restaurant);
+        if (request.getAvailable() != null) {
+            food.setIsAvailable(request.getAvailable());
+        }
+    }
+
+    private void assignCommonData(
+            Food food,
+            String rawName,
+            String description,
+            Double price,
+            Set<String> categories,
+            Restaurant restaurant
+    ) {
+        food.setName(sanitizeFoodName(rawName));
+        food.setDescription(description);
+        food.setPrice(price);
+        food.setCategories(resolveCategories(categories));
+        food.setRestaurant(restaurant);
+    }
+
+    private void validateUniqueFoodName(String rawName, Long restaurantId, Long excludeFoodId) {
+        String normalizedName = normalizeFoodName(rawName);
+        Food foodWithSameName = foodRepository.findActiveByNormalizedName(restaurantId, normalizedName).orElse(null);
+        if (foodWithSameName != null && !foodWithSameName.getId().equals(excludeFoodId)) {
+            throw new BadRequestException("name: Food name already exists in this restaurant");
+        }
+    }
+
+    private Set<Category> resolveCategories(Set<String> categories) {
+        Set<String> normalizedCategories = normalizeCategories(categories);
+        return categoryService.findCategoriesInSet(normalizedCategories);
+    }
+
+    private Set<String> normalizeCategories(Set<String> categories) {
+        if (categories == null || categories.isEmpty()) {
+            return Set.of();
+        }
+
+        return categories.stream()
+                .map(c -> c.replace("--", "").trim())
+                .collect(Collectors.toSet());
+    }
+
+    private void deleteImages(Food dbFood, List<FoodImageRequest> images) {
+        if (images == null || dbFood.getImages() == null) return;
+
+        for (FoodImageRequest reqImg : images) {
 //            skip not removed images
             if (!"removed".equals(reqImg.getStatus())) continue;
 
@@ -166,9 +240,8 @@ public class FoodService {
 
     }
 
-    private void persistImages(Food dbFood, FoodUpdateRequest request) {
-        List<FoodImageRequest> incoming = request.getImages();
-        if (incoming.isEmpty()) return;
+    private void persistImages(Food dbFood, List<FoodImageRequest> incoming) {
+        if (incoming == null || incoming.isEmpty()) return;
 
         List<FoodImage> existingImages = dbFood.getImages();
         if (existingImages == null) {
@@ -216,6 +289,17 @@ public class FoodService {
     private Food fetchFoodById(Long foodId) {
         return foodRepository.findById(foodId)
                 .orElseThrow(() -> new FoodNotFoundException("Food item not found"));
+    }
+
+    private String sanitizeFoodName(String rawName) {
+        if (rawName == null || rawName.isBlank()) {
+            throw new BadRequestException("name: Name is required");
+        }
+        return rawName.trim().replaceAll("\\s+", " ");
+    }
+
+    private String normalizeFoodName(String rawName) {
+        return sanitizeFoodName(rawName).toLowerCase(Locale.ROOT);
     }
 
 

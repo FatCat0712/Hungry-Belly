@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface FoodRepository extends JpaRepository<Food, Long> {
@@ -20,8 +21,7 @@ public interface FoodRepository extends JpaRepository<Food, Long> {
                             FROM food_items f
                             LEFT JOIN restaurants r 
                              ON r.id = f.restaurant_id
-                            WHERE f.is_deleted = false
-                            AND (
+                            WHERE (
                                 LOWER(f.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
                                 OR LOWER(r.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
                                 OR EXISTS(
@@ -38,8 +38,7 @@ public interface FoodRepository extends JpaRepository<Food, Long> {
                         FROM food_items f
                         LEFT JOIN restaurants r 
                         ON r.id = f.restaurant_id
-                        WHERE f.is_deleted = false
-                        AND (
+                        WHERE (
                             LOWER(f.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
                             OR LOWER(r.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
                             OR EXISTS(
@@ -55,8 +54,16 @@ public interface FoodRepository extends JpaRepository<Food, Long> {
     )
     Page<Long> findIdFoodsWithKeyword(@Param("keyword") String keyword, Pageable pageable);
 
-    @Query("SELECT f.id FROM Food f WHERE f.isDeleted = false")
+    @Query("SELECT f.id FROM Food f")
     Page<Long> findAllFoodIds(Pageable pageable);
+
+    @Query("""
+            SELECT f FROM Food f
+            WHERE f.restaurant.id = :restaurantId
+            AND LOWER(TRIM(f.name)) = :normalizedName
+            """)
+    Optional<Food> findActiveByNormalizedName(@Param("restaurantId") Long restaurantId,
+                                              @Param("normalizedName") String normalizedName);
 
     @Query("""
             SELECT 

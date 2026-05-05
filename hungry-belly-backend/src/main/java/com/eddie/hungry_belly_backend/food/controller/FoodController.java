@@ -2,6 +2,7 @@ package com.eddie.hungry_belly_backend.food.controller;
 
 import com.eddie.hungry_belly_backend.common.dto.response.ApiResponse;
 import com.eddie.hungry_belly_backend.common.util.paginate.PageRequestDto;
+import com.eddie.hungry_belly_backend.food.dto.request.FoodCreateRequest;
 import com.eddie.hungry_belly_backend.food.dto.request.FoodUpdateRequest;
 import com.eddie.hungry_belly_backend.food.service.FoodService;
 import lombok.RequiredArgsConstructor;
@@ -33,9 +34,22 @@ public class FoodController {
         return ResponseEntity.status(body.getStatus()).body(body);
     }
 
+    @PostMapping
+    public ResponseEntity<ApiResponse<?>> createFoodItem(@RequestBody FoodCreateRequest request) {
+        ApiResponse<?> body = ApiResponse.create(foodService.createFoodItem(request), "Food item created");
+        return ResponseEntity.status(body.getStatus()).body(body);
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<?>> updateFoodItem(@PathVariable("id") Long foodId, @RequestBody FoodUpdateRequest request) {
         ApiResponse<?> body = ApiResponse.success(foodService.updateFoodItem(foodId, request), "Food item updated");
+        return ResponseEntity.status(body.getStatus()).body(body);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<?>> deleteFoodItem(@PathVariable("id") Long foodId) {
+        foodService.deleteFood(foodId);
+        ApiResponse<?> body = ApiResponse.done(null, "Food item deleted");
         return ResponseEntity.status(body.getStatus()).body(body);
     }
 
