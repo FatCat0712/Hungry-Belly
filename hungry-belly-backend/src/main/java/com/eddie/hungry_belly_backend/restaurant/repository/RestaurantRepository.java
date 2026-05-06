@@ -17,8 +17,7 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
     @Query("SELECT r.id FROM Restaurant r WHERE " +
             "r.name LIKE %?1% OR " +
             "r.cuisine LIKE %?1% OR " +
-            "r.description LIKE %?1% OR " +
-            "r.owner LIKE %?1%" )
+            "r.description LIKE %?1% ")
     Page<Long> findRestaurantIdsByKeyword(String keyword, Pageable pageable);
 
     @Query("SELECT r.id FROM Restaurant r")
@@ -31,7 +30,6 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
             r.cuisine,
             ri.imageUrl,
             r.rating, 
-            r.owner, 
             r.orders, 
             r.enabled
         )

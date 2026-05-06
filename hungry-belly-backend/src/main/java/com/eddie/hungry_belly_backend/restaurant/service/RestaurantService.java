@@ -1,13 +1,16 @@
 package com.eddie.hungry_belly_backend.restaurant.service;
 
+import com.eddie.hungry_belly_backend.auth.service.RestaurantAuthorizationService;
 import com.eddie.hungry_belly_backend.common.dto.response.PageResponse;
 import com.eddie.hungry_belly_backend.common.mapper.PageMapper;
 import com.eddie.hungry_belly_backend.common.util.paginate.PageRequestDto;
 import com.eddie.hungry_belly_backend.common.util.paginate.PaginationUtils;
 import com.eddie.hungry_belly_backend.common.util.storage.service.StorageService;
+import com.eddie.hungry_belly_backend.entity.User;
 import com.eddie.hungry_belly_backend.entity.restaurant.Restaurant;
 import com.eddie.hungry_belly_backend.entity.restaurant.RestaurantImage;
 import com.eddie.hungry_belly_backend.exception.BadRequestException;
+import com.eddie.hungry_belly_backend.exception.RestaurantAccessDeniedException;
 import com.eddie.hungry_belly_backend.exception.RestaurantNotFoundException;
 import com.eddie.hungry_belly_backend.restaurant.dto.request.RestaurantCreateRequest;
 import com.eddie.hungry_belly_backend.restaurant.dto.request.RestaurantImageRequest;
@@ -16,6 +19,8 @@ import com.eddie.hungry_belly_backend.restaurant.dto.response.RestaurantDetailRe
 import com.eddie.hungry_belly_backend.restaurant.dto.response.RestaurantImageResponse;
 import com.eddie.hungry_belly_backend.restaurant.dto.response.RestaurantSummaryResponse;
 import com.eddie.hungry_belly_backend.restaurant.repository.RestaurantRepository;
+import com.eddie.hungry_belly_backend.restaurantuser.service.RestaurantUserService;
+import com.eddie.hungry_belly_backend.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -34,9 +39,12 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class RestaurantService {
     private final RestaurantRepository restaurantRepository;
+    private final UserService userService;
+    private final RestaurantUserService restaurantUserService;
     private final StorageService storageService;
+    private final RestaurantAuthorizationService authz;
 
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN','PARTNER')")
     public PageResponse<RestaurantSummaryResponse> getRestaurants(PageRequestDto request) {
 //      Step 1: Build pageable (page number, size, sort) from request
         Pageable pageable = PaginationUtils.buildPageable(request);
@@ -97,8 +105,12 @@ public class RestaurantService {
                 .orElseThrow(() -> new RestaurantNotFoundException("Restaurant not found" + id));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN','PARTNER')")
     public RestaurantDetailResponse getRestaurantById(Long restaurantId) {
+        Long currentUserId = authz.currentUserId();
+        if (!authz.isAdmin() && !authz.belongsToRestaurant(restaurantId, currentUserId)) {
+            throw new RestaurantAccessDeniedException("Access Denied");
+        }
         Restaurant restaurant = retrieveRestaurantFromDbById(restaurantId);
         return convertToRestaurantDetailResponse(restaurant);
     }
@@ -110,29 +122,54 @@ public class RestaurantService {
 
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN','PARTNER')")
+    @Transactional
     public RestaurantDetailResponse createRestaurant(RestaurantCreateRequest request) {
         validateRestaurantRequest(null, request);
 
         Restaurant newRestaurant = new Restaurant();
         assignData(newRestaurant, request);
-        newRestaurant.setOwner(request.getOwner());
         persistImages(newRestaurant, request);
 
         newRestaurant = restaurantRepository.save(newRestaurant);
+
+        Long ownerId;
+        if(authz.isAdmin()) {
+            if(request.getOwnerId() == null) {
+                throw new BadRequestException("ownerId: Owner ID is required when creating restaurant as ADMIN");
+            }
+            ownerId = request.getOwnerId();
+        }
+        else {
+            ownerId = authz.currentUserId();
+        }
+
+        User owner = userService.findUserById(ownerId);
+
+        restaurantUserService.createOwnerMembership(newRestaurant.getId(), owner.getId());
+
+
         return convertToRestaurantDetailResponse(newRestaurant);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN','PARTNER')")
     @Transactional
     public void updateRestaurantStatus(Long restaurantId) {
+        Long currentUserId = authz.currentUserId();
+        if(!authz.isAdmin() && !authz.isRestaurantOwner(restaurantId, currentUserId)) {
+            throw new RestaurantAccessDeniedException("Only OWNER can update restaurant status");
+        }
         Restaurant dbRestaurant = retrieveRestaurantFromDbById(restaurantId);
         restaurantRepository.updateRestaurantStatus(restaurantId, !dbRestaurant.getEnabled());
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN','PARTNER')")
     @Transactional
     public RestaurantDetailResponse updateRestaurant(Long id, RestaurantRequest request) {
+        Long currentUserId = authz.currentUserId();
+        if(!authz.isAdmin() && !authz.isOwnerOrManager(id, currentUserId)) {
+            throw new RestaurantAccessDeniedException("Only OWNER/MANAGER can update restaurant");
+        }
         Restaurant dbRestaurant = retrieveRestaurantFromDbById(id);
 
         validateRestaurantRequest(id, request);

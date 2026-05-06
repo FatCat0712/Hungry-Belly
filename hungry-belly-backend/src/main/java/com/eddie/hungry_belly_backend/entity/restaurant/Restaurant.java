@@ -4,6 +4,7 @@ import com.eddie.hungry_belly_backend.entity.food.Food;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Table(name = "restaurants")
@@ -28,19 +29,22 @@ public class Restaurant {
     private String phone;
 
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<RestaurantImage> images;
+    @Builder.Default
+    private List<RestaurantImage> images = new ArrayList<>();
 
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Food> foods;
+    @Builder.Default
+    private List<Food> foods = new ArrayList<>();
+
+    @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<RestaurantUser> restaurantUsers = new ArrayList<>();
 
     private Boolean enabled;
 
     private String address;
 
     private Double rating;
-
-    @Column(nullable = false, length = 30)
-    private String owner;
 
     @Column(nullable = false)
     private String cuisine;

@@ -32,9 +32,6 @@ public class User {
 
     private boolean enabled;
 
-    @Column()
-    private boolean deleted;
-
     @Column(length = 64)
     private String photo;
 

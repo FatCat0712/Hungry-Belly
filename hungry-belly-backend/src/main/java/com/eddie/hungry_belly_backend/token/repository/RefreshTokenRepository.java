@@ -23,5 +23,5 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(value = "delete rt from refresh_token rt INNER JOIN users u ON rt.user_id = u.id WHERE u.email = :email", nativeQuery = true)
-    int deleteByUserId(@Param("email") String email);
+    int deleteByUserEmail(@Param("email") String email);
 }

@@ -1,74 +1,76 @@
 # Hungry Belly
 
-Hungry Belly is a full-stack food delivery admin platform.
+Hungry Belly is a full-stack admin platform for managing users, roles, restaurants, categories, foods, authentication, and media uploads for a food delivery system.
 
-The project includes:
+The repository contains:
 
-- A Spring Boot backend with JWT authentication, role-based authorization, CRUD modules, export utilities, and S3-compatible storage integration.
-- A React + Vite frontend for admin operations such as users, roles, restaurants, categories, foods, and account management.
+- `hungry-belly-backend` - Spring Boot 3 REST API
+- `hungry-belly-frontend` - React 19 + Vite admin dashboard
+- `resources` - project assets, including the database schema image
 
-## Tech Stack
+## Database schema
 
-### Backend
+![Hungry Belly schema](resources/Hungery%20Belly.jpg)
 
-- Java 21
-- Spring Boot 3
-- Spring Security + JWT (access/refresh flow)
-- Spring Data JPA + Hibernate
-- MySQL
-- AWS SDK S3 (S3-compatible storage)
-- Apache POI + Super CSV (Excel/CSV export)
+## What's implemented
 
-### Frontend
+### Backend API
 
-- React 19 + Vite
-- React Router
-- TanStack Query
-- Axios
-- Bootstrap + Bootstrap Icons
+- JWT authentication with login, refresh token, logout, current-user lookup, and account update endpoints
+- Cookie-based access and refresh token flow
+- Role-based authorization with route protection for admin and restaurant-partner operations
+- User management with paginated listing, search/sort support, stats, create, update, reset password, enable/disable, delete, and export
+- Role and permission management with role creation, update, delete, lookup, and permission assignment support
+- Restaurant management with paginated listing, details, create, update, enable/disable, and delete
+- Restaurant membership APIs for listing members, adding members, changing member roles, removing members, and fetching current-user restaurant memberships
+- Category management with paginated root-category listing, hierarchical category data for forms, create, update, enable/disable, delete, and export
+- Food management with paginated listing, details, create, update, enable/disable, and delete
+- S3-compatible storage integration for temporary upload sessions and pre-signed upload URLs
+- Scheduled cleanup jobs for generated files and temporary image-related assets
+- Shared export pipeline for CSV and Excel downloads
 
-## Repository Structure
+### Frontend admin app
+
+- Login flow backed by cookie auth and automatic token refresh
+- Protected routes with redirect to login for unauthenticated users
+- Access-denied screen for authenticated users without permission
+- Dashboard shell with sidebar navigation and profile access
+- User management screen with paging, sorting, searching, export, status toggle, create/edit, and reset-password flows
+- Role management screens with permission-aware role create and edit flows
+- Restaurant management screens with create, edit, detail view, status updates, and image handling
+- Category management screens with paging, sorting, searching, export, create, edit, delete, and status updates
+- Food management screens with paging, sorting, searching, detail view, create, edit, delete, status updates, and image handling
+- Shared uploader flow that requests pre-signed URLs from the backend and uploads files directly to object storage
+
+### Present but still minimal
+
+- The dashboard currently uses static summary cards and sample recent-order content
+- The Orders page exists in routing and navigation, but is still a placeholder screen
+
+## Tech stack
+
+| Layer | Main technologies |
+| --- | --- |
+| Backend | Java 21, Spring Boot 3, Spring Security, Spring Data JPA, MySQL, JWT, Lombok |
+| Storage / export | AWS SDK S3-compatible client, Apache POI, Super CSV |
+| Frontend | React 19, Vite, React Router, TanStack Query, Axios, Bootstrap, Bootstrap Icons, React Toastify |
+
+## Repository structure
 
 ```text
 hungry-belly/
-	hungry-belly-backend/   # Spring Boot API
-	hungry-belly-frontend/  # React admin app
+|-- hungry-belly-backend/
+|-- hungry-belly-frontend/
+`-- resources/
 ```
 
-## Features Implemented
+## API surface
 
-### Authentication and Authorization
-
-- Login, refresh token, logout, and current user profile endpoints.
-- JWT-based stateless authentication.
-- Role-based access control with method and route protection.
-- HTTP-only cookie support and frontend auto-refresh flow for expired access tokens.
-
-### Admin Management Modules
-
-- User management: create, update, password reset, status toggle, delete, stats.
-- Role and permission management.
-- Restaurant management with status updates.
-- Category management with hierarchical/root retrieval and category exports.
-- Food management with list/detail/create/update/delete, status toggle, category mapping, and image handling.
-
-### Data Handling and Utility Features
-
-- Pagination, filtering/search, sorting across management screens.
-- CSV/Excel export endpoints for selected modules.
-- S3-compatible upload flow with pre-signed URL generation.
-- Scheduled cleanup tasks for stale image/export files.
-- Hard-delete CRUD flow for food/user modules (soft-delete removed in recent refactor).
-- Query optimizations for food/category listing workflows to reduce N+1 and improve pagination performance.
-- JWT/auth flow refinements and stricter backend authorization policies.
-
-## API Overview
-
-Base prefix: `/api/v1`
+Base path: `/api/v1`
 
 Main endpoint groups:
 
-- `/auth` (login, refresh-token, logout, me, update-account)
+- `/auth`
 - `/users`
 - `/roles`
 - `/permissions`
@@ -77,26 +79,23 @@ Main endpoint groups:
 - `/foods`
 - `/storage`
 
-## Prerequisites
+## Local setup
+
+### Prerequisites
 
 - Java 21
-- Maven 3.9+
-- Node.js 20+ (or 18+ with compatible npm)
+- Node.js 20+ and npm
 - MySQL 8+
 
-## Backend Setup
+### Backend
 
-1. Go to backend folder:
-
-```bash
-cd hungry-belly-backend
-```
-
-2. Create `.env` file in `hungry-belly-backend` with these keys:
+1. Go to the backend folder.
+2. Create `hungry-belly-backend\.env`.
+3. Add the required environment variables:
 
 ```env
 DB_URL=jdbc:mysql://localhost:3306/hungry_belly
-DB_USERNAME=your_mysql_user
+DB_USERNAME=your_mysql_username
 DB_PASSWORD=your_mysql_password
 
 BUCKET_NAME=your_bucket_name
@@ -104,79 +103,70 @@ ACCESS_BUCKET_KEY=your_storage_access_key
 SECRET_BUCKET_KEY=your_storage_secret_key
 REGION_NAME=your_region
 S3_ENDPOINT=your_s3_endpoint
-SERVICE_ROLE_KEY=your_service_role_key
 SIGN_ENDPOINT=your_sign_endpoint
+SERVICE_ROLE_KEY=your_service_role_key
 
 JWT_SECRET=your_jwt_secret
 ```
 
-3. Run backend:
+4. Start the API:
 
 ```bash
 ./mvnw spring-boot:run
 ```
 
-Backend runs on the default Spring Boot port unless changed in configuration.
-
-## Frontend Setup
-
-1. Open a new terminal and go to frontend folder:
+On Windows, use:
 
 ```bash
-cd hungry-belly-frontend
+mvnw.cmd spring-boot:run
 ```
 
-2. Install dependencies:
+### Frontend
 
-```bash
-npm install
-```
-
-3. Create `.env` file in `hungry-belly-frontend`:
+1. Go to the frontend folder.
+2. Install dependencies.
+3. Create `hungry-belly-frontend\.env`.
+4. Add:
 
 ```env
 VITE_API_URL=http://localhost:8080/api/v1
 ```
 
-4. Start development server:
+5. Start the frontend:
 
 ```bash
+npm install
 npm run dev
 ```
 
-Frontend runs on `http://localhost:5173` by default.
+The Vite dev server runs on `http://localhost:5173` by default.
 
-## Development Notes
-
-- Backend CORS is configured for `http://localhost:5173`.
-- Frontend Axios client uses `withCredentials: true` to support auth cookies.
-- Test profile config exists in `src/test/resources/application-test.yaml`.
-- Recent tests include category repository sorting/pagination behavior and cookie utility coverage.
-
-## Recent Changes
-
-- Added full food CRUD endpoints (`POST/PUT/DELETE`) and service workflows with validation.
-- Extended role-based access control for food APIs (`ADMIN`, `MANAGER`) in security configuration.
-- Refactored food/user lifecycle handling toward hard-delete consistency.
-- Improved food/category query strategies and table pagination behavior.
-- Added and refactored cleanup services for export files and image folders.
-
-## Scripts
+## Useful commands
 
 ### Backend
 
-- Run app: `./mvnw spring-boot:run`
-- Run tests: `./mvnw test`
+```bash
+./mvnw test
+./mvnw spring-boot:run
+```
 
 ### Frontend
 
-- Start dev server: `npm run dev`
-- Build production bundle: `npm run build`
-- Preview production build: `npm run preview`
-- Lint: `npm run lint`
+```bash
+npm run dev
+npm run build
+npm run lint
+npm run preview
+```
+
+## Notes
+
+- Backend configuration imports values from a local `.env` file
+- Default backend CORS configuration allows `http://localhost:5173`
+- The frontend sends credentials with API requests so auth cookies are included
+- Category and user exports support both CSV and Excel formats
 
 ## Author
 
-Mai Son Hai
-
-- GitHub: https://github.com/FatCat0712
+Mai Son Hai  
+GitHub: https://github.com/FatCat0712

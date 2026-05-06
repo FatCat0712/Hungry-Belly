@@ -82,6 +82,12 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(HttpStatus.FORBIDDEN.value(), "Access denied"));
     }
 
+    @ExceptionHandler(RestaurantAccessDeniedException.class)
+    public ResponseEntity<?> handleRestaurantAccessDenied(RestaurantAccessDeniedException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.error(HttpStatus.FORBIDDEN.value(), ex.getMessage()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<?> handleGeneralException(Exception ex) {
         log.error("An unexpected error occurred: {}", ex.getMessage(), ex);

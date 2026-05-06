@@ -1,7 +1,6 @@
 package com.eddie.hungry_belly_backend.security.jwt;
 
 import com.eddie.hungry_belly_backend.common.util.CookieUtils;
-import com.eddie.hungry_belly_backend.security.AppUserDetailsService;
 import io.jsonwebtoken.JwtException;
 import jakarta.annotation.Nonnull;
 import jakarta.servlet.FilterChain;
@@ -32,9 +31,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Autowired
     private CookieUtils cookieUtils;
-
-    @Autowired
-    private AppUserDetailsService userDetailsService;
 
     @Autowired
     private JwtAuthenticationEntryPoint authenticationEntryPoint;

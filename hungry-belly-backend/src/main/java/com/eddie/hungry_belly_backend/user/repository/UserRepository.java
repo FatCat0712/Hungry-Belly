@@ -15,15 +15,15 @@ import java.util.Optional;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
-    boolean existsByEmailAndDeletedFalse(String email);
+    boolean existsByEmail(String email);
 
-    @Query("SELECT u FROM User u JOIN FETCH u.roles WHERE u.email = ?1 AND u.deleted = false")
+    @Query("SELECT u FROM User u JOIN FETCH u.roles WHERE u.email = ?1")
     User findByEmail(String email);
 
     // Pagination query - returns IDs only (no collection fetch)
     @Query(
-            value = "SELECT u.id FROM users u WHERE u.deleted = false",
-            countQuery = "SELECT COUNT(*) FROM users u WHERE u.deleted = false",
+            value = "SELECT u.id FROM users u",
+            countQuery = "SELECT COUNT(*) FROM users",
             nativeQuery = true
     )
     Page<Long> findAllUserIds(Pageable pageable);
@@ -31,8 +31,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query(value = """
             SELECT u.id            
             FROM users u
-            WHERE u.deleted = false
-            AND (
+            WHERE 
                 LOWER(u.first_name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
                 LOWER(u.last_name) LIKE LOWER(CONCAT('%', :keyword, '%'))  OR
                 LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
@@ -40,17 +39,16 @@ public interface UserRepository extends JpaRepository<User, Long> {
                 EXISTS (
                     SELECT 1
                     FROM user_roles ur
-                    JOIN roles r ON r.id = ur.role_id
+                    LEFT JOIN roles r ON r.id = ur.role_id
                     WHERE ur.user_id = u.id
                     AND LOWER(r.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
                 )
-            )
+            
             """,
             countQuery = """
                     SELECT COUNT(*)            
                     FROM users u
-                    WHERE u.deleted = false
-                    AND (
+                    WHERE
                         LOWER(u.first_name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
                         LOWER(u.last_name) LIKE LOWER(CONCAT('%', :keyword, '%'))  OR
                         LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
@@ -58,11 +56,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
                         EXISTS (
                             SELECT 1
                             FROM user_roles ur
-                            JOIN roles r ON r.id = ur.role_id
+                            LEFT JOIN roles r ON r.id = ur.role_id
                             WHERE ur.user_id = u.id
                             AND LOWER(r.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
                         )
-                    )
                     """,
             nativeQuery = true)
     Page<Long> findAllUserIdsWithKeyword(@Param("keyword") String keyword, Pageable pageable);
@@ -77,10 +74,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT COUNT(*) FROM User u WHERE u.enabled = true")
     Long countActiveUser();
 
-    @Query("SELECT COUNT(*) FROM User u WHERE u.deleted = false")
+    @Query("SELECT COUNT(*) FROM User")
     Long countAllUsers();
 
-    @Query("UPDATE User u SET u.deleted = true, u.enabled = false WHERE u.id = ?1")
+    @Query("DELETE FROM  User u WHERE u.id = ?1")
     @Modifying
     void deleteUserById(Long id);
 
@@ -90,9 +87,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Long countById(Long id);
 
-    @Query("SELECT u FROM User u LEFT JOIN FETCH u.roles WHERE u.id = ?1 AND u.deleted = false")
+    @Query("SELECT u FROM User u LEFT JOIN FETCH u.roles WHERE u.id = ?1")
     Optional<User> findUserById(Long id);
 
-    @Query("SELECT COUNT(*) FROM User u JOIN u.roles r WHERE r.name = 'Admin' AND u.enabled = true AND u.deleted = false")
+    @Query("SELECT COUNT(*) FROM User u JOIN u.roles r WHERE r.name = 'Admin' AND u.enabled = true")
     long countActiveAdmins();
 }

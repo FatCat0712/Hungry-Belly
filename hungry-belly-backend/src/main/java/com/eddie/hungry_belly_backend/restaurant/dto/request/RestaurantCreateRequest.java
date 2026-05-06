@@ -6,5 +6,5 @@ import lombok.Setter;
 @Getter
 @Setter
 public class RestaurantCreateRequest extends RestaurantRequest {
-    private String owner;
+    private Long ownerId;
 }

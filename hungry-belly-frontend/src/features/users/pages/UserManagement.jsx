@@ -53,8 +53,7 @@ export default function UserManagement() {
   const navigate = useNavigate();
   const { toggleStatus } = useToggleStatus();
 
-  const [format, setFormat] = useState("");
-  const { exportUsers } = useExportUsers(format);
+  const { exportUsers } = useExportUsers();
 
   const { user: loggedInUser } = useContext(AuthContext);
 
@@ -83,14 +82,13 @@ export default function UserManagement() {
     setUserToDelete(null);
   };
 
-  const handlePageChange = (page) => {
-    setPage(page, { totalItems: totalElements, pageSize });
+  const handlePageChange = (pageNumber) => {
+    setPage(pageNumber, { totalItems: totalElements, pageSize });
   };
 
-  const handleExportUsers = async () => {
-    // Keep modal UX in place until export API/hook is added.
+  const handleExportUsers = async (format) => {
     toast.info("Exporting users... Please wait.");
-    const data = await exportUsers();
+    const data = await exportUsers(format);
     window.open(data.downloadUrl);
   };
 
@@ -116,19 +114,13 @@ export default function UserManagement() {
           <div className="d-flex flex-wrap gap-2">
             <button
               className="btn btn-secondary d-flex align-items-center gap-2"
-              onClick={() => {
-                setFormat("excel");
-                handleExportUsers();
-              }}
+              onClick={() => handleExportUsers("excel")}
             >
               <i className="bi bi-download"></i> Export Excel
             </button>
             <button
               className="btn btn-info d-flex align-items-center gap-2"
-              onClick={() => {
-                setFormat("csv");
-                handleExportUsers();
-              }}
+              onClick={() => handleExportUsers("csv")}
             >
               <i className="bi bi-download"></i> Export CSV
             </button>
@@ -141,7 +133,6 @@ export default function UserManagement() {
           </div>
         </div>
 
-        {/* Statistics Cards */}
         <div className="row g-3 mb-3">
           <div className="col-sm-4">
             <div className="card border-0 shadow-sm">

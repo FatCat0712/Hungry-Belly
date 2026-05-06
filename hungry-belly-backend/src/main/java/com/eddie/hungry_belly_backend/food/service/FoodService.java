@@ -1,5 +1,6 @@
 package com.eddie.hungry_belly_backend.food.service;
 
+import com.eddie.hungry_belly_backend.auth.service.RestaurantAuthorizationService;
 import com.eddie.hungry_belly_backend.category.service.CategoryService;
 import com.eddie.hungry_belly_backend.common.dto.response.PageResponse;
 import com.eddie.hungry_belly_backend.common.mapper.PageMapper;
@@ -39,6 +40,7 @@ public class FoodService {
     private final StorageService storageService;
     private final CategoryService categoryService;
     private final RestaurantService restaurantService;
+    private final RestaurantAuthorizationService authz;
 
     @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public PageResponse<FoodSummaryResponse> listAllFoodItems(PageRequestDto request) {
@@ -116,6 +118,13 @@ public class FoodService {
     @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public FoodDetailResponse createFoodItem(FoodCreateRequest request) {
         Restaurant restaurant = restaurantService.findRestaurantByName(request.getRestaurant());
+        Long uid = authz.currentUserId();
+        Long rid = restaurant.getId();
+        if (!authz.isAdmin() && !authz.isOwnerOrManager(rid, uid)) {
+            throw new BadRequestException("You don't have permission to manage food items for this restaurant");
+        }
+
+
         validateUniqueFoodName(request.getName(), restaurant.getId(), null);
 
         Food newFood = new Food();

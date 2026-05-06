@@ -48,7 +48,7 @@ public class UserService {
 
     @PreAuthorize("hasRole('ADMIN')")
     public UserResponse createUser(UserCreateRequest request) {
-        boolean isEmailUnique = userRepository.existsByEmailAndDeletedFalse(request.getEmail());
+        boolean isEmailUnique = userRepository.existsByEmail(request.getEmail());
         if (isEmailUnique) {
             throw new BadRequestException("email: Email already exists");
         }

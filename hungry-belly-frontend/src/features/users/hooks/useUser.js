@@ -133,9 +133,9 @@ export const useGetUser = (userId) => {
   return { user: data || {}, isLoading };
 };
 
-export const useExportUsers = (format) => {
+export const useExportUsers = () => {
   const { mutateAsync: exportUsers } = useMutation({
-    mutationFn: () => exportUsersApi(format),
+    mutationFn: (format) => exportUsersApi(format),
   });
 
   return { exportUsers };

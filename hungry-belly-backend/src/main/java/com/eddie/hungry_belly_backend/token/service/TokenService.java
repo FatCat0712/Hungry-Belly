@@ -74,7 +74,7 @@ public class TokenService {
     public void logout() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getPrincipal().toString();
-        refreshTokenRepository.deleteByUserId(email);
+        refreshTokenRepository.deleteByUserEmail(email);
     }
 
 }
