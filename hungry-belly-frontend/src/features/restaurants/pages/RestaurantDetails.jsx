@@ -12,21 +12,6 @@ const currencyFormatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 0,
 });
 
-const ensureArray = (value) => {
-  if (Array.isArray(value)) {
-    return value.filter(Boolean);
-  }
-
-  if (typeof value === "string") {
-    return value
-      .split(",")
-      .map((item) => item.trim())
-      .filter(Boolean);
-  }
-
-  return [];
-};
-
 const pickFirst = (source, keys) => {
   for (const key of keys) {
     const value = source?.[key];
@@ -81,56 +66,27 @@ const formatMetric = (value, suffix = "") => {
   return `${value}${suffix}`;
 };
 
-const sampleRestaurantImages = [
-  {
-    src: "https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=1200&q=80",
-    alt: "Warm dining room with prepared tables",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=900&q=80",
-    alt: "Restaurant terrace with ambient lighting",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=900&q=80",
-    alt: "Signature plated dish served in a modern restaurant",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1515669097368-22e68427d265?auto=format&fit=crop&w=900&q=80",
-    alt: "Chef preparing food in an open kitchen",
-  },
-];
-
-const normalizeGalleryImages = (value) => {
-  if (!Array.isArray(value)) {
+const normalizeGalleryImages = (images) => {
+  if (!Array.isArray(images)) {
     return [];
   }
 
-  return value
-    .map((item, index) => {
-      if (typeof item === "string") {
-        return {
-          src: item,
-          alt: `Restaurant gallery image ${index + 1}`,
-        };
-      }
-
-      const src =
-        item?.imageUrl || item?.url || item?.src || item?.photoUrl || null;
-
-      if (!src) {
-        return null;
-      }
-
-      return {
-        src,
-        alt:
-          item?.alt ||
-          item?.caption ||
-          item?.title ||
-          `Restaurant gallery image ${index + 1}`,
-      };
-    })
-    .filter(Boolean);
+  return images
+    .filter((img) => img?.url)
+    .map((img) => ({
+      src: img.url,
+      alt:
+        img.type === "COVER"
+          ? "Restaurant cover image"
+          : "Restaurant gallery image",
+      type: img.type,
+      isPrimary: img.isPrimary,
+    }))
+    .sort((a, b) => {
+      if (a.isPrimary) return -1;
+      if (b.isPrimary) return 1;
+      return 0;
+    });
 };
 
 export default function RestaurantDetails() {
@@ -188,54 +144,19 @@ export default function RestaurantDetails() {
     "orderCount",
     "completedOrders",
   ]);
-  const owner = pickFirst(restaurant, ["owner", "ownerName", "managerName"]);
-  const description = pickFirst(restaurant, [
-    "description",
-    "shortDescription",
-    "about",
-  ]);
-  const address = pickFirst(restaurant, [
-    "address",
-    "fullAddress",
-    "location",
-    "streetAddress",
-  ]);
-  const phone = pickFirst(restaurant, [
-    "phoneNumber",
-    "phone",
-    "contactNumber",
-  ]);
-  const email = pickFirst(restaurant, ["email", "contactEmail"]);
-  const deliveryTime = pickFirst(restaurant, [
-    "deliveryTime",
-    "estimatedDeliveryTime",
-  ]);
-  const priceRange = pickFirst(restaurant, ["priceRange", "priceTier"]);
-  const minimumOrder = pickFirst(restaurant, [
-    "minimumOrder",
-    "minimumOrderAmount",
-  ]);
+
+  const galleryImages = normalizeGalleryImages(restaurant?.images || []);
   const heroImage =
-    pickFirst(restaurant, ["imageUrl", "bannerUrl", "coverImageUrl"]) ||
+    galleryImages.find((img) => img.isPrimary)?.src ||
+    galleryImages[0]?.src ||
     "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80";
-  const galleryImagesFromData = normalizeGalleryImages(
-    pickFirst(restaurant, ["images", "gallery", "photos", "media"]),
-  );
-  const galleryImages =
-    galleryImagesFromData.length > 0
-      ? galleryImagesFromData
-      : sampleRestaurantImages.map((image, index) => ({
-          ...image,
-          alt: `${restaurantName} sample image ${index + 1}: ${image.alt}`,
-        }));
-  const isUsingSampleGallery = galleryImagesFromData.length === 0;
-  const featureTags = ensureArray(
-    pickFirst(restaurant, ["categories", "tags", "features"]),
-  );
   const openingHours = formatHours(
     pickFirst(restaurant, ["openingHours", "businessHours", "hours"]),
   );
   const isActive = Boolean(restaurant?.enabled);
+  const members = restaurant?.members || [];
+  const featuredMembers = members.slice(0, 3);
+  const owner = restaurant.members?.find((m) => m.role === "OWNER");
 
   return (
     <div className="restaurant-details-page container-fluid px-0">
@@ -281,10 +202,9 @@ export default function RestaurantDetails() {
                 {restaurantName}
               </h1>
               <p className="restaurant-hero__lead mb-0">
-                {description ||
-                  `${restaurantName} is listed in the admin system${
-                    cuisine ? ` under ${cuisine}` : ""
-                  }. This page centralizes operational details, ownership, and service visibility in one place.`}
+                {`${restaurantName} is listed in the admin system${
+                  cuisine ? ` under ${cuisine}` : ""
+                }. This page centralizes operational details, ownership, and service visibility in one place.`}
               </p>
             </div>
 
@@ -301,11 +221,20 @@ export default function RestaurantDetails() {
                   </div>
                   <div>
                     <span className="restaurant-stat__label">Owner</span>
-                    <strong>{owner || "Not assigned"}</strong>
+                    <div className="d-flex align-items-center gap-2">
+                      {owner?.imageUrl && (
+                        <img
+                          src={owner.imageUrl}
+                          alt={owner.fullName}
+                          style={{ width: 24, height: 24, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
+                        />
+                      )}
+                      <strong>{owner?.fullName || "Not assigned"}</strong>
+                    </div>
                   </div>
                   <div>
                     <span className="restaurant-stat__label">Price range</span>
-                    <strong>{priceRange || "Not set"}</strong>
+                    <strong>{"Not set"}</strong>
                   </div>
                 </div>
 
@@ -381,7 +310,7 @@ export default function RestaurantDetails() {
                     <span className="restaurant-metric-card__label">
                       Delivery ETA
                     </span>
-                    <strong>{deliveryTime || "Not shared"}</strong>
+                    <strong>{"Not shared"}</strong>
                   </div>
                 </div>
               </div>
@@ -393,8 +322,7 @@ export default function RestaurantDetails() {
               <span className="restaurant-section-kicker">Story</span>
               <h2 className="h4 mb-3">Brand and service context</h2>
               <p className="text-muted mb-4 restaurant-body-copy">
-                {description ||
-                  `${restaurantName} currently has limited descriptive content in the dataset. This view is ready to surface richer brand copy, policy notes, and operational guidance as the restaurant profile expands.`}
+                {"Not shared"}
               </p>
 
               <div className="row g-3">
@@ -412,7 +340,7 @@ export default function RestaurantDetails() {
                     <span className="restaurant-info-block__label">
                       Minimum order
                     </span>
-                    <strong>{formatMinimumOrder(minimumOrder)}</strong>
+                    <strong>{formatMinimumOrder(0)}</strong>
                     <small>
                       Displayed when platform order thresholds are configured.
                     </small>
@@ -441,37 +369,40 @@ export default function RestaurantDetails() {
                   <span className="restaurant-section-kicker">Gallery</span>
                   <h2 className="h4 mb-1">Visual preview</h2>
                 </div>
-                {isUsingSampleGallery ? (
-                  <span className="restaurant-chip restaurant-chip--outline">
-                    Sample imagery
-                  </span>
-                ) : null}
               </div>
 
-              <div className="restaurant-gallery">
-                <figure className="restaurant-gallery__featured mb-0">
-                  <img
-                    src={galleryImages[0].src}
-                    alt={galleryImages[0].alt}
-                    className="restaurant-gallery__image"
-                  />
-                </figure>
+              {galleryImages.length > 0 ? (
+                <div className="restaurant-gallery">
+                  <figure className="restaurant-gallery__featured mb-0">
+                    <img
+                      src={galleryImages[0].src}
+                      alt={galleryImages[0].alt}
+                      className="restaurant-gallery__image"
+                    />
+                  </figure>
 
-                <div className="restaurant-gallery__grid">
-                  {galleryImages.slice(1).map((image) => (
-                    <figure
-                      key={image.src}
-                      className="restaurant-gallery__tile mb-0"
-                    >
-                      <img
-                        src={image.src}
-                        alt={image.alt}
-                        className="restaurant-gallery__image"
-                      />
-                    </figure>
-                  ))}
+                  <div className="restaurant-gallery__grid">
+                    {galleryImages.slice(1).map((image) => (
+                      <figure
+                        key={image.src}
+                        className="restaurant-gallery__tile mb-0"
+                      >
+                        <img
+                          src={image.src}
+                          alt={image.alt}
+                          className="restaurant-gallery__image"
+                        />
+                      </figure>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="alert alert-info mb-0">
+                  <p className="mb-0">
+                    No gallery images available for this restaurant.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -485,19 +416,28 @@ export default function RestaurantDetails() {
               <div className="restaurant-detail-list">
                 <div>
                   <span>Owner</span>
-                  <strong>{owner || "Not assigned"}</strong>
+                  <div className="d-flex align-items-center gap-2">
+                    {owner?.imageUrl && (
+                      <img
+                        src={owner.imageUrl}
+                        alt={owner.fullName}
+                        style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
+                      />
+                    )}
+                    <strong>{owner?.fullName || "Not assigned"}</strong>
+                  </div>
                 </div>
                 <div>
                   <span>Phone</span>
-                  <strong>{phone || "No phone on file"}</strong>
+                  <strong>{owner?.phone || "No phone on file"}</strong>
                 </div>
                 <div>
                   <span>Email</span>
-                  <strong>{email || "No email on file"}</strong>
+                  <strong>{owner?.email || "No email on file"}</strong>
                 </div>
                 <div>
                   <span>Address</span>
-                  <strong>{address || "No address on file"}</strong>
+                  <strong>{owner?.address || "No address on file"}</strong>
                 </div>
               </div>
             </div>
@@ -505,43 +445,72 @@ export default function RestaurantDetails() {
 
           <div className="restaurant-panel card border-0 shadow-sm mb-4">
             <div className="card-body p-4">
-              <span className="restaurant-section-kicker">Signals</span>
-              <h2 className="h4 mb-3">Visibility tags</h2>
-              <div className="d-flex flex-wrap gap-2">
-                {(featureTags.length > 0
-                  ? featureTags
-                  : [
-                      cuisine || "Uncategorized",
-                      isActive ? "Accepting orders" : "Not accepting orders",
-                      rating ? "Rated listing" : "Unrated listing",
-                    ]
-                ).map((tag) => (
-                  <span
-                    key={tag}
-                    className="restaurant-chip restaurant-chip--outline"
-                  >
-                    {tag}
-                  </span>
-                ))}
+              <div className="d-flex justify-content-between align-items-start gap-2 mb-3">
+                <div>
+                  <span className="restaurant-section-kicker">Members</span>
+                  <h2 className="h5 mb-1">Team overview</h2>
+                </div>
               </div>
-            </div>
-          </div>
 
-          <div className="restaurant-panel card border-0 shadow-sm">
-            <div className="card-body p-4">
-              <span className="restaurant-section-kicker">Admin notes</span>
-              <h2 className="h4 mb-3">Recommended next actions</h2>
-              <ul className="restaurant-action-list mb-0">
-                <li>
-                  Review missing profile fields before publishing this
-                  restaurant more broadly.
-                </li>
-                <li>Confirm that ownership and contact details are current.</li>
-                <li>
-                  Use the edit flow to enrich the profile with description,
-                  schedule, and pricing data.
-                </li>
-              </ul>
+              {members.length > 0 ? (
+                <>
+                  <div className="restaurant-member-compact-list">
+                    {featuredMembers
+                      .filter((member) => member.role !== "OWNER")
+                      .map((member) => (
+                        <article
+                          key={member.membershipId}
+                          className="restaurant-member-compact"
+                        >
+                          <img
+                            src={member.imageUrl}
+                            alt={member.fullName}
+                            className="restaurant-member-compact__avatar"
+                          />
+                          <div className="restaurant-member-compact__body">
+                            <h3 className="h6 mb-0">{member.fullName}</h3>
+                            <p className="mb-1 text-muted small">
+                              {member.role}
+                            </p>
+                            <div className="d-flex flex-wrap gap-2 align-items-center">
+                              <span className="restaurant-member-compact__meta">
+                                {member.enabled ? "Active" : "Inactive"}
+                              </span>
+                            </div>
+                            <a
+                              className="restaurant-member-compact__contact"
+                              href={`mailto:${member.email}`}
+                            >
+                              {member.email}
+                            </a>
+                          </div>
+                        </article>
+                      ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    className="btn btn-outline-primary btn-sm mt-3"
+                    onClick={() => navigate(`/restaurants/${restaurant?.id}/members`)}
+                  >
+                    <i className="bi bi-people me-1"></i>
+                    Manage members
+                  </button>
+
+                  {members.length > 3 && (
+                    <p className="text-muted small mb-0 mt-3">
+                      Showing {featuredMembers.length} of {members.length}{" "}
+                      members.
+                    </p>
+                  )}
+                </>
+              ) : (
+                <div className="alert alert-info mb-0">
+                  <p className="mb-0">
+                    No team members assigned to this restaurant.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>

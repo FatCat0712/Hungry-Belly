@@ -39,7 +39,10 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        String[] whiteList = {API + "/auth/login", API + "/auth/refresh-token"};
+        String[] whiteList = {
+                API + "/auth/login", API + "/auth/refresh-token", "/swagger-ui/**",
+                "/swagger-ui.html", "/v3/api-docs/**"
+        };
 
 
         http
@@ -49,8 +52,8 @@ public class SecurityConfig {
                         .requestMatchers(whiteList).permitAll()
                         .requestMatchers(API + "/users/**").hasRole("ADMIN")
                         .requestMatchers(API + "/roles/**").hasRole("ADMIN")
-                        .requestMatchers(API + "/restaurants/**").hasAnyRole("ADMIN","PARTNER")
-                        .requestMatchers( API + "/foods/**").hasAnyRole("ADMIN", "PARTNER")
+                        .requestMatchers(API + "/restaurants/**").hasAnyRole("ADMIN", "PARTNER")
+                        .requestMatchers(API + "/foods/**").hasAnyRole("ADMIN", "PARTNER")
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception
@@ -70,7 +73,7 @@ public class SecurityConfig {
 
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
-        var authProvider =  new DaoAuthenticationProvider(userDetailsService);
+        var authProvider = new DaoAuthenticationProvider(userDetailsService);
         authProvider.setPasswordEncoder(passwordEncoder());
         return authProvider;
     }

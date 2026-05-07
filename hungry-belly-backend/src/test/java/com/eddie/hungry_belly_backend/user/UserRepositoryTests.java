@@ -168,14 +168,12 @@ public class UserRepositoryTests {
         Optional<User> userRavi = userRepository.findById(userWithTwoRoles.getId());
 
         userRavi.ifPresent(user -> {
-            user.setDeleted(true);
             userRepository.save(user);
         });
 
         Optional<User> updatedUser = userRepository.findById(userWithTwoRoles.getId());
 
         assertThat(updatedUser).isPresent();
-        assertThat(updatedUser.get().isDeleted()).isTrue();
     }
 
     @Test

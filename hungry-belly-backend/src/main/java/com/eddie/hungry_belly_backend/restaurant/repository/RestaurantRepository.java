@@ -30,12 +30,14 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
             r.cuisine,
             ri.imageUrl,
             r.rating, 
-            r.orders, 
+            r.orders,
+            CONCAT(ru.user.firstName,' ', ru.user.lastName), 
             r.enabled
         )
     FROM Restaurant r
     LEFT JOIN r.images ri ON ri.isPrimary = true
-    WHERE r.id IN :ids
+    LEFT JOIN r.restaurantUsers ru ON r.id = ru.restaurant.id
+    WHERE r.id IN :ids AND ru.role = com.eddie.hungry_belly_backend.entity.restaurant.RestaurantRole.OWNER
     """)
     List<RestaurantSummaryResponse>findAllWithCoverImageByIds(@Param("ids") List<Long> ids);
 

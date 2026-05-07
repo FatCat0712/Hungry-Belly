@@ -1,0 +1,22 @@
+.restaurant-member-management-page .member-avatar,
+.restaurant-member-management-page .member-owner-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.restaurant-member-management-page .member-owner-avatar {
+  width: 44px;
+  height: 44px;
+}
+
+.restaurant-member-management-page .member-avatar--placeholder,
+.restaurant-member-management-page .member-owner-avatar--placeholder {
+  background: #eef1f4;
+  color: #6c757d;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}

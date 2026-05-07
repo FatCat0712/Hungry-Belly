@@ -55,3 +55,11 @@ export const deleteRestaurantApi = async (id) => {
   const response = await api.delete(`${API_URL}/${id}`);
   return response.data;
 };
+
+export const changeMemberRoleApi = async (restaurantId, userId, newRole) => {
+  const response = await api.patch(
+    `${API_URL}/${restaurantId}/members/${userId}/role`,
+    { role: newRole },
+  );
+  return response.data;
+};

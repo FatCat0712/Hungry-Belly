@@ -35,6 +35,9 @@ public class User {
     @Column(length = 64)
     private String photo;
 
+    @Column(length = 11, unique = true)
+    private String phone;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_roles",

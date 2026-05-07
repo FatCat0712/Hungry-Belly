@@ -41,4 +41,7 @@ public interface RestaurantUserRepository extends JpaRepository<RestaurantUser, 
             """)
     List<RestaurantUser> findByUserIdsWithRestaurant(@Param("userIds") List<Long> userIds);
 
+
+
+
 }

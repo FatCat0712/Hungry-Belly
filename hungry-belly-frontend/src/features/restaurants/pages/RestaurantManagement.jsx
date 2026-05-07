@@ -379,6 +379,15 @@ export default function RestaurantManagement() {
                               <i className="bi bi-eye"></i>
                             </button>
                             <button
+                              className="btn btn-sm btn-outline-primary"
+                              onClick={() => {
+                                navigate(`/restaurants/${restaurant.id}/members`);
+                              }}
+                              title="Manage members"
+                            >
+                              <i className="bi bi-people"></i>
+                            </button>
+                            <button
                               className="btn btn-sm btn-outline-secondary"
                               onClick={() => {
                                 navigate(

@@ -10,6 +10,7 @@ import Orders from "../features/orders/pages/Orders";
 import EditRestaurant from "../features/restaurants/pages/EditRestaurant";
 import RestaurantDetails from "../features/restaurants/pages/RestaurantDetails";
 import RestaurantManagement from "../features/restaurants/pages/RestaurantManagement";
+import RestaurantUserManagement from "../features/restaurants/pages/RestaurantUserManagement";
 import CreateRole from "../features/roles/pages/CreateRole";
 import EditRole from "../features/roles/pages/EditRole";
 import RoleManagement from "../features/roles/pages/RoleManagement";
@@ -53,6 +54,10 @@ function App() {
               <Route path="restaurants/new" element={<CreateRestaurant />} />
               <Route path="restaurants/:id" element={<RestaurantDetails />} />
               <Route path="restaurants/:id/edit" element={<EditRestaurant />} />
+              <Route
+                path="restaurants/:id/members"
+                element={<RestaurantUserManagement />}
+              />
               <Route path="categories" element={<CategoryManagement />} />
               <Route path="categories/:id/edit" element={<EditCategory />} />
               <Route path="categories/new" element={<NewCategory />} />

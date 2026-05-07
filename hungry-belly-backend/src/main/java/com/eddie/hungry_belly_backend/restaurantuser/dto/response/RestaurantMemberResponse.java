@@ -14,4 +14,7 @@ public class RestaurantMemberResponse {
     private String email;
     private String fullName;
     private RestaurantRole role;
+    private String imageUrl;
+    private Boolean enabled;
+    private String phone;
 }

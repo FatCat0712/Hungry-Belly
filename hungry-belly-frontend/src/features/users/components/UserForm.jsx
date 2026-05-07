@@ -279,7 +279,7 @@ function UserForm({ selectedUser }) {
         <button
           type="button"
           className="btn btn-secondary"
-          onClick={() => navigate("/users")}
+          onClick={() => navigate(-1)}
         >
           Cancel
         </button>

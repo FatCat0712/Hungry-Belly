@@ -1,6 +1,7 @@
 package com.eddie.hungry_belly_backend.restaurantuser.service;
 
 import com.eddie.hungry_belly_backend.auth.service.RestaurantAuthorizationService;
+import com.eddie.hungry_belly_backend.common.util.storage.service.StorageService;
 import com.eddie.hungry_belly_backend.entity.User;
 import com.eddie.hungry_belly_backend.entity.restaurant.Restaurant;
 import com.eddie.hungry_belly_backend.entity.restaurant.RestaurantRole;
@@ -29,6 +30,7 @@ public class RestaurantUserService {
     private final RestaurantUserRepository restaurantUserRepository;
     private final RestaurantRepository restaurantRepository;
     private final UserRepository userRepository;
+    private final StorageService storageService;
     private final RestaurantAuthorizationService authz;
 
     @Transactional
@@ -52,7 +54,7 @@ public class RestaurantUserService {
     public List<RestaurantMemberResponse> getRestaurantMembers(Long restaurantId) {
         Long userId = authz.currentUserId();
         if(!authz.isAdmin() && !authz.isOwnerOrManager(restaurantId, userId)) {
-            throw new BadRequestException("Unauthorized to view members of this restaurant");
+            throw new RestaurantAccessDeniedException("Unauthorized to view members of this restaurant");
         }
 
         return restaurantUserRepository.findAllByRestaurantIdWithUser(restaurantId).stream()
@@ -63,7 +65,7 @@ public class RestaurantUserService {
     @Transactional
     public RestaurantMemberResponse addMember(Long restaurantId, AddMemberRequest request) {
         Long userId = authz.currentUserId();
-        if(authz.isAdmin() && !authz.isRestaurantOwner(restaurantId, userId)) {
+        if(!authz.isAdmin() && !authz.isRestaurantOwner(restaurantId, userId)) {
             throw new RestaurantAccessDeniedException("Only OWNER can add members");
         }
 
@@ -91,7 +93,7 @@ public class RestaurantUserService {
         }
 
         if(request.getRole() == RestaurantRole.OWNER) {
-            throw new BadRequestException("role: User ownership transfer endpoint");
+            throw new BadRequestException("role: Use ownership transfer endpoint");
         }
 
         RestaurantUser ru = restaurantUserRepository.findById(membershipId)
@@ -165,6 +167,7 @@ public class RestaurantUserService {
 
 
 
+
     private Restaurant requireRestaurant(Long restaurantId) {
         return restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new RestaurantNotFoundException("Restaurant not found"));
@@ -178,7 +181,7 @@ public class RestaurantUserService {
     private UserRestaurantResponse toUserRestaurantResponse(RestaurantUser ru) {
         Restaurant r = ru.getRestaurant();
         return UserRestaurantResponse.builder()
-                .restaurantId(ru.getId())
+                .restaurantId(r.getId())
                 .restaurantName(r.getName())
                 .cuisine(r.getCuisine())
                 .enabled(r.getEnabled())
@@ -191,12 +194,16 @@ public class RestaurantUserService {
         User u = ru.getUser();
         return RestaurantMemberResponse.builder()
                 .membershipId(ru.getId())
-                .userId(ru.getId())
+                .userId(u.getId())
                 .email(u.getEmail())
                 .fullName(u.getFirstName() + " " + u.getLastName())
                 .role(ru.getRole())
+                .imageUrl(storageService.generateDownloadUrl(u.getPhoto(), 3600))
+                .phone(u.getPhone())
+                .enabled(u.isEnabled())
                 .build();
     }
+
 
 
 }

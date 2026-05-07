@@ -1,5 +1,6 @@
 package com.eddie.hungry_belly_backend.restaurant.dto.response;
 
+import com.eddie.hungry_belly_backend.restaurantuser.dto.response.RestaurantMemberResponse;
 import lombok.*;
 
 import java.util.List;
@@ -15,6 +16,7 @@ public class RestaurantDetailResponse {
     private String name;
     private String cuisine;
     private List<RestaurantImageResponse> images;
+    private List<RestaurantMemberResponse> members;
     private String phone;
     private String address;
     private String description;

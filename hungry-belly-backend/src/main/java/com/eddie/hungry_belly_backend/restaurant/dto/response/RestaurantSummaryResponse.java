@@ -14,5 +14,6 @@ public class RestaurantSummaryResponse {
     private String imageUrl;
     private Double rating;
     private Integer orders;
+    private String owner;
     private Boolean enabled;
 }

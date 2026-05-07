@@ -8,6 +8,8 @@ import com.eddie.hungry_belly_backend.token.service.TokenService;
 import com.eddie.hungry_belly_backend.user.dto.request.LoginRequest;
 import com.eddie.hungry_belly_backend.user.dto.request.UserUpdateRequest;
 import com.eddie.hungry_belly_backend.user.dto.response.UserResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("${api.prefix}/auth")
+@Tag(name = "Authentication", description = "Endpoints for login, token refresh, logout, and current account operations")
 public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final AuthService authService;
@@ -29,6 +32,7 @@ public class AuthController {
     private final AuthTokenProperties authTokenProperties;
 
 
+    @Operation(summary = "Login", description = "Authenticates a user and issues access and refresh token cookies.")
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<?>> authenticateUser(@RequestBody @Valid LoginRequest request, HttpServletResponse response) {
         Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
@@ -39,6 +43,7 @@ public class AuthController {
         return ResponseEntity.status(body.getStatus()).body(body);
     }
 
+    @Operation(summary = "Refresh access token", description = "Refreshes JWT tokens using the refresh token cookie.")
     @PostMapping("/refresh-token")
     public ResponseEntity<ApiResponse<?>> refreshAccessToken(HttpServletRequest request, HttpServletResponse response) {
         String token = cookieUtils.extractTokenFromCookies(request, "refreshToken");
@@ -49,6 +54,7 @@ public class AuthController {
         return ResponseEntity.status(body.getStatus()).body(body);
     }
 
+    @Operation(summary = "Logout", description = "Clears auth cookies and invalidates the current refresh token.")
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<?>> logout(HttpServletResponse response) {
         cookieUtils.clearCookie(response, "accessToken");
@@ -58,6 +64,7 @@ public class AuthController {
         return ResponseEntity.status(body.getStatus()).body(body);
     }
 
+    @Operation(summary = "Get current user", description = "Returns the authenticated user's profile.")
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<?>> getLoggedInUser() {
         UserResponse response = authService.getCurrentLoginUserInfo();
@@ -65,6 +72,7 @@ public class AuthController {
         return ResponseEntity.status(body.getStatus()).body(body);
     }
 
+    @Operation(summary = "Update current account", description = "Updates profile information for the authenticated user.")
     @PutMapping("/update-account")
     public ResponseEntity<ApiResponse<?>> updateAccount(@Valid @RequestBody UserUpdateRequest request) {
         UserResponse response = authService.updateCurrentLoginUser(request);

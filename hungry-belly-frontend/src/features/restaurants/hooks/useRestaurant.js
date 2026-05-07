@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  changeMemberRoleApi,
   createRestaurantApi,
   deleteRestaurantApi,
   getRestaurantByIdApi,
@@ -213,4 +214,17 @@ export const buildRestaurantImagePayload = (images, uploadId) => {
     const { path, type, isPrimary, status, displayOrder, id } = image;
     return { path, type, isPrimary, status, displayOrder, uploadId, id };
   });
+};
+
+export const useChangeMemberRole = () => {
+  const queryClient = useQueryClient();
+  const { mutateAsync: changeMemberRole } = useMutation({
+    mutationFn: ({ restaurantId, userId, newRole }) =>
+      changeMemberRoleApi(restaurantId, userId, newRole),
+    onSuccess: (data, { restaurantId }) => {
+      queryClient.invalidateQueries({ queryKey: ["restaurant", restaurantId] });
+      queryClient.invalidateQueries({ queryKey: ["restaurants"] });
+    },
+  });
+  return { changeMemberRole };
 };
