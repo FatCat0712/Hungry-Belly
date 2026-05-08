@@ -6,10 +6,13 @@ import com.eddie.hungry_belly_backend.entity.User;
 import com.eddie.hungry_belly_backend.entity.restaurant.Restaurant;
 import com.eddie.hungry_belly_backend.entity.restaurant.RestaurantRole;
 import com.eddie.hungry_belly_backend.entity.restaurant.RestaurantUser;
-import com.eddie.hungry_belly_backend.exception.BadRequestException;
-import com.eddie.hungry_belly_backend.exception.RestaurantAccessDeniedException;
-import com.eddie.hungry_belly_backend.exception.RestaurantNotFoundException;
-import com.eddie.hungry_belly_backend.exception.UserNotFoundException;
+import com.eddie.hungry_belly_backend.exception.common.BadRequestException;
+import com.eddie.hungry_belly_backend.exception.common.NotFoundException;
+import com.eddie.hungry_belly_backend.exception.restaurant.RestaurantAccessDeniedException;
+import com.eddie.hungry_belly_backend.exception.restaurant.RestaurantNotFoundException;
+import com.eddie.hungry_belly_backend.exception.restaurant.restaurantuser.OwnershipModificationException;
+import com.eddie.hungry_belly_backend.exception.restaurant.restaurantuser.UserAlreadyMemberException;
+import com.eddie.hungry_belly_backend.exception.user.UserNotFoundException;
 import com.eddie.hungry_belly_backend.restaurant.repository.RestaurantRepository;
 import com.eddie.hungry_belly_backend.restaurantuser.dto.request.AddMemberRequest;
 import com.eddie.hungry_belly_backend.restaurantuser.dto.request.ChangeMemberRoleRequest;
@@ -18,7 +21,9 @@ import com.eddie.hungry_belly_backend.restaurantuser.dto.response.RestaurantMemb
 import com.eddie.hungry_belly_backend.restaurantuser.dto.response.UserRestaurantResponse;
 import com.eddie.hungry_belly_backend.restaurantuser.repository.RestaurantUserRepository;
 import com.eddie.hungry_belly_backend.user.repository.UserRepository;
+import com.eddie.hungry_belly_backend.user.service.UserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,19 +31,21 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class RestaurantUserService {
     private final RestaurantUserRepository restaurantUserRepository;
     private final RestaurantRepository restaurantRepository;
     private final UserRepository userRepository;
     private final StorageService storageService;
     private final RestaurantAuthorizationService authz;
+    private final UserService userService;
 
     @Transactional
     public void createOwnerMembership(Long restaurantId, Long ownerUserId) {
         Restaurant restaurant = requireRestaurant(restaurantId);
         User owner = requireUser(ownerUserId);
 
-        if(restaurantUserRepository.findByRestaurantIdAndUserId(restaurantId, ownerUserId).isPresent()) {
+        if (restaurantUserRepository.findByRestaurantIdAndUserId(restaurantId, ownerUserId).isPresent()) {
             throw new BadRequestException("userId: User is already a member of this restaurant");
         }
 
@@ -53,33 +60,36 @@ public class RestaurantUserService {
 
     public List<RestaurantMemberResponse> getRestaurantMembers(Long restaurantId) {
         Long userId = authz.currentUserId();
-        if(!authz.isAdmin() && !authz.isOwnerOrManager(restaurantId, userId)) {
+        if (!authz.isAdmin() && !authz.isOwnerOrManager(restaurantId, userId)) {
             throw new RestaurantAccessDeniedException("Unauthorized to view members of this restaurant");
         }
 
-        return restaurantUserRepository.findAllByRestaurantIdWithUser(restaurantId).stream()
-                .map(this::toMemberResponse)
+        return restaurantUserRepository.findAllByRestaurantIdWithUser(restaurantId)
+                .stream().map(this::toMemberResponse)
                 .toList();
+
     }
 
     @Transactional
     public RestaurantMemberResponse addMember(Long restaurantId, AddMemberRequest request) {
         Long userId = authz.currentUserId();
-        if(!authz.isAdmin() && !authz.isRestaurantOwner(restaurantId, userId)) {
+        if (!authz.isAdmin() && !authz.isRestaurantOwner(restaurantId, userId)) {
             throw new RestaurantAccessDeniedException("Only OWNER can add members");
         }
 
-        if(request.getRole() == RestaurantRole.OWNER) {
-            throw new BadRequestException("role: User ownership transfer endpoint");
+        if (request.getRole() == RestaurantRole.OWNER) {
+            throw new OwnershipModificationException("Use ownership transfer endpoint");
         }
 
-        if(restaurantUserRepository.findByRestaurantIdAndUserId(restaurantId, request.getUserId()).isPresent()) {
-            throw new BadRequestException("userId: User is already a member of this restaurant");
+        User user = userService.findByEmail(request.getEmail());
+
+        if (restaurantUserRepository.findByRestaurantIdAndUserId(restaurantId, user.getId()).isPresent()) {
+            throw new UserAlreadyMemberException("User is already a member of this restaurant");
         }
 
         RestaurantUser ru = RestaurantUser.builder()
                 .restaurant(requireRestaurant(restaurantId))
-                .user(requireUser(request.getUserId()))
+                .user(user)
                 .role(request.getRole())
                 .build();
 
@@ -88,23 +98,23 @@ public class RestaurantUserService {
 
     public RestaurantMemberResponse changeMemberRole(Long restaurantId, Long membershipId, ChangeMemberRoleRequest request) {
         Long userId = authz.currentUserId();
-        if(!authz.isAdmin() && !authz.isRestaurantOwner(restaurantId, userId)) {
+        if (!authz.isAdmin() && !authz.isRestaurantOwner(restaurantId, userId)) {
             throw new RestaurantAccessDeniedException("Only OWNER can change member roles");
         }
 
-        if(request.getRole() == RestaurantRole.OWNER) {
-            throw new BadRequestException("role: Use ownership transfer endpoint");
+        if (request.getRole() == RestaurantRole.OWNER) {
+            throw new OwnershipModificationException("Use ownership transfer endpoint");
         }
 
         RestaurantUser ru = restaurantUserRepository.findById(membershipId)
-                .orElseThrow(() -> new BadRequestException("membershipId: Membership not found"));
+                .orElseThrow(() -> new NotFoundException("Membership not found"));
 
-        if(!ru.getRestaurant().getId().equals(restaurantId)) {
-            throw new BadRequestException("membershipId: Membership does not belong to this restaurant");
+        if (!ru.getRestaurant().getId().equals(restaurantId)) {
+            throw new BadRequestException("Membership does not belong to this restaurant");
         }
 
-        if(ru.getRole() == RestaurantRole.OWNER) {
-            throw new BadRequestException("role: Cannot modify current OWNER role directly");
+        if (ru.getRole() == RestaurantRole.OWNER) {
+            throw new OwnershipModificationException("Cannot modify current OWNER role directly");
         }
         ru.setRole(request.getRole());
         return toMemberResponse(restaurantUserRepository.save(ru));
@@ -113,45 +123,48 @@ public class RestaurantUserService {
     @Transactional
     public void removeMember(Long restaurantId, Long membershipId) {
         Long userId = authz.currentUserId();
-        if(!authz.isAdmin() && !authz.isRestaurantOwner(restaurantId, userId)) {
+        if (!authz.isAdmin() && !authz.isRestaurantOwner(restaurantId, userId)) {
             throw new RestaurantAccessDeniedException("Only OWNER can remove members");
         }
 
         RestaurantUser ru = restaurantUserRepository.findById(membershipId)
-                .orElseThrow(() -> new BadRequestException("membershipId: Membership not found"));
+                .orElseThrow(() -> new NotFoundException("Membership not found"));
 
-        if(!ru.getRestaurant().getId().equals(restaurantId)) {
-            throw new BadRequestException("membershipId: Membership does not belong to this restaurant");
+        if (!ru.getRestaurant().getId().equals(restaurantId)) {
+            throw new BadRequestException("Membership does not belong to this restaurant");
         }
 
-        if(ru.getRole() == RestaurantRole.OWNER) {
-            throw new BadRequestException("role: Cannot remove current OWNER directly");
+        if (ru.getRole() == RestaurantRole.OWNER) {
+            throw new OwnershipModificationException("Cannot remove current OWNER directly");
         }
 
         restaurantUserRepository.delete(ru);
     }
 
+    @Transactional
     public void transferOwner(Long restaurantId, TransferOwnerRequest request) {
         Long userId = authz.currentUserId();
-        if(!authz.isAdmin() && !authz.isRestaurantOwner(restaurantId, userId)) {
+        if (!authz.isAdmin() && !authz.isRestaurantOwner(restaurantId, userId)) {
             throw new RestaurantAccessDeniedException("Only OWNER can transfer ownership");
         }
 
         RestaurantUser currentOwner = restaurantUserRepository.findOwnerByRestaurantIdForUpdate(restaurantId)
-                .orElseThrow(() -> new BadRequestException("restaurant: No owner found"));
+                .orElseThrow(() -> new NotFoundException("No owner found"));
 
-        if(currentOwner.getUser().getId().equals(request.getNewOwnerId())) {
-            throw new BadRequestException("newOwnerUserId: User is already the owner");
+        User newOwner = userService.findByEmail(request.getNewOwnerEmail());
+
+        if (currentOwner.getUser().getId().equals(newOwner.getId())) {
+            throw new BadRequestException("User is already the owner");
         }
 
         currentOwner.setRole(RestaurantRole.MANAGER);
         restaurantUserRepository.save(currentOwner);
 
         RestaurantUser newOwnerMembership = restaurantUserRepository
-                .findByRestaurantIdAndUserId(restaurantId, request.getNewOwnerId())
+                .findByRestaurantIdAndUserId(restaurantId, newOwner.getId())
                 .orElseGet(() -> RestaurantUser.builder()
                         .restaurant(currentOwner.getRestaurant())
-                        .user(requireUser(request.getNewOwnerId()))
+                        .user(newOwner)
                         .build());
 
         newOwnerMembership.setRole(RestaurantRole.OWNER);
@@ -164,9 +177,6 @@ public class RestaurantUserService {
                 .map(this::toUserRestaurantResponse)
                 .toList();
     }
-
-
-
 
     private Restaurant requireRestaurant(Long restaurantId) {
         return restaurantRepository.findById(restaurantId)
@@ -203,7 +213,6 @@ public class RestaurantUserService {
                 .enabled(u.isEnabled())
                 .build();
     }
-
 
 
 }

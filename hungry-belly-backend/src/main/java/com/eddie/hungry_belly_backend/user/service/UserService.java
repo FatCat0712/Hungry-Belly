@@ -11,9 +11,9 @@ import com.eddie.hungry_belly_backend.common.util.paginate.PaginationUtils;
 import com.eddie.hungry_belly_backend.common.util.storage.service.StorageService;
 import com.eddie.hungry_belly_backend.entity.Role;
 import com.eddie.hungry_belly_backend.entity.User;
-import com.eddie.hungry_belly_backend.exception.BadRequestException;
-import com.eddie.hungry_belly_backend.exception.InvalidOperationException;
-import com.eddie.hungry_belly_backend.exception.UserNotFoundException;
+import com.eddie.hungry_belly_backend.exception.common.BadRequestException;
+import com.eddie.hungry_belly_backend.exception.common.InvalidOperationException;
+import com.eddie.hungry_belly_backend.exception.user.UserNotFoundException;
 import com.eddie.hungry_belly_backend.role.service.RoleService;
 import com.eddie.hungry_belly_backend.user.dto.request.ResetPasswordRequest;
 import com.eddie.hungry_belly_backend.user.dto.request.UserCreateRequest;
@@ -131,7 +131,7 @@ public class UserService {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String currentEmail = auth.getName();
-        User loggedInUser = userRepository.findByEmail(currentEmail);
+        User loggedInUser = findByEmail(currentEmail);
 
         if (loggedInUser != null && loggedInUser.getId().equals(id)) {
             throw new InvalidOperationException("You cannot delete your own account");
@@ -228,7 +228,7 @@ public class UserService {
     }
 
     public User findByEmail(String email) {
-        return userRepository.findByEmail(email);
+        return userRepository.findByEmail(email).orElseThrow(() -> new UserNotFoundException("User could not be found"));
     }
 
 

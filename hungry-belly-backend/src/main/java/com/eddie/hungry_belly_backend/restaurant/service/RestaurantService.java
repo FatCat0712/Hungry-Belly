@@ -9,9 +9,9 @@ import com.eddie.hungry_belly_backend.common.util.storage.service.StorageService
 import com.eddie.hungry_belly_backend.entity.User;
 import com.eddie.hungry_belly_backend.entity.restaurant.Restaurant;
 import com.eddie.hungry_belly_backend.entity.restaurant.RestaurantImage;
-import com.eddie.hungry_belly_backend.exception.BadRequestException;
-import com.eddie.hungry_belly_backend.exception.RestaurantAccessDeniedException;
-import com.eddie.hungry_belly_backend.exception.RestaurantNotFoundException;
+import com.eddie.hungry_belly_backend.exception.common.BadRequestException;
+import com.eddie.hungry_belly_backend.exception.restaurant.RestaurantAccessDeniedException;
+import com.eddie.hungry_belly_backend.exception.restaurant.RestaurantNotFoundException;
 import com.eddie.hungry_belly_backend.restaurant.dto.request.RestaurantCreateRequest;
 import com.eddie.hungry_belly_backend.restaurant.dto.request.RestaurantImageRequest;
 import com.eddie.hungry_belly_backend.restaurant.dto.request.RestaurantRequest;

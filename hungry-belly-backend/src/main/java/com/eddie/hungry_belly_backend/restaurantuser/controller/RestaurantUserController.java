@@ -4,6 +4,7 @@ import com.eddie.hungry_belly_backend.auth.service.RestaurantAuthorizationServic
 import com.eddie.hungry_belly_backend.common.dto.response.ApiResponse;
 import com.eddie.hungry_belly_backend.restaurantuser.dto.request.AddMemberRequest;
 import com.eddie.hungry_belly_backend.restaurantuser.dto.request.ChangeMemberRoleRequest;
+import com.eddie.hungry_belly_backend.restaurantuser.dto.request.TransferOwnerRequest;
 import com.eddie.hungry_belly_backend.restaurantuser.dto.response.RestaurantMemberResponse;
 import com.eddie.hungry_belly_backend.restaurantuser.dto.response.UserRestaurantResponse;
 import com.eddie.hungry_belly_backend.restaurantuser.service.RestaurantUserService;
@@ -70,6 +71,14 @@ public class RestaurantUserController {
         Long currentUserId = authz.currentUserId();
         List<UserRestaurantResponse> restaurants = restaurantUserService.getCurrentUserRequests(currentUserId);
         ApiResponse<?> body = ApiResponse.success(restaurants, "Get my restaurants");
+        return ResponseEntity.status(body.getStatus()).body(body);
+    }
+
+
+    @PostMapping("/{restaurantId}/transfer-ownership")
+    public ResponseEntity<ApiResponse<?>> transferOwnership(@PathVariable Long restaurantId, @RequestBody TransferOwnerRequest request) {
+        restaurantUserService.transferOwner(restaurantId, request);
+        ApiResponse<?> body = ApiResponse.done(null,"Ownership transferred");
         return ResponseEntity.status(body.getStatus()).body(body);
     }
 

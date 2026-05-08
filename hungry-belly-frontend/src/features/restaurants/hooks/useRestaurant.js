@@ -1,10 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  addMemberApi,
   changeMemberRoleApi,
   createRestaurantApi,
   deleteRestaurantApi,
   getRestaurantByIdApi,
   getRestaurantsApi,
+  removeMemberApi,
+  transferOwnershipApi,
   updateRestaurantApi,
   updateRestaurantStatusApi,
 } from "../api/restaurantService";
@@ -227,4 +230,46 @@ export const useChangeMemberRole = () => {
     },
   });
   return { changeMemberRole };
+};
+
+export const useRemoveMember = () => {
+  const queryClient = useQueryClient();
+  const { mutateAsync: removeMember } = useMutation({
+    mutationFn: ({ restaurantId, membershipId }) =>
+      removeMemberApi(restaurantId, membershipId),
+    onSuccess: (data, { restaurantId }) => {
+      queryClient.invalidateQueries({ queryKey: ["restaurant", restaurantId] });
+      queryClient.invalidateQueries({ queryKey: ["restaurants"] });
+    },
+  });
+  return { removeMember };
+};
+
+export const useAddMember = () => {
+  const queryClient = useQueryClient();
+  const { mutateAsync: addMember } = useMutation({
+    mutationFn: ({ restaurantId, email, role }) =>
+      addMemberApi(restaurantId, { email, role }),
+    onSuccess: (data, { restaurantId }) => {
+      queryClient.invalidateQueries({ queryKey: ["restaurant", restaurantId] });
+      queryClient.invalidateQueries({ queryKey: ["restaurants"] });
+    },
+  });
+  return { addMember };
+};
+
+export const useTransferOwnership = () => {
+  const queryClient = useQueryClient();
+  const { mutateAsync: transferOwnership, isPending: isTransferring } =
+    useMutation({
+      mutationFn: ({ restaurantId, newOwnerEmail }) =>
+        transferOwnershipApi(restaurantId, newOwnerEmail),
+      onSuccess: (data, { restaurantId }) => {
+        queryClient.invalidateQueries({
+          queryKey: ["restaurant", restaurantId],
+        });
+        queryClient.invalidateQueries({ queryKey: ["restaurants"] });
+      },
+    });
+  return { transferOwnership, isTransferring };
 };

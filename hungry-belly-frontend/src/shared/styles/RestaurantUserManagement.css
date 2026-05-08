@@ -20,3 +20,26 @@
   align-items: center;
   justify-content: center;
 }
+
+.restaurant-member-management-page .transfer-owner-btn {
+  background: linear-gradient(135deg, #f59f00, #f08c00);
+  border: 0;
+  color: #fff;
+  font-weight: 600;
+}
+
+.restaurant-member-management-page .transfer-owner-btn:disabled {
+  opacity: 0.8;
+  cursor: not-allowed;
+}
+
+.restaurant-member-management-page .transfer-owner-modal__notice {
+  background: #fff4e6;
+  color: #8f4f00;
+}
+
+.restaurant-member-management-page .transfer-owner-modal__candidate {
+  margin-top: 0.75rem;
+  background: #fffdf8;
+  border-left: 4px solid #f59f00 !important;
+}

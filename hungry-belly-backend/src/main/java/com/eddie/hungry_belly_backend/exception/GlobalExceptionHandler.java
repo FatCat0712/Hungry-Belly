@@ -1,6 +1,10 @@
 package com.eddie.hungry_belly_backend.exception;
 
 import com.eddie.hungry_belly_backend.common.dto.response.ApiResponse;
+import com.eddie.hungry_belly_backend.exception.common.BadRequestException;
+import com.eddie.hungry_belly_backend.exception.common.InvalidOperationException;
+import com.eddie.hungry_belly_backend.exception.common.NotFoundException;
+import com.eddie.hungry_belly_backend.exception.restaurant.RestaurantAccessDeniedException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,15 +24,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ApiResponse<?>> handleBadRequest(BadRequestException ex) {
-        Map<String, String> errors = new HashMap<>();
-
-        log.error("Bad request: {}", ex.getMessage(), ex);
-
-        String[] errorEntry = ex.getMessage().split(":");
-        errors.put(errorEntry[0], errorEntry[1]);
-
+        log.error("Bad request: {}", ex.getMessage());
         return ResponseEntity.badRequest().body(
-                ApiResponse.error(HttpStatus.BAD_REQUEST.value(), errors)
+                ApiResponse.error(HttpStatus.BAD_REQUEST.value(), ex.getMessage())
         );
     }
 
@@ -40,7 +38,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(NotFoundException.class)
-    public ResponseEntity<ApiResponse<?>> handleUserNotFoundException(NotFoundException ex) {
+    public ResponseEntity<ApiResponse<?>> handleNotFoundException(NotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(ApiResponse.error(HttpStatus.NOT_FOUND.value(), ex.getMessage()));
     }

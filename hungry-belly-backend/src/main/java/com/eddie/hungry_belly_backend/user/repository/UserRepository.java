@@ -18,7 +18,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByEmail(String email);
 
     @Query("SELECT u FROM User u JOIN FETCH u.roles WHERE u.email = ?1")
-    User findByEmail(String email);
+    Optional<User> findByEmail(String email);
 
     // Pagination query - returns IDs only (no collection fetch)
     @Query(

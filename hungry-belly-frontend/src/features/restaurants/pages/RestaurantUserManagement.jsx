@@ -1,33 +1,24 @@
 import { useContext, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "react-toastify";
 import { AuthContext } from "../../auth/context/auth-context";
 import AccessDenied from "../../access/pages/AccessDenied";
 import Spinner from "../../../shared/ui/Spinner";
-import {
-  useChangeMemberRole,
-  useRestaurantDetail,
-} from "../hooks/useRestaurant";
-import { useToggleStatus } from "../../users/hooks/useUser";
+import { useRestaurantDetail } from "../hooks/useRestaurant";
+import AddMemberModal from "../components/AddMemberModal";
+import ChangeRoleModal from "../components/ChangeRoleModal";
+import RemoveMemberModal from "../components/RemoveMemberModal";
+import TransferOwnerModal from "../components/TransferOwnerModal";
 import "../../../shared/styles/RestaurantUserManagement.css";
-
-const normalizeText = (value) =>
-  String(value || "")
-    .trim()
-    .toLowerCase();
 
 export default function RestaurantUserManagement() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const queryClient = useQueryClient();
   const { user: loggedInUser } = useContext(AuthContext);
-  const [keyword, setKeyword] = useState("");
-  const [roleFilter, setRoleFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
   const [selectedMemberForRole, setSelectedMemberForRole] = useState(null);
-  const [selectedRoleValue, setSelectedRoleValue] = useState("");
-  const { changeMemberRole } = useChangeMemberRole();
+  const [selectedMemberForRemoval, setSelectedMemberForRemoval] =
+    useState(null);
+  const [showAddMemberModal, setShowAddMemberModal] = useState(false);
+  const [showTransferOwnerModal, setShowTransferOwnerModal] = useState(false);
 
   const {
     data: restaurant,
@@ -35,7 +26,6 @@ export default function RestaurantUserManagement() {
     isError,
     error,
   } = useRestaurantDetail(id);
-  const { toggleStatus } = useToggleStatus();
 
   const isGranted =
     loggedInUser?.roles.includes("ROLE_ADMIN") ||
@@ -65,66 +55,30 @@ export default function RestaurantUserManagement() {
 
   const members = Array.isArray(restaurant?.members) ? restaurant.members : [];
   const restaurantName = restaurant?.name || "Restaurant";
-  const normalizedKeyword = normalizeText(keyword);
-
-  const filteredMembers = members.filter((member) => {
-    const role = normalizeText(member?.role);
-    const status = member?.enabled ? "active" : "inactive";
-    const searchable = [member?.fullName, member?.email, member?.role]
-      .map(normalizeText)
-      .join(" ");
-
-    const matchesKeyword =
-      !normalizedKeyword || searchable.includes(normalizedKeyword);
-    const matchesRole = roleFilter === "all" || role === roleFilter;
-    const matchesStatus = statusFilter === "all" || status === statusFilter;
-
-    return matchesKeyword && matchesRole && matchesStatus;
-  });
-
-  const roles = ["OWNER", "MANAGER", "STAFF"];
 
   const owner = members.find((member) => member.role === "OWNER");
   const activeCount = members.filter((member) => member.enabled).length;
 
-  const removeMember = (member) => {
-    toggleStatus(
-      { userId: member.userId },
-      {
-        onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: ["restaurant", id] });
-          const message = member.enabled
-            ? `${member.fullName} has been disabled.`
-            : `${member.fullName} has been enabled.`;
-          toast.success(message);
-        },
-        onError: (toggleError) => {
-          toast.error(
-            toggleError?.response?.data?.message ||
-              "Unable to update member status.",
-          );
-        },
-      },
-    );
+  const openRemoveMemberModal = (member) => {
+    setSelectedMemberForRemoval(member);
+  };
+
+  const closeRemoveMemberModal = () => {
+    setSelectedMemberForRemoval(null);
   };
 
   const openChangeRoleModal = (member) => {
     setSelectedMemberForRole(member);
-    setSelectedRoleValue(member.role || "");
   };
 
   const closeChangeRoleModal = () => {
     setSelectedMemberForRole(null);
-    setSelectedRoleValue("");
   };
 
-  const handleSaveRoleChange = () => {
-    // TODO: Implement role change API call when endpoint is provided
-    toast.info("Role change endpoint integration pending...");
-    chan
-
-    closeChangeRoleModal();
-  };
+  const openAddMemberModal = () => setShowAddMemberModal(true);
+  const closeAddMemberModal = () => setShowAddMemberModal(false);
+  const openTransferOwnerModal = () => setShowTransferOwnerModal(true);
+  const closeTransferOwnerModal = () => setShowTransferOwnerModal(false);
 
   return (
     <div className="container-fluid px-0 restaurant-member-management-page">
@@ -152,9 +106,18 @@ export default function RestaurantUserManagement() {
               </button>
               <button
                 type="button"
+                className="btn transfer-owner-btn"
+                onClick={openTransferOwnerModal}
+                title="Transfer ownership to another member"
+              >
+                <i className="bi bi-arrow-left-right me-1"></i>
+                Transfer owner
+              </button>
+              <button
+                type="button"
                 className="btn btn-primary"
-                disabled
-                title="Add member API is not available yet."
+                onClick={openAddMemberModal}
+                title="Add a new member to this restaurant"
               >
                 <i className="bi bi-person-plus-fill me-1"></i>
                 Add member
@@ -218,46 +181,6 @@ export default function RestaurantUserManagement() {
         <div className="card-body p-4">
           <div className="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-2 mb-3">
             <h2 className="h5 mb-0">Restaurant members</h2>
-
-            <div className="d-flex flex-wrap gap-2 align-items-center">
-              <div className="input-group" style={{ minWidth: 220 }}>
-                <span className="input-group-text">
-                  <i className="bi bi-search"></i>
-                </span>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Search name, email, role"
-                  value={keyword}
-                  onChange={(event) => setKeyword(event.target.value)}
-                />
-              </div>
-
-              <select
-                className="form-select"
-                style={{ minWidth: 150 }}
-                value={roleFilter}
-                onChange={(event) => setRoleFilter(event.target.value)}
-              >
-                <option value="all">All roles</option>
-                {roles.map((role) => (
-                  <option key={role} value={role}>
-                    {role.toUpperCase()}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                className="form-select"
-                style={{ minWidth: 130 }}
-                value={statusFilter}
-                onChange={(event) => setStatusFilter(event.target.value)}
-              >
-                <option value="all">All status</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
-            </div>
           </div>
 
           <div className="table-responsive">
@@ -273,8 +196,8 @@ export default function RestaurantUserManagement() {
               </thead>
 
               <tbody>
-                {filteredMembers.length > 0 ? (
-                  filteredMembers.map((member) => (
+                {members.length > 0 ? (
+                  members.map((member) => (
                     <tr key={member.membershipId}>
                       <td>
                         <div className="d-flex align-items-center gap-2">
@@ -342,25 +265,11 @@ export default function RestaurantUserManagement() {
                           </button>
                           <button
                             type="button"
-                            className={`btn btn-sm ${
-                              member.enabled
-                                ? "btn-outline-danger"
-                                : "btn-outline-success"
-                            }`}
-                            onClick={() => removeMember(member)}
-                            title={
-                              member.enabled
-                                ? "Disable member"
-                                : "Enable member"
-                            }
+                            className={"btn btn-sm btn-outline-danger"}
+                            onClick={() => openRemoveMemberModal(member)}
+                            title="Remove member"
                           >
-                            <i
-                              className={`bi ${
-                                member.enabled
-                                  ? "bi-person-x"
-                                  : "bi-person-check"
-                              }`}
-                            ></i>
+                            <i className={`bi bi-person-x`}></i>
                           </button>
                         </div>
                       </td>
@@ -379,81 +288,33 @@ export default function RestaurantUserManagement() {
         </div>
       </div>
 
-      {selectedMemberForRole && (
-        <div
-          className="modal d-block"
-          style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
-          tabIndex="-1"
-        >
-          <div className="modal-dialog modal-dialog-centered" role="document">
-            <div className="modal-content">
-              <div className="modal-header border-bottom">
-                <h5 className="modal-title">Change Member Role</h5>
-                <button
-                  type="button"
-                  className="btn-close"
-                  aria-label="Close"
-                  onClick={closeChangeRoleModal}
-                ></button>
-              </div>
+      <RemoveMemberModal
+        isOpen={Boolean(selectedMemberForRemoval)}
+        member={selectedMemberForRemoval}
+        onClose={closeRemoveMemberModal}
+        restaurantId={id}
+      />
 
-              <div className="modal-body">
-                <div className="mb-3">
-                  <p className="text-muted mb-2">
-                    Update role for{" "}
-                    <strong>{selectedMemberForRole?.fullName}</strong>
-                  </p>
-                  <div className="alert alert-light border-1 mb-0">
-                    <small>
-                      <strong>Current role:</strong>{" "}
-                      {selectedMemberForRole?.role}
-                    </small>
-                  </div>
-                </div>
+      <ChangeRoleModal
+        key={selectedMemberForRole?.membershipId || "change-role-modal"}
+        isOpen={Boolean(selectedMemberForRole)}
+        member={selectedMemberForRole}
+        onClose={closeChangeRoleModal}
+        restaurantId={id}
+      />
 
-                <label htmlFor="role-select" className="form-label">
-                  Select New Role
-                </label>
-                <select
-                  id="role-select"
-                  className="form-select"
-                  value={selectedRoleValue}
-                  onChange={(e) => setSelectedRoleValue(e.target.value)}
-                >
-                  <option value="">-- Choose a role --</option>
-                  {roles.map((role) => (
-                    <option key={role} value={role}>
-                      {role.toUpperCase()}
-                    </option>
-                  ))}
-                </select>
-              </div>
+      <AddMemberModal
+        isOpen={showAddMemberModal}
+        restaurantId={id}
+        onClose={closeAddMemberModal}
+      />
 
-              <div className="modal-footer border-top gap-2">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={closeChangeRoleModal}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-warning"
-                  onClick={handleSaveRoleChange}
-                  disabled={
-                    !selectedRoleValue ||
-                    selectedRoleValue === selectedMemberForRole?.role
-                  }
-                >
-                  <i className="bi bi-check-circle me-2"></i>
-                  Save Changes
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <TransferOwnerModal
+        isOpen={showTransferOwnerModal}
+        onClose={closeTransferOwnerModal}
+        currentOwner={owner}
+        restaurantId={id}
+      />
     </div>
   );
 }

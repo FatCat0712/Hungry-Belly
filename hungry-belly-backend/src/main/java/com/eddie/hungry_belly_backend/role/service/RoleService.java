@@ -2,8 +2,8 @@ package com.eddie.hungry_belly_backend.role.service;
 
 import com.eddie.hungry_belly_backend.entity.Permission;
 import com.eddie.hungry_belly_backend.entity.Role;
-import com.eddie.hungry_belly_backend.exception.BadRequestException;
-import com.eddie.hungry_belly_backend.exception.RoleNotFoundException;
+import com.eddie.hungry_belly_backend.exception.common.BadRequestException;
+import com.eddie.hungry_belly_backend.exception.role.RoleNotFoundException;
 import com.eddie.hungry_belly_backend.permission.dto.response.PermissionResponse;
 import com.eddie.hungry_belly_backend.permission.service.PermissionService;
 import com.eddie.hungry_belly_backend.role.dto.request.RoleCreateRequest;

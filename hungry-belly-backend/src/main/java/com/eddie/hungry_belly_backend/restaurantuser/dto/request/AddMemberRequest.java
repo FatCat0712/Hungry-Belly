@@ -8,8 +8,8 @@ import lombok.Setter;
 @Getter
 @Setter
 public class AddMemberRequest {
-    @NotNull(message = "User ID required")
-    private Long userId;
+    @NotNull(message = "Email is required")
+    private String email;
 
     @NotNull(message = "Role is required")
     private RestaurantRole role;

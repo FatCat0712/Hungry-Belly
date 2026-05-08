@@ -3,7 +3,7 @@ package com.eddie.hungry_belly_backend.token.service;
 import com.eddie.hungry_belly_backend.config.properties.AuthTokenProperties;
 import com.eddie.hungry_belly_backend.entity.RefreshToken;
 import com.eddie.hungry_belly_backend.entity.User;
-import com.eddie.hungry_belly_backend.exception.BadRequestException;
+import com.eddie.hungry_belly_backend.exception.common.BadRequestException;
 import com.eddie.hungry_belly_backend.security.AppUserDetails;
 import com.eddie.hungry_belly_backend.security.AppUserDetailsService;
 import com.eddie.hungry_belly_backend.security.jwt.JwtUtils;

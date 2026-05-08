@@ -8,5 +8,5 @@ import lombok.Setter;
 @Setter
 public class TransferOwnerRequest {
     @NotNull(message = "New owner userId is required")
-    private Long newOwnerId;
+    private String newOwnerEmail;
 }

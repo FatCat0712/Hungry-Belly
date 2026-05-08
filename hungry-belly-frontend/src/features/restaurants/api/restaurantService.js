@@ -63,3 +63,28 @@ export const changeMemberRoleApi = async (restaurantId, userId, newRole) => {
   );
   return response.data;
 };
+
+export const removeMemberApi = async (restaurantId, membershipId) => {
+  const response = await api.delete(
+    `${API_URL}/${restaurantId}/members/${membershipId}`,
+  );
+  return response.data;
+};
+
+export const addMemberApi = async (restaurantId, { email, role }) => {
+  const response = await api.post(`${API_URL}/${restaurantId}/members`, {
+    email,
+    role,
+  });
+  return response.data;
+};
+
+export const transferOwnershipApi = async (restaurantId, newOwnerEmail) => {
+  const response = await api.post(
+    `${API_URL}/${restaurantId}/transfer-ownership`,
+    {
+      newOwnerEmail,
+    },
+  );
+  return response.data;
+};

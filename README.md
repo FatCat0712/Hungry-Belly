@@ -1,37 +1,34 @@
 # Hungry Belly
 
-Hungry Belly is a full-stack admin platform for managing users, roles, restaurants, categories, foods, authentication, and media uploads for a food delivery system.
+Hungry Belly is a full-stack admin platform for operating a food-delivery back office. The repository includes a Spring Boot API, a React admin dashboard, media-upload utilities, and management flows for users, roles, restaurants, categories, foods, and restaurant staff membership.
 
 ## Overview
 
-This repository contains:
-
 - `hungry-belly-backend` - Spring Boot REST API
 - `hungry-belly-frontend` - React + Vite admin dashboard
-- `resources` - project assets, including the database schema
+- `resources` - project assets, including the database schema image
 
-## Database Schema
+## Current capabilities
 
-![Hungry Belly schema](resources/Hungery%20Belly.jpg)
+- **Authentication and account management** - JWT-based login, refresh-token flow, logout, current-user profile, and account update APIs.
+- **Role and permission administration** - manage roles, inspect permissions, and control access to protected admin features.
+- **User operations** - paginated user management, password reset, status updates, and CSV/XLSX export.
+- **Restaurant operations** - create, edit, activate/deactivate, delete, and inspect restaurants.
+- **Restaurant membership management** - list members, add members, change member roles, remove members, list the signed-in user's restaurants, and transfer restaurant ownership.
+- **Catalog management** - manage hierarchical categories and food items.
+- **Media uploads** - generate presigned upload URLs and temporary upload sessions for client-side file handling.
+- **Operational cleanup** - scheduled cleanup services remove orphaned uploads and generated export files.
+- **API documentation** - OpenAPI/Swagger UI is enabled in the backend.
 
-## What Makes It Stand Out
-
-- **Secure by design** - JWT authentication, refresh-token flow, cookie support, and protected routes create a production-ready admin experience.
-- **Granular access control** - role- and permission-based authorization helps separate admin and operational responsibilities cleanly.
-- **End-to-end admin operations** - a single platform to manage users, roles, restaurants, categories, and foods with a consistent workflow.
-- **Scalable media uploads** - pre-signed URL uploads and temporary upload sessions reduce backend load and support a cleaner file pipeline.
-- **Export-ready back office** - built-in CSV and Excel export flows make operational data easier to review and share.
-- **Operational hygiene** - scheduled cleanup jobs help keep temporary uploads and generated files under control.
-
-## Tech Stack
+## Tech stack
 
 | Layer | Technologies |
 | --- | --- |
-| Backend | Java 21, Spring Boot 3.5, Spring Security, Spring Data JPA, MySQL |
-| Frontend | React 19, Vite, React Router, TanStack Query, Axios, Bootstrap |
-| Storage & export | S3-compatible object storage, Apache POI, Super CSV |
+| Backend | Java 21, Spring Boot 3.5, Spring Security, Spring Data JPA, MySQL, H2 (tests) |
+| Frontend | React 19, Vite 8, React Router 7, TanStack Query 5, Axios, Bootstrap 5 |
+| Storage and export | AWS SDK for S3-compatible storage, Apache POI, Super CSV |
 
-## Repository Structure
+## Repository structure
 
 ```text
 hungry-belly/
@@ -40,7 +37,11 @@ hungry-belly/
 `-- resources/
 ```
 
-## Getting Started
+## Database schema
+
+![Hungry Belly schema](resources/Hungery%20Belly.jpg)
+
+## Getting started
 
 ### Prerequisites
 
@@ -48,7 +49,7 @@ hungry-belly/
 - Node.js 20+
 - MySQL 8+
 
-### Backend Setup
+### 1. Configure the backend
 
 Create `hungry-belly-backend\.env`:
 
@@ -68,13 +69,19 @@ SERVICE_ROLE_KEY=your_service_role_key
 JWT_SECRET=your_jwt_secret
 ```
 
-Run the API:
+The backend loads this file through `spring.config.import`, uses `/api/v1` as the API prefix, and allows frontend requests from `http://localhost:5173`.
+
+### 2. Run the backend
+
+From `hungry-belly-backend`:
 
 ```bash
-mvnw.cmd spring-boot:run
+.\mvnw.cmd spring-boot:run
 ```
 
-### Frontend Setup
+The API starts on `http://localhost:8080` by default.
+
+### 3. Configure the frontend
 
 Create `hungry-belly-frontend\.env`:
 
@@ -82,38 +89,42 @@ Create `hungry-belly-frontend\.env`:
 VITE_API_URL=http://localhost:8080/api/v1
 ```
 
-Install dependencies and start the app:
+### 4. Run the frontend
+
+From `hungry-belly-frontend`:
 
 ```bash
 npm install
 npm run dev
 ```
 
-The frontend runs on `http://localhost:5173` by default.
+The admin app runs on `http://localhost:5173`.
 
-## Useful Commands
+## Useful commands
 
 ### Backend
 
 ```bash
-mvnw.cmd test
-mvnw.cmd spring-boot:run
+.\mvnw.cmd spring-boot:run
+.\mvnw.cmd -q test
+.\mvnw.cmd -q -DskipTests package
 ```
 
 ### Frontend
 
 ```bash
+npm install
 npm run dev
 npm run build
 npm run lint
 npm run preview
 ```
 
-## API Surface
+## API overview
 
 Base path: `/api/v1`
 
-Main endpoint groups:
+Main modules:
 
 - `/auth`
 - `/users`
@@ -124,8 +135,34 @@ Main endpoint groups:
 - `/foods`
 - `/storage`
 
+Restaurant membership endpoints are grouped under `/restaurants`, including:
+
+- `GET /restaurants/{restaurantId}/members`
+- `POST /restaurants/{restaurantId}/members`
+- `PATCH /restaurants/{restaurantId}/members/{membershipId}/role`
+- `DELETE /restaurants/{restaurantId}/members/{membershipId}`
+- `GET /restaurants/mine`
+- `POST /restaurants/{restaurantId}/transfer-ownership`
+
+Swagger UI is available at `http://localhost:8080/swagger-ui/index.html`.
+
+## Frontend routes
+
+Key admin routes include:
+
+- `/users`
+- `/roles`
+- `/restaurants`
+- `/restaurants/:id`
+- `/restaurants/:id/members`
+- `/categories`
+- `/foods`
+- `/profile`
+
+The frontend sends credentials with every request and automatically attempts token refresh on `401` responses.
+
 ## Notes
 
-- The backend loads local configuration from `hungry-belly-backend\.env`
-- The default frontend API target is `http://localhost:8080/api/v1`
-- The frontend sends credentials with requests so authentication cookies are included
+- The backend uses MySQL in normal development and H2 in the test profile.
+- Backend security protects user and role management for admins, while restaurant and food features are available to admin and partner roles.
+- The frontend contains the latest restaurant member-management UI, including add member, role change, remove member, and transfer owner flows.
