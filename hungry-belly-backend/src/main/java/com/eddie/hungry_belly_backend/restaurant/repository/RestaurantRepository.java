@@ -30,7 +30,6 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
             r.cuisine,
             ri.imageUrl,
             r.rating, 
-            r.orders,
             CONCAT(ru.user.firstName,' ', ru.user.lastName), 
             r.enabled
         )

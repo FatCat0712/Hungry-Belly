@@ -13,7 +13,7 @@ public class RestaurantSummaryResponse {
     private String cuisine;
     private String imageUrl;
     private Double rating;
-    private Integer orders;
+//    private Integer orders;
     private String owner;
     private Boolean enabled;
 }

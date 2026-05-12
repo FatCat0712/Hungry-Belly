@@ -42,12 +42,15 @@ public class Restaurant {
 
     private Boolean enabled;
 
-    private String address;
-
-    private Double rating;
-
     @Column(nullable = false)
-    private String cuisine;
+    private String addressLine;
 
-    private int orders;
+    private String ward;
+    private String city;
+    private Integer minPrepTime;
+    private Integer maxPrepTime;
+    private Double latitude;
+    private Double longitude;
+    private Double rating;
+    private String cuisine;
 }

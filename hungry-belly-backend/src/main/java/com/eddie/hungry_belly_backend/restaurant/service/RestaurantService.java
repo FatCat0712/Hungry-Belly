@@ -283,7 +283,7 @@ public class RestaurantService {
         restaurant.setPhone(request.getPhone());
         restaurant.setName(request.getName());
         restaurant.setDescription(request.getDescription());
-        restaurant.setAddress(request.getAddress());
+        restaurant.setAddressLine(request.getAddress());
         restaurant.setEnabled(request.getEnabled());
     }
 
@@ -311,7 +311,7 @@ public class RestaurantService {
                 .cuisine(restaurant.getCuisine())
                 .images(images)
                 .phone(restaurant.getPhone())
-                .address(restaurant.getAddress())
+                .address(restaurant.getAddressLine())
                 .members(members)
                 .description(restaurant.getDescription())
                 .enabled(restaurant.getEnabled())
