@@ -1,0 +1,543 @@
+/* Hungry Belly Custom Styles */
+
+:root {
+  --primary-coral: #f26b5b;
+  --primary-coral-dark: #e05a4a;
+  --secondary-yellow: #f5c85c;
+  --secondary-orange: #f7a54a;
+  --light-gray: #f8f9fa;
+  --medium-gray: #6c757d;
+  --dark-gray: #343a40;
+  --white: #ffffff;
+  --shadow-light: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.12);
+  --shadow-heavy: 0 8px 32px rgba(0, 0, 0, 0.16);
+  --border-radius: 12px;
+  --border-radius-lg: 16px;
+  --transition: all 0.3s ease;
+}
+
+/* Global Styles */
+body {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--white);
+  color: var(--dark-gray);
+}
+
+/* Primary Button Styles */
+.btn-primary {
+  background-color: var(--primary-coral) !important;
+  border-color: var(--primary-coral) !important;
+  border-radius: var(--border-radius);
+  padding: 10px 24px;
+  font-weight: 600;
+  transition: var(--transition);
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-coral-dark) !important;
+  border-color: var(--primary-coral-dark) !important;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-medium);
+}
+
+/* Secondary Button Styles */
+.btn-outline-primary {
+  color: var(--primary-coral) !important;
+  border-color: var(--primary-coral) !important;
+  border-radius: var(--border-radius);
+  padding: 10px 24px;
+  font-weight: 600;
+  transition: var(--transition);
+}
+
+.btn-outline-primary:hover {
+  background-color: var(--primary-coral) !important;
+  color: var(--white) !important;
+}
+
+/* Card Styles */
+.card {
+  border: none;
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-light);
+  transition: var(--transition);
+  overflow: hidden;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-medium);
+}
+
+/* Navbar Styles */
+.navbar {
+  box-shadow: var(--shadow-light);
+  background-color: var(--white) !important;
+}
+
+.navbar-brand {
+  font-weight: 700;
+  color: var(--primary-coral) !important;
+}
+
+.nav-link {
+  font-weight: 500;
+  color: var(--dark-gray) !important;
+  transition: var(--transition);
+  padding: 8px 16px !important;
+  border-radius: var(--border-radius);
+}
+
+.nav-link:hover {
+  color: var(--primary-coral) !important;
+  background-color: rgba(242, 107, 91, 0.1);
+}
+
+.nav-link.active {
+  color: var(--primary-coral) !important;
+}
+
+/* Hero Section */
+.hero-section {
+  background: linear-gradient(135deg, #fff5f3 0%, #fff9e6 100%);
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+}
+
+.hero-title {
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: var(--dark-gray);
+  line-height: 1.2;
+}
+
+.hero-subtitle {
+  font-size: 1.2rem;
+  color: var(--medium-gray);
+  margin-top: 1rem;
+}
+
+/* Search Box */
+.search-box {
+  background: var(--white);
+  border-radius: var(--border-radius-lg);
+  padding: 8px;
+  box-shadow: var(--shadow-medium);
+}
+
+.search-box .form-control {
+  border: none;
+  padding: 12px 16px;
+  font-size: 1rem;
+}
+
+.search-box .form-control:focus {
+  box-shadow: none;
+}
+
+.search-box .btn {
+  border-radius: var(--border-radius) !important;
+  padding: 12px 32px;
+}
+
+/* Category Cards */
+.category-card {
+  cursor: pointer;
+  text-align: center;
+  padding: 24px 16px;
+  background: var(--white);
+  border-radius: var(--border-radius-lg) !important;
+}
+
+.category-card:hover {
+  background: linear-gradient(135deg, #fff5f3 0%, #fff9e6 100%);
+}
+
+.category-card .category-icon {
+  font-size: 3rem;
+  margin-bottom: 12px;
+}
+
+.category-card .category-name {
+  font-weight: 600;
+  color: var(--dark-gray);
+}
+
+/* Restaurant Cards */
+.restaurant-card {
+  position: relative;
+}
+
+.restaurant-card .card-img-top {
+  height: 180px;
+  object-fit: cover;
+}
+
+.restaurant-card .favorite-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: var(--white);
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-light);
+  transition: var(--transition);
+  cursor: pointer;
+}
+
+.restaurant-card .favorite-btn:hover {
+  transform: scale(1.1);
+  color: var(--primary-coral);
+}
+
+.restaurant-card .favorite-btn.active {
+  color: var(--primary-coral);
+}
+
+.restaurant-card .rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--secondary-yellow);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.restaurant-card .delivery-info {
+  color: var(--medium-gray);
+  font-size: 0.875rem;
+}
+
+.restaurant-card .tag {
+  background: var(--light-gray);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  color: var(--medium-gray);
+}
+
+/* Food Item Cards */
+.food-card {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  background: var(--white);
+  border-radius: var(--border-radius-lg);
+  margin-bottom: 16px;
+}
+
+.food-card:hover {
+  box-shadow: var(--shadow-medium);
+}
+
+.food-card .food-image {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: var(--border-radius);
+}
+
+.food-card .food-info {
+  flex: 1;
+}
+
+.food-card .food-name {
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+}
+
+.food-card .food-description {
+  color: var(--medium-gray);
+  font-size: 0.9rem;
+  margin-bottom: 12px;
+}
+
+.food-card .food-price {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--primary-coral);
+}
+
+/* Cart Styles */
+.cart-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: var(--white);
+  border-radius: var(--border-radius);
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-light);
+}
+
+.cart-item .item-image {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: var(--border-radius);
+}
+
+.cart-item .quantity-control {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cart-item .quantity-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--primary-coral);
+  background: transparent;
+  color: var(--primary-coral);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.cart-item .quantity-btn:hover {
+  background: var(--primary-coral);
+  color: var(--white);
+}
+
+/* Section Titles */
+.section-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--dark-gray);
+}
+
+.section-subtitle {
+  color: var(--medium-gray);
+  margin-bottom: 32px;
+}
+
+/* Footer Styles */
+.footer {
+  background: var(--dark-gray);
+  color: var(--white);
+  padding: 60px 0 30px;
+}
+
+.footer h5 {
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.footer a {
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+.footer a:hover {
+  color: var(--primary-coral);
+}
+
+.footer .social-icons a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  margin-right: 10px;
+  font-size: 1.2rem;
+}
+
+.footer .social-icons a:hover {
+  background: var(--primary-coral);
+  color: var(--white);
+}
+
+/* Admin Dashboard Styles */
+.admin-sidebar {
+  background: var(--dark-gray);
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.admin-sidebar .nav-link {
+  color: rgba(255, 255, 255, 0.7) !important;
+  margin-bottom: 8px;
+}
+
+.admin-sidebar .nav-link:hover,
+.admin-sidebar .nav-link.active {
+  color: var(--white) !important;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.stat-card {
+  padding: 24px;
+  border-radius: var(--border-radius-lg);
+  color: var(--white);
+}
+
+.stat-card.orders {
+  background: linear-gradient(
+    135deg,
+    var(--primary-coral) 0%,
+    var(--secondary-orange) 100%
+  );
+}
+
+.stat-card.revenue {
+  background: linear-gradient(135deg, #4caf50 0%, #8bc34a 100%);
+}
+
+.stat-card.customers {
+  background: linear-gradient(135deg, #2196f3 0%, #03a9f4 100%);
+}
+
+.stat-card.restaurants {
+  background: linear-gradient(135deg, #9c27b0 0%, #e91e63 100%);
+}
+
+.stat-card .stat-icon {
+  font-size: 2.5rem;
+  opacity: 0.8;
+}
+
+.stat-card .stat-number {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.stat-card .stat-label {
+  opacity: 0.9;
+}
+
+/* Restaurant Detail Page */
+.restaurant-banner {
+  height: 300px;
+  object-fit: cover;
+  width: 100%;
+  border-radius: 0 0 var(--border-radius-lg) var(--border-radius-lg);
+}
+
+.restaurant-info-card {
+  background: var(--white);
+  border-radius: var(--border-radius-lg);
+  padding: 24px;
+  margin-top: -60px;
+  position: relative;
+  box-shadow: var(--shadow-medium);
+}
+
+/* Menu Tabs */
+.menu-tabs .nav-link {
+  border: none;
+  color: var(--medium-gray) !important;
+  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: var(--border-radius) !important;
+}
+
+.menu-tabs .nav-link.active {
+  background: var(--primary-coral) !important;
+  color: var(--white) !important;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.empty-state i {
+  font-size: 4rem;
+  color: var(--medium-gray);
+  margin-bottom: 20px;
+}
+
+.empty-state h4 {
+  color: var(--dark-gray);
+  margin-bottom: 12px;
+}
+
+.empty-state p {
+  color: var(--medium-gray);
+}
+
+/* Loading Skeleton */
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: var(--border-radius);
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 2.5rem;
+  }
+
+  .section-title {
+    font-size: 1.5rem;
+  }
+
+  .food-card {
+    flex-direction: column;
+  }
+
+  .food-card .food-image {
+    width: 100%;
+    height: 150px;
+  }
+}
+
+/* Badge Styles */
+.badge-coral {
+  background-color: var(--primary-coral);
+  color: white;
+}
+
+/* Order Summary */
+.order-summary {
+  background: var(--light-gray);
+  border-radius: var(--border-radius-lg);
+  padding: 24px;
+}
+
+.order-summary .summary-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.order-summary .summary-row:last-child {
+  border-bottom: none;
+}
+
+.order-summary .total-row {
+  font-weight: 700;
+  font-size: 1.2rem;
+  padding-top: 16px;
+  border-top: 2px solid var(--dark-gray);
+}

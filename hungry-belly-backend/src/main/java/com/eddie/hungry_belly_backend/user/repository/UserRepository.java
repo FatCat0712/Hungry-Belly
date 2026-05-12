@@ -17,7 +17,7 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByEmail(String email);
 
-    @Query("SELECT u FROM User u JOIN FETCH u.roles WHERE u.email = ?1")
+    @Query("SELECT u FROM User u LEFT JOIN FETCH u.roles WHERE u.email = ?1")
     Optional<User> findByEmail(String email);
 
     // Pagination query - returns IDs only (no collection fetch)
