@@ -137,32 +137,6 @@ function HomePage() {
           </div>
         </div>
       </section>
-
-      {/* CTA Section */}
-      <section
-        className="py-5"
-        style={{
-          background: "linear-gradient(135deg, #F26B5B 0%, #F5C85C 100%)",
-          color: "white",
-        }}
-      >
-        <div className="container text-center">
-          <h2 className="mb-3 fw-bold">Ready to Order?</h2>
-          <p className="mb-4 fs-5">
-            Download our app and get 20% off your first order!
-          </p>
-          <div className="d-flex justify-content-center gap-3">
-            <button className="btn btn-light btn-lg">
-              <i className="bi bi-apple me-2"></i>
-              App Store
-            </button>
-            <button className="btn btn-light btn-lg">
-              <i className="bi bi-google-play me-2"></i>
-              Play Store
-            </button>
-          </div>
-        </div>
-      </section>
     </>
   );
 }

@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import Navbar from "./components/Navbar";
+
 import HomePage from "./pages/HomePage";
 import RestaurantsPage from "./pages/RestaurantsPage";
 import RestaurantDetailPage from "./pages/RestaurantDetailPage";
 import CartPage from "./pages/CartPage";
 import OrdersPage from "./pages/OrdersPage";
 import ContactPage from "./pages/ContactPage";
-import Footer from "./components/Footer";
+import HomeLayout from "./layouts/HomeLayout";
 
 const App = () => {
   const [cartItems, setCartItems] = useState([]);
@@ -51,32 +51,28 @@ const App = () => {
 
   return (
     <BrowserRouter>
-      <div className="d-flex flex-column min-vh-100">
-        <Navbar cartCount={cartCount} />
-        <main className="grow">
-          <Routes>
-                    <Route path="/" element={<HomePage />} />
-                    <Route path="/restaurants" element={<RestaurantsPage />} />
-                    <Route
-                      path="/restaurant/:id"
-                      element={<RestaurantDetailPage addToCart={addToCart} />}
-                    />
-                    <Route
-                      path="/cart"
-                      element={
-                        <CartPage
-                          cartItems={cartItems}
-                          updateQuantity={updateQuantity}
-                          clearCart={clearCart}
-                        />
-                      }
-                    />
-                    <Route path="/orders" element={<OrdersPage />} />
-                    <Route path="/contact" element={<ContactPage />} />
-          </Routes>
-        </main>
-        <Footer />
-      </div>
+      <Routes>
+        <Route path="/" element={<HomeLayout />}>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/restaurants" element={<RestaurantsPage />} />
+          <Route
+            path="/restaurant/:id"
+            element={<RestaurantDetailPage addToCart={addToCart} />}
+          />
+          <Route
+            path="/cart"
+            element={
+              <CartPage
+                cartItems={cartItems}
+                updateQuantity={updateQuantity}
+                clearCart={clearCart}
+              />
+            }
+          />
+          <Route path="/orders" element={<OrdersPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+        </Route>
+      </Routes>
     </BrowserRouter>
   );
 };

@@ -1,7 +1,7 @@
 import { Link, NavLink } from "react-router-dom";
 import { assets } from "../assets/assets";
 
-function Navbar({ cartCount }) {
+function Navbar({ cartCount = 0 }) {
   return (
     <nav className="navbar navbar-expand-lg navbar-light bg-white sticky-top">
       <div className="container">
