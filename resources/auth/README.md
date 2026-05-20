@@ -26,7 +26,7 @@ There are only three ways this plays out.
 
 ## Scenario A — Normal Flow, No Attacker
 
-![Normal Flow, No Attacker](resources/auth/scenario_a.jpg)
+![Normal Flow, No Attacker](scenario_a.jpg)
 
 Nobody steals anything.
 
@@ -42,7 +42,7 @@ until they explicitly log out or the refresh token hits its 7-day expiry.
 
 ## Scenario B — Attacker Uses the Stolen Token First
 
-![Attacker Uses the Stolen Token First](resources/auth/scenario_b.jpg)
+![Attacker Uses the Stolen Token First](scenario_b.jpg)
 
 The attacker wins the race — and gets a silent window of access.
 
@@ -69,7 +69,7 @@ matters. Shorter AT means smaller damage window.
 
 ## Scenario C — User Uses the Stolen Token First
 
-![User Uses the Stolen Token First](resources/auth/scenario_c.jpg)
+![User Uses the Stolen Token First](scenario_c.jpg)
 
 The attacker never gets in — but still causes damage by trying.
 
