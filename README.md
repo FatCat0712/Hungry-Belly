@@ -1,11 +1,12 @@
 # Hungry Belly
 
-Hungry Belly is a full-stack admin platform for operating a food-delivery back office. The repository includes a Spring Boot API, a React admin dashboard, media-upload utilities, and management flows for users, roles, restaurants, categories, foods, and restaurant staff membership.
+Hungry Belly is a full-stack food platform with an admin back office and a customer-facing web app. The repository includes a Spring Boot API, React frontend applications, media-upload utilities, and management flows for users, roles, restaurants, categories, foods, and restaurant staff membership.
 
 ## Overview
 
 - `hungry-belly-backend` - Spring Boot REST API
-- `hungry-belly-frontend` - React + Vite admin dashboard
+- `hungry-belly-frontend/admin-app` - React + Vite admin dashboard
+- `hungry-belly-frontend/customer-app` - React + Vite customer storefront
 - `resources` - project assets, including the database schema image
 
 ## Current capabilities
@@ -22,11 +23,11 @@ Hungry Belly is a full-stack admin platform for operating a food-delivery back o
 
 ## Tech stack
 
-| Layer | Technologies |
-| --- | --- |
-| Backend | Java 21, Spring Boot 3.5, Spring Security, Spring Data JPA, MySQL, H2 (tests) |
-| Frontend | React 19, Vite 8, React Router 7, TanStack Query 5, Axios, Bootstrap 5 |
-| Storage and export | AWS SDK for S3-compatible storage, Apache POI, Super CSV |
+| Layer              | Technologies                                                                  |
+| ------------------ | ----------------------------------------------------------------------------- |
+| Backend            | Java 21, Spring Boot 3.5, Spring Security, Spring Data JPA, MySQL, H2 (tests) |
+| Frontend           | React 19, Vite 8, React Router 7, TanStack Query 5, Axios, Bootstrap 5        |
+| Storage and export | AWS SDK for S3-compatible storage, Apache POI, Super CSV                      |
 
 ## Repository structure
 
@@ -34,6 +35,8 @@ Hungry Belly is a full-stack admin platform for operating a food-delivery back o
 hungry-belly/
 |-- hungry-belly-backend/
 |-- hungry-belly-frontend/
+|   |-- admin-app/
+|   `-- customer-app/
 `-- resources/
 ```
 
@@ -83,22 +86,34 @@ The API starts on `http://localhost:8080` by default.
 
 ### 3. Configure the frontend
 
-Create `hungry-belly-frontend\.env`:
+Create `hungry-belly-frontend/admin-app/.env`:
 
 ```env
 VITE_API_URL=http://localhost:8080/api/v1
 ```
 
+The customer app currently uses local mock data and does not require API environment variables.
+
 ### 4. Run the frontend
 
-From `hungry-belly-frontend`:
+From `hungry-belly-frontend/admin-app`:
 
 ```bash
 npm install
 npm run dev
 ```
 
-The admin app runs on `http://localhost:5173`.
+In a separate terminal, from `hungry-belly-frontend/customer-app`:
+
+```bash
+npm install
+npm run dev
+```
+
+By default:
+
+- Admin app: `http://localhost:5173`
+- Customer app: run with `npm run dev -- --port 5174` if `5173` is already in use
 
 ## Useful commands
 
@@ -110,7 +125,17 @@ The admin app runs on `http://localhost:5173`.
 .\mvnw.cmd -q -DskipTests package
 ```
 
-### Frontend
+### Admin frontend (`hungry-belly-frontend/admin-app`)
+
+```bash
+npm install
+npm run dev
+npm run build
+npm run lint
+npm run preview
+```
+
+### Customer frontend (`hungry-belly-frontend/customer-app`)
 
 ```bash
 npm install
@@ -148,21 +173,33 @@ Swagger UI is available at `http://localhost:8080/swagger-ui/index.html`.
 
 ## Frontend routes
 
-Key admin routes include:
+Admin app routes include:
 
+- `/login`
+- `/`
 - `/users`
 - `/roles`
+- `/profile`
 - `/restaurants`
-- `/restaurants/:id`
-- `/restaurants/:id/members`
 - `/categories`
 - `/foods`
-- `/profile`
+- `/orders`
+- `/access-denied`
 
-The frontend sends credentials with every request and automatically attempts token refresh on `401` responses.
+Customer app routes include:
+
+- `/`
+- `/restaurants`
+- `/restaurant/:id`
+- `/cart`
+- `/orders`
+- `/contact`
+
+The admin app sends credentials with every request and automatically attempts token refresh on `401` responses.
 
 ## Notes
 
 - The backend uses MySQL in normal development and H2 in the test profile.
 - Backend security protects user and role management for admins, while restaurant and food features are available to admin and partner roles.
-- The frontend contains the latest restaurant member-management UI, including add member, role change, remove member, and transfer owner flows.
+- The admin app contains the latest restaurant member-management UI, including add member, role change, remove member, and transfer owner flows.
+- The customer app currently focuses on browsing/menu/order UI flows backed by local data.
