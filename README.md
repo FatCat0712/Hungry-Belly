@@ -39,7 +39,7 @@ hungry-belly/
 
 ## Database schema
 
-![Hungry Belly schema](resources/hungry-belly.jpg)
+![Hungry Belly schema](resources/schema/hungry-belly.jpg)
 
 ## Getting started
 
