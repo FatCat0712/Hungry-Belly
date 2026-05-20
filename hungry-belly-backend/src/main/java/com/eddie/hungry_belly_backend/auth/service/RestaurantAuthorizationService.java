@@ -19,7 +19,7 @@ public class RestaurantAuthorizationService {
         if(authentication == null || !authentication.isAuthenticated()) {
             throw new IllegalStateException("No authenticated user found");
         }
-        String email = authentication.getPrincipal().toString();
+        String email = authentication.getName();
         return userService.findByEmail(email).getId();
     }
 

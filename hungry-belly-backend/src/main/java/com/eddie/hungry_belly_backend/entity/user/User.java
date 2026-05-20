@@ -1,5 +1,6 @@
-package com.eddie.hungry_belly_backend.entity;
+package com.eddie.hungry_belly_backend.entity.user;
 
+import com.eddie.hungry_belly_backend.entity.Role;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -50,6 +51,7 @@ public class User {
     public void addRole(Role role) {
         this.roles.add(role);
     }
+
 
     @Override
     public String toString() {

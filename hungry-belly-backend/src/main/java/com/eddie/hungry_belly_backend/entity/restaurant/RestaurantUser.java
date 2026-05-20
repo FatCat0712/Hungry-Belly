@@ -1,6 +1,6 @@
 package com.eddie.hungry_belly_backend.entity.restaurant;
 
-import com.eddie.hungry_belly_backend.entity.User;
+import com.eddie.hungry_belly_backend.entity.user.User;
 import jakarta.persistence.*;
 import lombok.*;
 

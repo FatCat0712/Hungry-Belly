@@ -1,39 +1,31 @@
 package com.eddie.hungry_belly_backend.security.jwt;
 
 import com.eddie.hungry_belly_backend.common.util.CookieUtils;
+import com.eddie.hungry_belly_backend.security.AppUserDetailsService;
 import io.jsonwebtoken.JwtException;
 import jakarta.annotation.Nonnull;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.BadCredentialsException;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.List;
 
 @Component
+@RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-    // This filter will intercept incoming requests and validate the JWT token
-    // If the token is valid, it will set the authentication in the security context
-    // If the token is invalid or missing, it will not set the authentication and the request will be rejected by the JwtEntryPoint
-    @Autowired
-    private JwtUtils jwtUtils;
-
-    @Autowired
-    private CookieUtils cookieUtils;
-
-    @Autowired
-    private JwtAuthenticationEntryPoint authenticationEntryPoint;
+    private final JwtUtils jwtUtils;
+    private final CookieUtils cookieUtils;
+    private final AppUserDetailsService userDetailsService;
 
 
     @Override
@@ -51,22 +43,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 Authentication existing = SecurityContextHolder.getContext().getAuthentication();
                 if(existing == null) {
                     String username  = jwtUtils.getUsernameFromToken(token);
-                    List<SimpleGrantedAuthority> authorities = jwtUtils.getRolesFromToken(token).stream()
-                            .map(SimpleGrantedAuthority::new)
-                            .toList();
-                    var auth = new UsernamePasswordAuthenticationToken(username, null, authorities);
+                    UserDetails principal = userDetailsService.loadUserByUsername(username); // Check if user exists, will throw if not
+                    var auth = new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
                     SecurityContextHolder.getContext().setAuthentication(auth);
                 }
 
 
             } catch (JwtException | IllegalArgumentException | UsernameNotFoundException ex) {
                 SecurityContextHolder.clearContext();
-                authenticationEntryPoint.commence(
-                        request,
-                        response,
-                        new BadCredentialsException("Invalid or expired access token", ex)
-                );
-                return;
             }
         }
 

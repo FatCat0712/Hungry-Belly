@@ -46,14 +46,6 @@ public class JwtUtils {
                 .compact();
     }
 
-    public List<String> getRolesFromToken(String token) {
-        Claims claims = getClaimsFromToken(token);
-        Object raw = claims.get("roles");
-        if(raw instanceof List<?> list) {
-            return list.stream().map(String::valueOf).toList();
-        }
-        return List.of();
-    }
 
     public String getUsernameFromToken(String token) {
         return getClaimsFromToken(token).getSubject();

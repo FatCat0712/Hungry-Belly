@@ -1,6 +1,6 @@
 package com.eddie.hungry_belly_backend.security;
 
-import com.eddie.hungry_belly_backend.entity.User;
+import com.eddie.hungry_belly_backend.entity.user.User;
 import com.eddie.hungry_belly_backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;

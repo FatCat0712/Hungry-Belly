@@ -1,5 +1,7 @@
 package com.eddie.hungry_belly_backend.entity;
 
+import com.eddie.hungry_belly_backend.entity.user.User;
+import com.eddie.hungry_belly_backend.entity.user.UserSession;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -24,4 +26,14 @@ public class RefreshToken {
 
     @Column(nullable = false)
     private Instant expiryDate;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "session_id", nullable = false)
+    private UserSession session;
+
+    @Column(name = "family_id", nullable = false)
+    private Long familyId;
+
+    @Column(nullable = false)
+    private boolean used = false;
 }

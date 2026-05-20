@@ -2,7 +2,7 @@ package com.eddie.hungry_belly_backend.restaurantuser.service;
 
 import com.eddie.hungry_belly_backend.auth.service.RestaurantAuthorizationService;
 import com.eddie.hungry_belly_backend.common.util.storage.service.StorageService;
-import com.eddie.hungry_belly_backend.entity.User;
+import com.eddie.hungry_belly_backend.entity.user.User;
 import com.eddie.hungry_belly_backend.entity.restaurant.Restaurant;
 import com.eddie.hungry_belly_backend.entity.restaurant.RestaurantRole;
 import com.eddie.hungry_belly_backend.entity.restaurant.RestaurantUser;

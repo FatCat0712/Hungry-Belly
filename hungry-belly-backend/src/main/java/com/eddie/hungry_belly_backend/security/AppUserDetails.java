@@ -1,6 +1,6 @@
 package com.eddie.hungry_belly_backend.security;
 
-import com.eddie.hungry_belly_backend.entity.User;
+import com.eddie.hungry_belly_backend.entity.user.User;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

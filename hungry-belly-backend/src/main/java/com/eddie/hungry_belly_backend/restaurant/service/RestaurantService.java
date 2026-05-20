@@ -6,7 +6,7 @@ import com.eddie.hungry_belly_backend.common.mapper.PageMapper;
 import com.eddie.hungry_belly_backend.common.util.paginate.PageRequestDto;
 import com.eddie.hungry_belly_backend.common.util.paginate.PaginationUtils;
 import com.eddie.hungry_belly_backend.common.util.storage.service.StorageService;
-import com.eddie.hungry_belly_backend.entity.User;
+import com.eddie.hungry_belly_backend.entity.user.User;
 import com.eddie.hungry_belly_backend.entity.restaurant.Restaurant;
 import com.eddie.hungry_belly_backend.entity.restaurant.RestaurantImage;
 import com.eddie.hungry_belly_backend.exception.common.BadRequestException;

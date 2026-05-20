@@ -34,9 +34,9 @@ public class AuthController {
 
     @Operation(summary = "Login", description = "Authenticates a user and issues access and refresh token cookies.")
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<?>> authenticateUser(@RequestBody @Valid LoginRequest request, HttpServletResponse response) {
+    public ResponseEntity<ApiResponse<?>> authenticateUser(@RequestBody @Valid LoginRequest request, HttpServletRequest httpRequest, HttpServletResponse response) {
         Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
-        String[] tokens = tokenService.issueTokens(request.getEmail(), authentication);
+        String[] tokens = tokenService.issueTokens(authentication, httpRequest);
         cookieUtils.addTokenCookie(response, "accessToken", tokens[0], authTokenProperties.getAccessExpirationInMils());
         cookieUtils.addTokenCookie(response, "refreshToken", tokens[1], authTokenProperties.getRefreshExpirationInMils());
         ApiResponse<?> body = ApiResponse.success(null, "Login");
@@ -56,10 +56,11 @@ public class AuthController {
 
     @Operation(summary = "Logout", description = "Clears auth cookies and invalidates the current refresh token.")
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<?>> logout(HttpServletResponse response) {
+    public ResponseEntity<ApiResponse<?>> logout(HttpServletRequest request, HttpServletResponse response) {
+        String refreshToken = cookieUtils.extractTokenFromCookies(request, "refreshToken");
+        tokenService.logout(refreshToken);
         cookieUtils.clearCookie(response, "accessToken");
         cookieUtils.clearCookie(response, "refreshToken");
-        tokenService.logout();
         ApiResponse<?> body = ApiResponse.success(null, "Logout");
         return ResponseEntity.status(body.getStatus()).body(body);
     }

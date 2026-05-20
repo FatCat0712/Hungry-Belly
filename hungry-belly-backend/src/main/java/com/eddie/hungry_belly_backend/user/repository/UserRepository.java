@@ -1,6 +1,6 @@
 package com.eddie.hungry_belly_backend.user.repository;
 
-import com.eddie.hungry_belly_backend.entity.User;
+import com.eddie.hungry_belly_backend.entity.user.User;
 import com.eddie.hungry_belly_backend.user.projection.RoleUserCount;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

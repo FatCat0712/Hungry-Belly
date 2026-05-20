@@ -17,11 +17,11 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
     @Query("select rt from RefreshToken rt where rt.token = :token")
     Optional<RefreshToken> findByTokenForUpdate(@Param("token") String token);
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("select rt from RefreshToken rt where rt.user.id = :userId")
-    Optional<RefreshToken> findByUserIdForUpdate(@Param("userId") Long userId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(value = "delete rt from refresh_token rt INNER JOIN users u ON rt.user_id = u.id WHERE u.email = :email", nativeQuery = true)
-    int deleteByUserEmail(@Param("email") String email);
+    void deleteByUserEmail(@Param("email") String email);
+
+    @Modifying
+    void deleteAllByFamilyId(Long familyId);
 }

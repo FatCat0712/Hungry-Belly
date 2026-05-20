@@ -1,7 +1,7 @@
 package com.eddie.hungry_belly_backend.user;
 
 import com.eddie.hungry_belly_backend.entity.Role;
-import com.eddie.hungry_belly_backend.entity.User;
+import com.eddie.hungry_belly_backend.entity.user.User;
 import com.eddie.hungry_belly_backend.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
