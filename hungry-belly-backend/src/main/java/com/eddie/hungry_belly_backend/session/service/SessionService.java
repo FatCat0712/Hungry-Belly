@@ -33,11 +33,6 @@ public class SessionService {
         sessionRepository.save(session);
     }
 
-    public boolean isSessionValid(Long sessionId) {
-        return sessionRepository.findById(sessionId)
-                .map(UserSession::isValid)
-                .orElse(false);
-    }
 
 
 }
