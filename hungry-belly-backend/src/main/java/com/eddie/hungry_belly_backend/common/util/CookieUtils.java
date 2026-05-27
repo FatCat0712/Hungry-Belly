@@ -22,7 +22,7 @@ public class CookieUtils {
         Cookie tokenCookie = new Cookie(tokenName, token);
         tokenCookie.setHttpOnly(true);
         tokenCookie.setPath("/");
-        tokenCookie.setMaxAge((int)(maxAge/1000));
+        tokenCookie.setMaxAge((int)(maxAge));
         tokenCookie.setSecure(useSecureCookies);
         setResponseHeader(response, tokenCookie, resolveSameSite());
     }

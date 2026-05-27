@@ -541,3 +541,105 @@ body {
   padding-top: 16px;
   border-top: 2px solid var(--dark-gray);
 }
+
+/* Register Page */
+.register-page {
+  min-height: calc(100vh - 180px);
+  background: linear-gradient(145deg, #fff8f5 0%, #fffef8 55%, #f8fbff 100%);
+}
+
+.register-card {
+  border-radius: var(--border-radius-lg);
+  background: var(--white);
+  box-shadow: var(--shadow-medium);
+  overflow: hidden;
+}
+
+.register-card-header {
+  padding: 28px 28px 20px;
+  background: linear-gradient(135deg, rgba(242, 107, 91, 0.1), rgba(245, 200, 92, 0.18));
+  border-bottom: 1px solid rgba(242, 107, 91, 0.16);
+}
+
+.register-title {
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: var(--dark-gray);
+}
+
+.register-subtitle {
+  color: var(--medium-gray);
+}
+
+.register-form {
+  padding: 24px 28px 28px;
+}
+
+.register-form .form-control,
+.register-form .form-check-input {
+  border-radius: 10px;
+}
+
+.register-form .form-control:focus,
+.register-form .form-check-input:focus {
+  border-color: rgba(242, 107, 91, 0.5);
+  box-shadow: 0 0 0 0.2rem rgba(242, 107, 91, 0.18);
+}
+
+.register-roles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #e9ecef;
+  border-radius: var(--border-radius);
+  background: #fffdfb;
+}
+
+.register-switch .form-check-input {
+  width: 3rem;
+  height: 1.5rem;
+}
+
+.register-photo-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.photo-default-label {
+  white-space: nowrap;
+  background: rgba(108, 117, 125, 0.12);
+  color: var(--dark-gray);
+  border: 1px dashed rgba(108, 117, 125, 0.45);
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  min-width: 132px;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .register-card-header,
+  .register-form {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .register-title {
+    font-size: 1.5rem;
+  }
+
+  .register-roles {
+    grid-template-columns: 1fr;
+  }
+
+  .register-photo-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .photo-default-label {
+    width: 100%;
+  }
+}

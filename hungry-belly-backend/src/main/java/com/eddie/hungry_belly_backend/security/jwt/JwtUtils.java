@@ -51,6 +51,10 @@ public class JwtUtils {
         return getClaimsFromToken(token).getSubject();
     }
 
+    public Long getUserIdFromToken(String token) {
+        return getClaimsFromToken(token).get("id", Long.class);
+    }
+
     public Claims getClaimsFromToken(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(key())

@@ -64,7 +64,9 @@ function Navbar({ cartCount = 0 }) {
               <i className="bi bi-person me-1"></i>
               Login
             </button>
-            <button className="btn btn-primary">Register</button>
+            <Link to="/register" className="btn btn-primary">
+              Register
+            </Link>
           </div>
         </div>
       </div>

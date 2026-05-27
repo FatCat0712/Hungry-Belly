@@ -29,7 +29,6 @@ import java.util.List;
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-    private final JwtAuthenticationFilter jwtFilter;
     private final JwtAuthenticationEntryPoint authenticationEntryPoint;
     private final AppUserDetailsService userDetailsService;
     private final CustomAccessDeniedHandler accessDeniedHandler;
@@ -38,7 +37,7 @@ public class SecurityConfig {
     private String API;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtFilter) throws Exception {
         String[] whiteList = {
                 API + "/auth/login", API + "/auth/refresh-token", "/swagger-ui/**",
                 "/swagger-ui.html", "/v3/api-docs/**"
@@ -72,9 +71,9 @@ public class SecurityConfig {
     }
 
     @Bean
-    public DaoAuthenticationProvider authenticationProvider() {
+    public DaoAuthenticationProvider authenticationProvider(PasswordEncoder passwordEncoder) {
         var authProvider = new DaoAuthenticationProvider(userDetailsService);
-        authProvider.setPasswordEncoder(passwordEncoder());
+        authProvider.setPasswordEncoder(passwordEncoder);
         return authProvider;
     }
 

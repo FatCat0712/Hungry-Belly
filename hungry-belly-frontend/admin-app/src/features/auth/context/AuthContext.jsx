@@ -15,22 +15,6 @@ export const AuthProvider = ({ children }) => {
   } = useFetchCurrentUser({ enabled: !isOnLoginPage() });
   const queryClient = useQueryClient();
 
-  const loginUser = async (email, password) => {
-    await loginApi(email, password);
-    await fetchUser({ force: true });
-  };
-
-  const logoutUser = async () => {
-    try {
-      await logoutApi();
-    } finally {
-      setUser(null);
-      setIsAuthLoading(false);
-    }
-    await queryClient.cancelQueries({ queryKey: ["currentUser"] });
-    queryClient.removeQueries({ queryKey: ["currentUser"] });
-  };
-
   const fetchUser = async ({ force = false } = {}) => {
     if (!force && isOnLoginPage()) {
       setUser(null);
@@ -59,6 +43,24 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+
+  const loginUser = async (email, password) => {
+    await loginApi(email, password);
+    await fetchUser({ force: true });
+  };
+
+  const logoutUser = async () => {
+    try {
+      await logoutApi();
+    } finally {
+      setUser(null);
+      setIsAuthLoading(false);
+    }
+    await queryClient.cancelQueries({ queryKey: ["currentUser"] });
+    queryClient.removeQueries({ queryKey: ["currentUser"] });
+  };
+
+  
   useEffect(() => {
     if (isOnLoginPage()) {
       setUser(null);

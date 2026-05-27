@@ -24,6 +24,8 @@ import com.eddie.hungry_belly_backend.user.dto.response.UserResponse;
 import com.eddie.hungry_belly_backend.user.dto.response.UserStatsResponse;
 import com.eddie.hungry_belly_backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -57,6 +59,7 @@ public class UserService {
         return convertToAdminResponse(user);
     }
 
+    @Cacheable(value = "userProfiles", key = "#id")
     public User findUserById(Long id) {
         Optional<User> dbUser = userRepository.findUserById(id);
         if (dbUser.isEmpty()) {
@@ -71,6 +74,7 @@ public class UserService {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
+    @CacheEvict(value = "userProfiles", key = "#userId")
     public UserResponse updateUserInfo(Long userId, UserUpdateRequest request) {
 
         User existUser = findByEmail(request.getEmail());
@@ -110,6 +114,7 @@ public class UserService {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
+    @CacheEvict(value = "userProfiles", key = "#id")
     public void resetPassword(Long id, ResetPasswordRequest request) {
         User dbUser = findUserById(id);
         dbUser.setPassword(encodePassword(request.getNewPassword()));
@@ -118,6 +123,7 @@ public class UserService {
 
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional
+    @CacheEvict(value = "userProfiles", key = "#id")
     public void delete(Long id) {
         User currentUser = findUserById(id);
         Role roleAdmin = roleService.getExistRoleWithSameName("ROLE_ADMIN");
@@ -142,6 +148,7 @@ public class UserService {
 
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional
+    @CacheEvict(value = "userProfiles", key = "#id")
     public void updateUserStatus(Long id) {
         User dbUser = findUserById(id);
         userRepository.updateUserStatus(dbUser.getId(), !dbUser.isEnabled());

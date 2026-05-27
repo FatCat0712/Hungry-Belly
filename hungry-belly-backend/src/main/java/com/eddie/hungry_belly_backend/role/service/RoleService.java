@@ -14,6 +14,7 @@ import com.eddie.hungry_belly_backend.role.repository.RoleRepository;
 import com.eddie.hungry_belly_backend.user.projection.RoleUserCount;
 import com.eddie.hungry_belly_backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
@@ -63,6 +64,7 @@ public class RoleService{
 
 
     @PreAuthorize("hasRole('ADMIN')")
+    @CacheEvict(value = "userProfiles", allEntries = true)
     public void updateRole(RoleUpdateRequest request) {
         Role existRole = getExistRoleWithSameName(request.getName());
 
@@ -104,6 +106,7 @@ public class RoleService{
 
 
     @PreAuthorize("hasRole('ADMIN')")
+    @CacheEvict(value = "userProfiles", allEntries = true)
     public void delete(Long id) {
         roleRepository.deleteById(id);
     }

@@ -7,6 +7,7 @@ import RestaurantDetailPage from "./pages/RestaurantDetailPage";
 import CartPage from "./pages/CartPage";
 import OrdersPage from "./pages/OrdersPage";
 import ContactPage from "./pages/ContactPage";
+import RegisterPage from "./pages/RegisterPage";
 import HomeLayout from "./layouts/HomeLayout";
 
 const App = () => {
@@ -71,6 +72,7 @@ const App = () => {
           />
           <Route path="/orders" element={<OrdersPage />} />
           <Route path="/contact" element={<ContactPage />} />
+          <Route path="/register" element={<RegisterPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

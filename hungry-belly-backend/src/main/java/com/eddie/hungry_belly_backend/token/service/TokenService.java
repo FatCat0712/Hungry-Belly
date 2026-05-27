@@ -33,8 +33,7 @@ public class TokenService {
     @Transactional
     public String[] issueTokens(Authentication authentication, HttpServletRequest request) {
         AppUserDetails appUserDetails = (AppUserDetails) authentication.getPrincipal();
-        Long userId = appUserDetails.getId();
-        User dbUser = userService.findUserById(userId);
+        User dbUser = userService.findUserById(appUserDetails.getId());
         UserSession session = sessionService.createSession(dbUser, request);
         return buildAndSaveTokens(authentication, dbUser, session, session.getId());
     }

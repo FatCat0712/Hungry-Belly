@@ -1,7 +1,9 @@
 package com.eddie.hungry_belly_backend.security.jwt;
 
 import com.eddie.hungry_belly_backend.common.util.CookieUtils;
-import com.eddie.hungry_belly_backend.security.AppUserDetailsService;
+import com.eddie.hungry_belly_backend.entity.user.User;
+import com.eddie.hungry_belly_backend.security.AppUserDetails;
+import com.eddie.hungry_belly_backend.user.service.UserService;
 import io.jsonwebtoken.JwtException;
 import jakarta.annotation.Nonnull;
 import jakarta.servlet.FilterChain;
@@ -25,7 +27,7 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtUtils jwtUtils;
     private final CookieUtils cookieUtils;
-    private final AppUserDetailsService userDetailsService;
+    private final UserService userService;
 
 
     @Override
@@ -39,11 +41,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (StringUtils.hasText(token)) {
             try {
                 jwtUtils.validateToken(token);
-
                 Authentication existing = SecurityContextHolder.getContext().getAuthentication();
                 if(existing == null) {
-                    String username  = jwtUtils.getUsernameFromToken(token);
-                    UserDetails principal = userDetailsService.loadUserByUsername(username); // Check if user exists, will throw if not
+                    Long id = jwtUtils.getUserIdFromToken(token);
+                    User savedUser = userService.findUserById(id); // Check if user exists, will throw if not
+                    UserDetails principal = AppUserDetails.buildUserDetails(savedUser); // Check if user exists, will throw if not
                     var auth = new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
                     SecurityContextHolder.getContext().setAuthentication(auth);
                 }
