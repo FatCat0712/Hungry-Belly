@@ -42,6 +42,7 @@ public class SecurityConfig {
                 API + "/auth/login",
                 API + "/auth/refresh-token",
                 API + "/users/register",
+                API + "/users/activate",
                 "/swagger-ui/**",
                 "/swagger-ui.html",
                 "/v3/api-docs/**",

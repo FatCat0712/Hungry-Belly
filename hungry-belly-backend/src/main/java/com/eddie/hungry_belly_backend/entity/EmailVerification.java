@@ -2,8 +2,7 @@ package com.eddie.hungry_belly_backend.entity;
 
 import com.eddie.hungry_belly_backend.entity.user.User;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
