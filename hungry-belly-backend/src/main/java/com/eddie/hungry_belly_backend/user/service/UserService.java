@@ -24,11 +24,13 @@ import com.eddie.hungry_belly_backend.user.dto.response.ExportResult;
 import com.eddie.hungry_belly_backend.user.dto.response.UserCsvDto;
 import com.eddie.hungry_belly_backend.user.dto.response.UserResponse;
 import com.eddie.hungry_belly_backend.user.dto.response.UserStatsResponse;
+import com.eddie.hungry_belly_backend.user.event.UserRegisteredEvent;
 import com.eddie.hungry_belly_backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -51,6 +53,7 @@ public class UserService {
     private final ExportService exportService;
     private final StorageService storageService;
     private final EmailService emailService;
+    private final ApplicationEventPublisher eventPublisher;
 
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -64,6 +67,7 @@ public class UserService {
         return convertToAdminResponse(user);
     }
 
+    @Transactional
     public UserResponse createNewCustomer(RegisterRequest registerRequest) {
         boolean isEmailUnique = userRepository.existsByEmail(registerRequest.getEmail());
         if(isEmailUnique) {
@@ -86,7 +90,15 @@ public class UserService {
 
         emailService.createEmailVerification(newUser, verificationToken);
 
-        emailService.sendVerificationEmail(newUser, verificationToken);
+
+        eventPublisher.publishEvent(
+                new UserRegisteredEvent(
+                        newUser.getFirstName(),
+                        newUser.getEmail(),
+                        verificationToken)
+                )
+        ;
+
         return convertToAdminResponse(newUser);
     }
 

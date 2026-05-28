@@ -5,6 +5,7 @@ import com.eddie.hungry_belly_backend.entity.EmailVerification;
 import com.eddie.hungry_belly_backend.entity.TokenType;
 import com.eddie.hungry_belly_backend.entity.user.User;
 import com.eddie.hungry_belly_backend.exception.common.InvalidTokenException;
+import com.eddie.hungry_belly_backend.user.event.UserRegisteredEvent;
 import com.eddie.hungry_belly_backend.user.repository.UserRepository;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -14,7 +15,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -34,6 +38,13 @@ public class EmailService {
 
     @Value("${spring.mail.username}")
     private String fromEmail;
+
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onUserRegistered(UserRegisteredEvent event) {
+        sendVerificationEmail(event.getFirstName(), event.getEmail(), event.getActivationToken());
+    }
+
 
     public void createEmailVerification(User user, String token) {
         EmailVerification emailVerification = new EmailVerification();
@@ -62,11 +73,11 @@ public class EmailService {
         return user.getFirstName();
     }
 
-    public void sendVerificationEmail(User user, String token) {
+    public void sendVerificationEmail(String firstName, String email, String token) {
         // Implement email sending logic here (e.g., using JavaMailSender)
         String html = loadTemplate("activation")
                 .replace("{{logoUrl}}", "cid:logo")
-                .replace("{{firstName}}", user.getFirstName())
+                .replace("{{firstName}}", firstName)
                 .replace("{{activationLink}}", "http://localhost:8080" + API + "/users/activate?token=" + token);
         // Construct the verification URL and send the email to the user
 
@@ -74,7 +85,7 @@ public class EmailService {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
             helper.setFrom(fromEmail);
-            helper.setTo(user.getEmail());
+            helper.setTo(email);
             helper.setSubject("Activate Your Hungry Belly Account");
             helper.setText(html, true);
 
@@ -84,7 +95,7 @@ public class EmailService {
 
             mailSender.send(message);
         } catch (MessagingException e) {
-            log.error("Failed to send verification email to {}: {}", user.getEmail(), e.getMessage());
+            log.error("Failed to send verification email to {}: {}", email, e.getMessage());
         }
 
 
