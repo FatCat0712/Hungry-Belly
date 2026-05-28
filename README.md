@@ -1,205 +1,151 @@
 # Hungry Belly
 
-Hungry Belly is a full-stack food platform with an admin back office and a customer-facing web app. The repository includes a Spring Boot API, React frontend applications, media-upload utilities, and management flows for users, roles, restaurants, categories, foods, and restaurant staff membership.
-
-## Overview
-
-- `hungry-belly-backend` - Spring Boot REST API
-- `hungry-belly-frontend/admin-app` - React + Vite admin dashboard
-- `hungry-belly-frontend/customer-app` - React + Vite customer storefront
-- `resources` - project assets, including the database schema image
-
-## Current capabilities
-
-- **Authentication and account management** - JWT-based login, refresh-token flow, logout, current-user profile, and account update APIs.
-- **Role and permission administration** - manage roles, inspect permissions, and control access to protected admin features.
-- **User operations** - paginated user management, password reset, status updates, and CSV/XLSX export.
-- **Restaurant operations** - create, edit, activate/deactivate, delete, and inspect restaurants.
-- **Restaurant membership management** - list members, add members, change member roles, remove members, list the signed-in user's restaurants, and transfer restaurant ownership.
-- **Catalog management** - manage hierarchical categories and food items.
-- **Media uploads** - generate presigned upload URLs and temporary upload sessions for client-side file handling.
-- **Operational cleanup** - scheduled cleanup services remove orphaned uploads and generated export files.
-- **API documentation** - OpenAPI/Swagger UI is enabled in the backend.
-
-## Tech stack
-
-| Layer              | Technologies                                                                  |
-| ------------------ | ----------------------------------------------------------------------------- |
-| Backend            | Java 21, Spring Boot 3.5, Spring Security, Spring Data JPA, MySQL, H2 (tests) |
-| Frontend           | React 19, Vite 8, React Router 7, TanStack Query 5, Axios, Bootstrap 5        |
-| Storage and export | AWS SDK for S3-compatible storage, Apache POI, Super CSV                      |
+Hungry Belly is a monorepo centered on a Spring Boot backend for authentication, user and role administration, restaurant management, catalog management, storage uploads, and export workflows.
 
 ## Repository structure
 
 ```text
-hungry-belly/
-|-- hungry-belly-backend/
-|-- hungry-belly-frontend/
-|   |-- admin-app/
-|   `-- customer-app/
-`-- resources/
+hungry-belly\
+|-- hungry-belly-backend\
+|-- hungry-belly-frontend\
+|   |-- admin-app\
+|   `-- customer-app\
+`-- resources\
 ```
 
-## Database schema
+## Backend snapshot
 
-![Hungry Belly schema](resources/schema/hungry-belly.jpg)
+**Location:** `hungry-belly-backend\`
 
-## Getting started
+| Area | Current backend behavior |
+| --- | --- |
+| Authentication | Login, refresh-token rotation, logout, current-user profile, and account update |
+| Users | Paginated user management, stats, password reset, status toggle, and export |
+| Roles and permissions | Role CRUD, role name lookup, and permission listing |
+| Restaurants | Restaurant CRUD, status toggle, member management, and ownership transfer |
+| Catalog | Category CRUD, hierarchy view, export, and food CRUD with status toggle |
+| Storage | Presigned upload URL generation and temporary upload sessions |
+| Operations | Scheduled cleanup of orphaned images and exported files |
 
-### Prerequisites
+## Backend stack
 
 - Java 21
-- Node.js 20+
-- MySQL 8+
+- Spring Boot 3.5.11
+- Spring Web, Validation, Security, Data JPA
+- MySQL for normal development
+- H2 for tests
+- JWT authentication with HTTP-only cookies
+- Springdoc OpenAPI / Swagger UI
+- S3-compatible object storage integration
+- Apache POI and Super CSV for export generation
 
-### 1. Configure the backend
+## Backend architecture
 
-Create `hungry-belly-backend\.env`:
+The backend follows a package-by-feature structure under `src\main\java\com\eddie\hungry_belly_backend\`, with feature modules such as:
+
+- `auth`
+- `user`
+- `role`
+- `permission`
+- `restaurant`
+- `restaurantuser`
+- `category`
+- `food`
+
+Shared packages include `common`, `config`, `entity`, `exception`, `scheduler`, `security`, `session`, and `token`.
+
+## Configuration
+
+The backend imports local environment variables from `hungry-belly-backend\.env`.
+
+Create `hungry-belly-backend\.env` with:
 
 ```env
 DB_URL=jdbc:mysql://localhost:3306/hungry_belly
-DB_USERNAME=your_mysql_username
-DB_PASSWORD=your_mysql_password
+DB_USERNAME=
+DB_PASSWORD=
 
-BUCKET_NAME=your_bucket_name
-ACCESS_BUCKET_KEY=your_storage_access_key
-SECRET_BUCKET_KEY=your_storage_secret_key
-REGION_NAME=your_region
-S3_ENDPOINT=your_s3_endpoint
-SIGN_ENDPOINT=your_sign_endpoint
-SERVICE_ROLE_KEY=your_service_role_key
+BUCKET_NAME=
+ACCESS_BUCKET_KEY=
+SECRET_BUCKET_KEY=
+REGION_NAME=
+S3_ENDPOINT=
+SIGN_ENDPOINT=
+SERVICE_ROLE_KEY=
 
-JWT_SECRET=your_jwt_secret
+JWT_SECRET=
 ```
 
-The backend loads this file through `spring.config.import`, uses `/api/v1` as the API prefix, and allows frontend requests from `http://localhost:5173`.
+Notes:
 
-### 2. Run the backend
+- `JWT_SECRET` must be Base64-encoded because the backend decodes it before signing tokens.
+- The API base path is `/api/v1`.
+- Local CORS is currently configured for `http://localhost:5173`.
+- JPA schema generation is set to `ddl-auto: update`.
 
-From `hungry-belly-backend`:
+## Run the backend
 
-```bash
+From `hungry-belly-backend\` on Windows:
+
+```powershell
 .\mvnw.cmd spring-boot:run
 ```
 
-The API starts on `http://localhost:8080` by default.
+Default local URLs:
 
-### 3. Configure the frontend
+- API: `http://localhost:8080`
+- Swagger UI: `http://localhost:8080/swagger-ui/index.html`
 
-Create `hungry-belly-frontend/admin-app/.env`:
+## Build and test
+
+From `hungry-belly-backend\`:
+
+```powershell
+.\mvnw.cmd -q test
+.\mvnw.cmd -q -DskipTests package
+```
+
+Tests use H2 through `src\test\resources\application-test.yaml`.
+
+## API areas
+
+All backend endpoints are served under `/api/v1`.
+
+| Area | Base endpoints |
+| --- | --- |
+| Auth | `/auth/login`, `/auth/refresh-token`, `/auth/logout`, `/auth/me`, `/auth/update-account` |
+| Users | `/users`, `/users/page`, `/users/stats`, `/users/{id}/password`, `/users/{id}/status`, `/users/export/{format}` |
+| Roles | `/roles`, `/roles/names`, `/roles/{id}` |
+| Permissions | `/permissions` |
+| Restaurants | `/restaurants`, `/restaurants/page`, `/restaurants/{id}/status` |
+| Restaurant members | `/restaurants/{restaurantId}/members`, `/restaurants/mine`, `/restaurants/{restaurantId}/transfer-ownership` |
+| Categories | `/categories`, `/categories/roots`, `/categories/in-form`, `/categories/{id}/status`, `/categories/export/{format}` |
+| Foods | `/foods`, `/foods/page`, `/foods/{id}/status` |
+| Storage | `/storage/presigned-urls`, `/storage/temp-session` |
+
+Security notes from the current backend configuration:
+
+- `/users/**` and `/roles/**` require the `ADMIN` role.
+- `/restaurants/**` and `/foods/**` allow `ADMIN` or `PARTNER`.
+- Swagger and auth login/refresh routes are publicly accessible.
+
+## Frontend integration note
+
+The repo also contains:
+
+- `hungry-belly-frontend\admin-app\`
+- `hungry-belly-frontend\customer-app\`
+
+For local admin frontend development, point the app to:
 
 ```env
 VITE_API_URL=http://localhost:8080/api/v1
 ```
 
-The customer app currently uses local mock data and does not require API environment variables.
+## Docker
 
-### 4. Run the frontend
+`hungry-belly-backend\Dockerfile` builds the backend with Maven and Temurin 21, packages the Spring Boot jar, runs as a non-root user, and exposes port `8080`.
 
-From `hungry-belly-frontend/admin-app`:
+## Database schema
 
-```bash
-npm install
-npm run dev
-```
-
-In a separate terminal, from `hungry-belly-frontend/customer-app`:
-
-```bash
-npm install
-npm run dev
-```
-
-By default:
-
-- Admin app: `http://localhost:5173`
-- Customer app: run with `npm run dev -- --port 5174` if `5173` is already in use
-
-## Useful commands
-
-### Backend
-
-```bash
-.\mvnw.cmd spring-boot:run
-.\mvnw.cmd -q test
-.\mvnw.cmd -q -DskipTests package
-```
-
-### Admin frontend (`hungry-belly-frontend/admin-app`)
-
-```bash
-npm install
-npm run dev
-npm run build
-npm run lint
-npm run preview
-```
-
-### Customer frontend (`hungry-belly-frontend/customer-app`)
-
-```bash
-npm install
-npm run dev
-npm run build
-npm run lint
-npm run preview
-```
-
-## API overview
-
-Base path: `/api/v1`
-
-Main modules:
-
-- `/auth`
-- `/users`
-- `/roles`
-- `/permissions`
-- `/restaurants`
-- `/categories`
-- `/foods`
-- `/storage`
-
-Restaurant membership endpoints are grouped under `/restaurants`, including:
-
-- `GET /restaurants/{restaurantId}/members`
-- `POST /restaurants/{restaurantId}/members`
-- `PATCH /restaurants/{restaurantId}/members/{membershipId}/role`
-- `DELETE /restaurants/{restaurantId}/members/{membershipId}`
-- `GET /restaurants/mine`
-- `POST /restaurants/{restaurantId}/transfer-ownership`
-
-Swagger UI is available at `http://localhost:8080/swagger-ui/index.html`.
-
-## Frontend routes
-
-Admin app routes include:
-
-- `/login`
-- `/`
-- `/users`
-- `/roles`
-- `/profile`
-- `/restaurants`
-- `/categories`
-- `/foods`
-- `/orders`
-- `/access-denied`
-
-Customer app routes include:
-
-- `/`
-- `/restaurants`
-- `/restaurant/:id`
-- `/cart`
-- `/orders`
-- `/contact`
-
-The admin app sends credentials with every request and automatically attempts token refresh on `401` responses.
-
-## Notes
-
-- The backend uses MySQL in normal development and H2 in the test profile.
-- Backend security protects user and role management for admins, while restaurant and food features are available to admin and partner roles.
-- The admin app contains the latest restaurant member-management UI, including add member, role change, remove member, and transfer owner flows.
-- The customer app currently focuses on browsing/menu/order UI flows backed by local data.
+![Hungry Belly schema](resources/schema/hungry-belly.jpg)
