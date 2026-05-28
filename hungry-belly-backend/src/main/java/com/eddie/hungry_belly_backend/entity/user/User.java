@@ -1,5 +1,6 @@
 package com.eddie.hungry_belly_backend.entity.user;
 
+import com.eddie.hungry_belly_backend.entity.BaseEntity;
 import com.eddie.hungry_belly_backend.entity.Role;
 import jakarta.persistence.*;
 import lombok.*;
@@ -14,10 +15,7 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class User extends BaseEntity {
 
     @Column(length = 120, nullable = false)
     private String email;

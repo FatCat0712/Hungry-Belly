@@ -12,10 +12,7 @@ import java.util.Set;
 @Table(name = "roles")
 @Getter
 @Setter
-public class Role {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class Role extends BaseEntity {
 
     @Column(length = 40, unique = true, nullable = false)
     private String name;
@@ -35,7 +32,7 @@ public class Role {
     }
 
     public Role(Long id) {
-        this.id = id;
+        setId(id);
     }
 
     public Role(String name) {
@@ -51,12 +48,12 @@ public class Role {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         Role role = (Role) o;
-        return Objects.equals(id, role.id);
+        return Objects.equals(super.getId(), role.getId());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(id);
+        return Objects.hashCode(super.getId());
     }
 
     @Override

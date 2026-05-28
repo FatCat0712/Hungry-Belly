@@ -39,8 +39,12 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtFilter) throws Exception {
         String[] whiteList = {
-                API + "/auth/login", API + "/auth/refresh-token", "/swagger-ui/**",
-                "/swagger-ui.html", "/v3/api-docs/**"
+                API + "/auth/login",
+                API + "/auth/refresh-token",
+                API + "/users/register",
+                "/swagger-ui/**",
+                "/swagger-ui.html",
+                "/v3/api-docs/**",
         };
 
 

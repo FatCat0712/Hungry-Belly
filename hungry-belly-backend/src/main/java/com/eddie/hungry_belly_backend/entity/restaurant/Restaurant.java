@@ -1,5 +1,6 @@
 package com.eddie.hungry_belly_backend.entity.restaurant;
 
+import com.eddie.hungry_belly_backend.entity.BaseEntity;
 import com.eddie.hungry_belly_backend.entity.food.Food;
 import jakarta.persistence.*;
 import lombok.*;
@@ -14,10 +15,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Restaurant {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class Restaurant extends BaseEntity {
 
     @Column(length = 128, nullable = false, unique = true)
     private String name;

@@ -15,6 +15,7 @@ import com.eddie.hungry_belly_backend.exception.common.BadRequestException;
 import com.eddie.hungry_belly_backend.exception.common.InvalidOperationException;
 import com.eddie.hungry_belly_backend.exception.user.UserNotFoundException;
 import com.eddie.hungry_belly_backend.role.service.RoleService;
+import com.eddie.hungry_belly_backend.user.dto.request.RegisterRequest;
 import com.eddie.hungry_belly_backend.user.dto.request.ResetPasswordRequest;
 import com.eddie.hungry_belly_backend.user.dto.request.UserCreateRequest;
 import com.eddie.hungry_belly_backend.user.dto.request.UserUpdateRequest;
@@ -57,6 +58,26 @@ public class UserService {
         User user = convertToUserEntity(request);
         user = userRepository.save(user);
         return convertToAdminResponse(user);
+    }
+
+    public UserResponse createNewCustomer(RegisterRequest registerRequest) {
+        boolean isEmailUnique = userRepository.existsByEmail(registerRequest.getEmail());
+        if(isEmailUnique) {
+            throw new BadRequestException("email: Email already exists");
+        }
+
+        User newUser = User.builder()
+                .email(registerRequest.getEmail())
+                .firstName(registerRequest.getFirstName())
+                .lastName(registerRequest.getLastName())
+                .password(encodePassword(registerRequest.getPassword()))
+                .enabled(false)
+                .photo(registerRequest.getPhotoPath())
+                .roles(Set.of(roleService.getExistRoleWithSameName("ROLE_USER")))
+                .build();
+
+        newUser = userRepository.save(newUser);
+        return convertToAdminResponse(newUser);
     }
 
     @Cacheable(value = "userProfiles", key = "#id")

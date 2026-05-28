@@ -1,5 +1,6 @@
 package com.eddie.hungry_belly_backend.entity.restaurant;
 
+import com.eddie.hungry_belly_backend.entity.BaseEntity;
 import com.eddie.hungry_belly_backend.entity.user.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -15,10 +16,7 @@ uniqueConstraints = @UniqueConstraint(
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class RestaurantUser {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class RestaurantUser extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "restaurant_id", nullable = false)
