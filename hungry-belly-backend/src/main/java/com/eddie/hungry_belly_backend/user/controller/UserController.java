@@ -2,6 +2,8 @@ package com.eddie.hungry_belly_backend.user.controller;
 
 import com.eddie.hungry_belly_backend.common.dto.response.ApiResponse;
 import com.eddie.hungry_belly_backend.common.util.paginate.PageRequestDto;
+import com.eddie.hungry_belly_backend.email.service.EmailService;
+import com.eddie.hungry_belly_backend.exception.common.InvalidTokenException;
 import com.eddie.hungry_belly_backend.user.dto.request.RegisterRequest;
 import com.eddie.hungry_belly_backend.user.dto.request.ResetPasswordRequest;
 import com.eddie.hungry_belly_backend.user.dto.request.UserCreateRequest;
@@ -14,6 +16,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "User Management", description = "Endpoints for managing users (Admin only)")
 public class UserController {
     private final UserService userService;
+    private final EmailService emailService;
 
     @Operation(summary = "List users with pagination", description = "Fetches a paginated list of users. Admin only.")
     @PostMapping("/page")
@@ -103,6 +108,30 @@ public class UserController {
         UserResponse response = userService.createNewCustomer(registerRequest);
         ApiResponse<?> body = ApiResponse.success(response, "Customer registered");
         return ResponseEntity.status(body.getStatus()).body(body);
+    }
+
+    @Operation(summary = "Verify email", description = "Verifies a user's email address using the provided token. Open to public.")
+    @GetMapping("/activate")
+    public ResponseEntity<String> activate(@RequestParam String token) {
+        try {
+            String firstName = emailService.activate(token); // returns user's first name
+            String logo = emailService.getLogoInBase64();
+
+            String html = emailService.loadTemplate("activation-success")
+                    .replace("{{logoUrl}}", logo)
+                    .replace("{{firstName}}", firstName)
+                    .replace("{{appUrl}}", "http://localhost:8080"); // You can replace this with your actual app URL
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.TEXT_HTML)
+                    .body(html);
+
+        } catch (InvalidTokenException e) {
+            // you'll want a separate error page here later
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .contentType(MediaType.TEXT_HTML)
+                    .body("<p>This activation link is invalid or has expired.</p>");
+        }
     }
 
 
