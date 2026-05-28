@@ -1,5 +1,6 @@
 package com.eddie.hungry_belly_backend.entity.restaurant;
 
+import com.eddie.hungry_belly_backend.entity.BaseEntity;
 import com.eddie.hungry_belly_backend.entity.ImageType;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -11,10 +12,7 @@ import java.util.Objects;
 @Table(name = "restaurant_images")
 @Getter
 @Setter
-public class RestaurantImage {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class RestaurantImage extends BaseEntity {
 
     @Column(nullable = false)
     private String imageUrl;
@@ -44,11 +42,11 @@ public class RestaurantImage {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         RestaurantImage that = (RestaurantImage) o;
-        return Objects.equals(id, that.id);
+        return Objects.equals(super.getId(), that.getId());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(id);
+        return Objects.hashCode(super.getId());
     }
 }

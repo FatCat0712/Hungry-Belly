@@ -11,10 +11,7 @@ import java.util.Set;
 @Table(name = "categories")
 @Getter
 @Setter
-public class Category {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class Category extends BaseEntity {
 
     @Column(length = 128, nullable = false, unique = true)
     private String name;
@@ -45,7 +42,7 @@ public class Category {
     }
 
     public Category(Long id) {
-        this.id = id;
+        setId(id);
     }
 
     public Category(String name) {

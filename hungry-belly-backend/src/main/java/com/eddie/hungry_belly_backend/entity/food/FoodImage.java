@@ -1,5 +1,6 @@
 package com.eddie.hungry_belly_backend.entity.food;
 
+import com.eddie.hungry_belly_backend.entity.BaseEntity;
 import com.eddie.hungry_belly_backend.entity.ImageType;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -9,10 +10,7 @@ import lombok.Setter;
 @Table(name = "food_images")
 @Getter
 @Setter
-public class FoodImage {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class FoodImage extends BaseEntity {
 
     @Column(nullable = false)
     private String imageUrl;

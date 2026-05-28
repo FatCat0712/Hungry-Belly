@@ -8,10 +8,7 @@ import lombok.Setter;
 @Table(name = "permissions")
 @Getter
 @Setter
-public class Permission {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class Permission extends BaseEntity {
 
     @Column(length = 40, unique = true, nullable = false)
     private String name;

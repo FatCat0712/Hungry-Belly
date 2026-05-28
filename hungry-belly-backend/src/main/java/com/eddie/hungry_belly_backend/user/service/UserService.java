@@ -9,12 +9,14 @@ import com.eddie.hungry_belly_backend.common.util.export.ExportStrategy;
 import com.eddie.hungry_belly_backend.common.util.paginate.PageRequestDto;
 import com.eddie.hungry_belly_backend.common.util.paginate.PaginationUtils;
 import com.eddie.hungry_belly_backend.common.util.storage.service.StorageService;
+import com.eddie.hungry_belly_backend.email.service.EmailService;
 import com.eddie.hungry_belly_backend.entity.Role;
 import com.eddie.hungry_belly_backend.entity.user.User;
 import com.eddie.hungry_belly_backend.exception.common.BadRequestException;
 import com.eddie.hungry_belly_backend.exception.common.InvalidOperationException;
 import com.eddie.hungry_belly_backend.exception.user.UserNotFoundException;
 import com.eddie.hungry_belly_backend.role.service.RoleService;
+import com.eddie.hungry_belly_backend.user.dto.request.RegisterRequest;
 import com.eddie.hungry_belly_backend.user.dto.request.ResetPasswordRequest;
 import com.eddie.hungry_belly_backend.user.dto.request.UserCreateRequest;
 import com.eddie.hungry_belly_backend.user.dto.request.UserUpdateRequest;
@@ -22,10 +24,13 @@ import com.eddie.hungry_belly_backend.user.dto.response.ExportResult;
 import com.eddie.hungry_belly_backend.user.dto.response.UserCsvDto;
 import com.eddie.hungry_belly_backend.user.dto.response.UserResponse;
 import com.eddie.hungry_belly_backend.user.dto.response.UserStatsResponse;
+import com.eddie.hungry_belly_backend.user.event.UserRegisteredEvent;
 import com.eddie.hungry_belly_backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -47,6 +52,9 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final ExportService exportService;
     private final StorageService storageService;
+    private final EmailService emailService;
+    private final ApplicationEventPublisher eventPublisher;
+
 
     @PreAuthorize("hasRole('ADMIN')")
     public UserResponse createUser(UserCreateRequest request) {
@@ -57,6 +65,41 @@ public class UserService {
         User user = convertToUserEntity(request);
         user = userRepository.save(user);
         return convertToAdminResponse(user);
+    }
+
+    @Transactional
+    public UserResponse createNewCustomer(RegisterRequest registerRequest) {
+        boolean isEmailUnique = userRepository.existsByEmail(registerRequest.getEmail());
+        if(isEmailUnique) {
+            throw new BadRequestException("email: Email already exists");
+        }
+
+        User newUser = User.builder()
+                .email(registerRequest.getEmail())
+                .firstName(registerRequest.getFirstName())
+                .lastName(registerRequest.getLastName())
+                .password(encodePassword(registerRequest.getPassword()))
+                .enabled(false)
+                .photo(registerRequest.getPhotoPath())
+                .roles(Set.of(roleService.getExistRoleWithSameName("ROLE_USER")))
+                .build();
+
+        newUser = userRepository.save(newUser);
+
+        String verificationToken = RandomStringUtils.randomAlphanumeric(64);
+
+        emailService.createEmailVerification(newUser, verificationToken);
+
+
+        eventPublisher.publishEvent(
+                new UserRegisteredEvent(
+                        newUser.getFirstName(),
+                        newUser.getEmail(),
+                        verificationToken)
+                )
+        ;
+
+        return convertToAdminResponse(newUser);
     }
 
     @Cacheable(value = "userProfiles", key = "#id")
