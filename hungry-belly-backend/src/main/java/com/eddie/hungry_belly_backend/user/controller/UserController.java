@@ -2,6 +2,7 @@ package com.eddie.hungry_belly_backend.user.controller;
 
 import com.eddie.hungry_belly_backend.common.dto.response.ApiResponse;
 import com.eddie.hungry_belly_backend.common.util.paginate.PageRequestDto;
+import com.eddie.hungry_belly_backend.user.dto.request.RegisterRequest;
 import com.eddie.hungry_belly_backend.user.dto.request.ResetPasswordRequest;
 import com.eddie.hungry_belly_backend.user.dto.request.UserCreateRequest;
 import com.eddie.hungry_belly_backend.user.dto.request.UserUpdateRequest;
@@ -92,6 +93,15 @@ public class UserController {
     public ResponseEntity<ApiResponse<?>> exportUsersCsv(@PathVariable String format) {
         ExportResult exportResult = userService.exportUser(format);
         ApiResponse<?> body = ApiResponse.success(exportResult, "Data exported");
+        return ResponseEntity.status(body.getStatus()).body(body);
+    }
+
+
+    @Operation(summary = "Register new customer", description = "Registers a new customer account. Open to public.")
+    @PostMapping("/register")
+    public ResponseEntity<ApiResponse<?>> registerNewCustomer(@Valid @RequestBody RegisterRequest registerRequest) {
+        UserResponse response = userService.createNewCustomer(registerRequest);
+        ApiResponse<?> body = ApiResponse.success(response, "Customer registered");
         return ResponseEntity.status(body.getStatus()).body(body);
     }
 

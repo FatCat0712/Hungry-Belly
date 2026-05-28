@@ -12,10 +12,7 @@ import java.time.Instant;
 @Table(name = "refresh_token")
 @Getter
 @Setter
-public class RefreshToken {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class RefreshToken extends BaseEntity {
 
     @Column(nullable = false, unique = true)
     private String token;
