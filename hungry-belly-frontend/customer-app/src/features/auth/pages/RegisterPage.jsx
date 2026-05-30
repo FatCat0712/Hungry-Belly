@@ -1,8 +1,12 @@
 import { useState } from "react";
-import { assets } from "../assets/assets";
+import { useNavigate } from "react-router-dom";
+import { assets } from "../../../shared/assets/assets";
+import { useRegisterUser } from "../hooks/useAuth";
 
 function RegisterPage() {
-  const [formData, setFormData] = useState({
+  const { registerUser } = useRegisterUser();
+  const navigate = useNavigate();
+  const [data, setData] = useState({
     email: "",
     firstName: "",
     lastName: "",
@@ -14,17 +18,24 @@ function RegisterPage() {
 
   const handleChange = (event) => {
     const { name, value } = event.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handlePhotoChange = (event) => {
     const selectedFile = event.target.files?.[0] || null;
-    setFormData((prev) => ({ ...prev, photo: selectedFile }));
+    setData((prev) => ({ ...prev, photo: selectedFile }));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    alert("Registration form submitted");
+    try {
+      await registerUser(data);
+      navigate("/verify-email", {
+        state: { email: data.email, firstName: data.firstName },
+      });
+    } catch (error) {
+      alert("Registration failed");
+    }
   };
 
   return (
@@ -52,7 +63,7 @@ function RegisterPage() {
                       type="email"
                       className="form-control"
                       placeholder="jane.doe@example.com"
-                      value={formData.email}
+                      value={data.email}
                       onChange={handleChange}
                       required
                     />
@@ -71,7 +82,7 @@ function RegisterPage() {
                       type="text"
                       className="form-control"
                       placeholder="Jane"
-                      value={formData.firstName}
+                      value={data.firstName}
                       onChange={handleChange}
                       required
                     />
@@ -90,7 +101,7 @@ function RegisterPage() {
                       type="text"
                       className="form-control"
                       placeholder="Doe"
-                      value={formData.lastName}
+                      value={data.lastName}
                       onChange={handleChange}
                       required
                     />
@@ -109,7 +120,7 @@ function RegisterPage() {
                       type="password"
                       className="form-control"
                       placeholder="Enter password"
-                      value={formData.password}
+                      value={data.password}
                       onChange={handleChange}
                       required
                     />
@@ -128,7 +139,7 @@ function RegisterPage() {
                       type="password"
                       className="form-control"
                       placeholder="Confirm password"
-                      value={formData.confirmPassword}
+                      value={data.confirmPassword}
                       onChange={handleChange}
                       required
                     />
@@ -147,7 +158,7 @@ function RegisterPage() {
                       type="text"
                       className="form-control"
                       placeholder="Enter phone number"
-                      value={formData.phoneNumber || ""}
+                      value={data.phoneNumber || ""}
                       onChange={handleChange}
                       required
                     />
@@ -170,7 +181,7 @@ function RegisterPage() {
                     <div className="form-check mt-1 ">
                       <label className="form-label" htmlFor="useDefault">
                         <img
-                          src={formData.photo ? formData.photo : assets.upload}
+                          src={data.photo ? data.photo : assets.upload}
                           alt=""
                           width={98}
                         />

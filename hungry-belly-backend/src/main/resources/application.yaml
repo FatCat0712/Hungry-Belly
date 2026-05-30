@@ -38,8 +38,8 @@ api:
 auth:
   token:
 #    15 minutes for access token, 7 days for refresh token
-    accessExpirationInMils: 54000
-    refreshExpirationInMils: 604800
+    accessExpirationInMils: 900000
+    refreshExpirationInMils: 604800000
     jwtSecret: ${JWT_SECRET}
 app:
   useSecureCookie: false

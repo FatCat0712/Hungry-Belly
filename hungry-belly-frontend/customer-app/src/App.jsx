@@ -1,14 +1,16 @@
 import { useState } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
-import HomePage from "./pages/HomePage";
-import RestaurantsPage from "./pages/RestaurantsPage";
-import RestaurantDetailPage from "./pages/RestaurantDetailPage";
-import CartPage from "./pages/CartPage";
-import OrdersPage from "./pages/OrdersPage";
-import ContactPage from "./pages/ContactPage";
-import RegisterPage from "./pages/RegisterPage";
-import HomeLayout from "./layouts/HomeLayout";
+import HomePage from "./features/home/pages/HomePage";
+import RestaurantsPage from "./features/restaurants/pages/RestaurantsPage";
+import RestaurantDetailPage from "./features/restaurants/pages/RestaurantDetailPage";
+import CartPage from "./features/cart/pages/CartPage";
+import OrdersPage from "./features/orders/pages/OrdersPage";
+import ContactPage from "./features/contact/pages/ContactPage";
+import RegisterPage from "./features/auth/pages/RegisterPage";
+import LoginPage from "./features/auth/pages/LoginPage";
+import EmailVerificationPage from "./features/auth/pages/EmailVerificationPage";
+import HomeLayout from "./shared/layouts/HomeLayout";
 
 const App = () => {
   const [cartItems, setCartItems] = useState([]);
@@ -72,7 +74,9 @@ const App = () => {
           />
           <Route path="/orders" element={<OrdersPage />} />
           <Route path="/contact" element={<ContactPage />} />
+          <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/verify-email" element={<EmailVerificationPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

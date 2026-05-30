@@ -1,7 +1,7 @@
 import HeroSection from "../components/HeroSection.jsx";
 import CategoryCard from "../components/CategoryCard.jsx";
-import RestaurantCard from "../components/RestaurantCard.jsx";
-import { categories, restaurants } from "../data/data.js";
+import RestaurantCard from "../../restaurants/components/RestaurantCard.jsx";
+import { categories, restaurants } from "../../restaurants/data/data.js";
 import { useNavigate } from "react-router-dom";
 
 function HomePage() {
