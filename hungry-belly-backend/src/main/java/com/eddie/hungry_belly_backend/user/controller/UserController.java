@@ -120,7 +120,7 @@ public class UserController {
             String html = emailService.loadTemplate("activation-success")
                     .replace("{{logoUrl}}", logo)
                     .replace("{{firstName}}", firstName)
-                    .replace("{{appUrl}}", "http://localhost:8080"); // You can replace this with your actual app URL
+                    .replace("{{appUrl}}", "http://localhost:5173/login"); // You can replace this with your actual app URL
 
             return ResponseEntity.ok()
                     .contentType(MediaType.TEXT_HTML)

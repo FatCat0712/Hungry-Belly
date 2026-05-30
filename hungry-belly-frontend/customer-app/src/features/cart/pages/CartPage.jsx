@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import CartItem from "../components/CartItem.jsx";
-import EmptyState from "../components/EmptyState.jsx";
+import EmptyState from "../../../shared/components/EmptyState.jsx";
 
 function CartPage({ cartItems, updateQuantity, clearCart }) {
   const subtotal = cartItems.reduce(

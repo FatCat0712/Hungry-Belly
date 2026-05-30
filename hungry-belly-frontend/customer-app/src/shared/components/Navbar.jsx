@@ -60,10 +60,10 @@ function Navbar({ cartCount = 0 }) {
                 </span>
               )}
             </Link>
-            <button className="btn btn-outline-secondary">
+            <Link to="/login" className="btn btn-outline-secondary">
               <i className="bi bi-person me-1"></i>
               Login
-            </button>
+            </Link>
             <Link to="/register" className="btn btn-primary">
               Register
             </Link>

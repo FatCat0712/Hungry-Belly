@@ -14,6 +14,9 @@ public class CookieUtils {
     @Value("${app.useSecureCookie}")
     private boolean useSecureCookies;
 
+    @Value("${api.prefix}")
+    private String API;
+
     public void addTokenCookie(HttpServletResponse response, String tokenName, String token, long maxAge) {
         if(response == null) {
             throw new IllegalArgumentException("HttpServletResponse cannot be null");
@@ -21,7 +24,7 @@ public class CookieUtils {
 
         Cookie tokenCookie = new Cookie(tokenName, token);
         tokenCookie.setHttpOnly(true);
-        tokenCookie.setPath("/");
+        tokenCookie.setPath("refreshToken".equals(tokenName) ? API + "/auth/refresh-token" : "/");
         tokenCookie.setMaxAge((int)(maxAge));
         tokenCookie.setSecure(useSecureCookies);
         setResponseHeader(response, tokenCookie, resolveSameSite());
